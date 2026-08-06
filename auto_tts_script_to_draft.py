@@ -4,12 +4,21 @@ import edge_tts
 import pycapcut as cc
 from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextSegment, AudioMaterial, AudioSegment
 
-async def generate_tts_audio(text: str, output_path: str, voice: str = "ko-KR-SunHiNeural"):
+async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-SunHiNeural"):
     """Edge-TTS를 사용하여 텍스트를 한국어 MP3 오디오로 변환합니다."""
-    communicate = edge_tts.Communicate(text, voice)
+    if isinstance(voice_config, dict):
+        voice = voice_config.get("voice", "ko-KR-SunHiNeural")
+        rate = voice_config.get("rate", "+0%")
+        pitch = voice_config.get("pitch", "+0Hz")
+    else:
+        voice = voice_config
+        rate = "+0%"
+        pitch = "+0Hz"
+
+    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(output_path)
 
-def create_capcut_with_tts(script_text: str, project_name: str = "허리_복대_음성더빙_광고", voice: str = "ko-KR-SunHiNeural"):
+def create_capcut_with_tts(script_text: str, project_name: str = "허리_복대_음성더빙_광고", voice="ko-KR-SunHiNeural"):
     """
     대본(텍스트)을 읽어:
     1. Edge-TTS로 문장별 음성(MP3) 파일 생성
@@ -39,7 +48,7 @@ def create_capcut_with_tts(script_text: str, project_name: str = "허리_복대_
         mp3_path = os.path.join(audio_dir, f"voice_{i}.mp3")
 
         # 3. AI 음성(TTS) 파일 생성
-        asyncio.run(generate_tts_audio(line, mp3_path, voice=voice))
+        asyncio.run(generate_tts_audio(line, mp3_path, voice_config=voice))
 
         # 4. 생성된 음성 소재 분석 (길이 추출)
         audio_mat = AudioMaterial(mp3_path)
