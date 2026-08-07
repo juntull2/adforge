@@ -332,6 +332,38 @@ def generate_seo_recommendation(script_text: str, api_key: str):
         return f"SEO 추천 생성 중 오류가 발생했습니다: {str(e)}"
 
 # -------------------------------------------------------------------
+
+def generate_hailuo_prompts(script_text: str, api_key: str):
+    """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기"""
+    if not api_key:
+        return "API 키가 설정되지 않았습니다."
+        
+    genai.configure(api_key=api_key)
+    prompt = f"""
+    You are an expert AI video prompt engineer for MiniMax Hailuo AI.
+    Below is a Korean short-form video script.
+    I need you to break down this script into logical visual scenes (approx 3-5 scenes).
+    For each scene, provide a highly detailed English prompt to generate a cinematic, realistic video clip that matches the context.
+    The prompt should focus on visual descriptions (lighting, camera angle, subject, action).
+    Do NOT include text overlays or text inside the video prompt.
+    
+    Script:
+    {script_text}
+    
+    Output Format:
+    [Scene 1] <Korean summary of the scene>
+    Prompt: <English Prompt for Hailuo AI>
+    
+    [Scene 2] ...
+    """
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"프롬프트 생성 중 오류가 발생했습니다: {str(e)}"
+
+# -------------------------------------------------------------------
 # 6. AI TTS + 배경 비디오 소스 + Pretendard 자막 100% 자동 제작
 # -------------------------------------------------------------------
 async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-SunHiNeural"):
@@ -355,11 +387,12 @@ async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-Su
     communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(output_path)
 
-def build_capcut_project_for_naver_clip(product_name: str, keyword: str, script_text: str, seo_title: str, voice="ko-KR-SunHiNeural"):
-    project_name = f"네이버클립_{keyword.replace(' ', '_')}"
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural"):
+    import time
+    project_name = f"AutoProject_{int(time.time())}"
     
-    prod_data = PRODUCTS_DB.get(product_name, PRODUCTS_DB["다피다 허리 찜질기"])
-    stock_videos = get_or_download_stock_videos(prod_data.get("stock_keywords", ["back pain"]))
+    # 캡컷 프로젝트용 스톡 비디오 (임시 더미용)
+    stock_videos = get_or_download_stock_videos(["abstract background"])
 
     draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
     draft_folder = cc.DraftFolder(draft_folder_path)
@@ -385,7 +418,7 @@ def build_capcut_project_for_naver_clip(product_name: str, keyword: str, script_
 
     print(f"\n========================================================")
     print(f"[네이버 클립 프로젝트 생성 시작] {project_name}")
-    print(f"[SEO 제목] {seo_title}")
+    
     print(f"[자동 비디오 교차 배치] 보유 스톡 비디오 {len(stock_videos)}개 교차 연동")
     print(f"========================================================")
 
@@ -463,7 +496,7 @@ def build_capcut_project_for_naver_clip(product_name: str, keyword: str, script_
 
     script_file.save()
     print(f"\n[완료] [AI더빙 + 비디오 컷 + Pretendard 자막] 100% 자동 완성! 초안: '{project_name}'")
-    return project_name, seo_title
+    return project_name
 
 if __name__ == "__main__":
     build_capcut_project_for_naver_clip("다피다 허리 찜질기", "허리아플때")
