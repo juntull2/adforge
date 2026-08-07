@@ -369,7 +369,7 @@ C (Direct Promo): Actively review and recommend "{product_name}" by name in the 
 
 OUTPUT STRUCTURE:
 Write ONLY the content requested below, without any extra markdown formatting or conversational text.
-Separate the video script and the comment CTA with exactly this delimiter: "====COMMENT===="
+Separate the video script, comment CTA, and video description with exactly these delimiters: "====COMMENT====" and "====DESCRIPTION===="
 
 [Video Script]
 Write the narration text for a 30-40 second short-form video.
@@ -380,6 +380,11 @@ Format: just raw text that a TTS can read nicely. No timestamps, no visual direc
 If Format A: Write a polite comment encouraging engagement (no product).
 If Format B: Write a comment promoting "{product_name}", e.g., "영상에서 말한 그 제품! 네이버에 '{product_name}'를 검색해 보세요."
 If Format C: Write a comment with a link or search CTA for "{product_name}".
+
+====DESCRIPTION====
+[Video Description & Hashtags]
+Write a catchy video description along with 3-5 relevant hashtags.
+MUST BE UNDER 200 CHARACTERS TOTAL.
 """
 
         kwargs = {

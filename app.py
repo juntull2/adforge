@@ -87,6 +87,7 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
         st.session_state["raw_script_output"] = ""
         st.session_state["parsed_script"] = ""
         st.session_state["parsed_comment"] = ""
+        st.session_state["parsed_description"] = ""
         
         with st.spinner(f"대본 기획 중... ({model_choice})"):
             st.markdown("##### 💡 대본 작성 중 (실시간)")
@@ -99,18 +100,29 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
             raw_output = st.write_stream(script_stream_generator())
             st.session_state["raw_script_output"] = raw_output
             
-            # Parsing the output to split script and comment
+            # Parsing the output to split script, comment, and description
             if "====COMMENT====" in raw_output:
                 parts = raw_output.split("====COMMENT====")
                 st.session_state["parsed_script"] = parts[0].strip()
-                st.session_state["parsed_comment"] = parts[1].strip()
+                if "====DESCRIPTION====" in parts[1]:
+                    sub_parts = parts[1].split("====DESCRIPTION====")
+                    st.session_state["parsed_comment"] = sub_parts[0].strip()
+                    st.session_state["parsed_description"] = sub_parts[1].strip()
+                else:
+                    st.session_state["parsed_comment"] = parts[1].strip()
             else:
                 st.session_state["parsed_script"] = raw_output.strip()
 
-# Show parsed comment if exists
-if st.session_state.get("parsed_comment"):
-    st.markdown("##### 💬 유튜브/클립용 고정 댓글 (CTA)")
-    st.markdown(f'<div class="comment-box">{st.session_state["parsed_comment"]}</div>', unsafe_allow_html=True)
+# Show parsed comment & description if exists
+col_out1, col_out2 = st.columns(2)
+with col_out1:
+    if st.session_state.get("parsed_comment"):
+        st.markdown("##### 💬 유튜브/클립용 고정 댓글 (CTA)")
+        st.markdown(f'<div class="comment-box">{st.session_state["parsed_comment"]}</div>', unsafe_allow_html=True)
+with col_out2:
+    if st.session_state.get("parsed_description"):
+        st.markdown("##### 📝 영상 설명 & 해시태그 (200자 내)")
+        st.markdown(f'<div class="comment-box" style="border-left-color: #3182ce;">{st.session_state["parsed_description"]}</div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
