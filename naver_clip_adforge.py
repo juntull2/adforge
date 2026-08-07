@@ -369,14 +369,14 @@ Format Guidelines & Rules:
    - A (Amplify): Explain the cause of the problem to build professional trust (e.g., "척추 기립근이 잠들었기 때문입니다.").
    - S (Solution): Provide a low-barrier, easy solution (e.g., "제자리에서 1분 만에 세우는 특급 비법!").
    - T (Transformation): Explain step-by-step actions and the positive transformation (e.g., "무너진 척추 기둥을 세워줍니다.").
-   - O (Offer): A strong Call to Action (e.g., "저장하시고 '척추기립근'이라고 남겨주세요").
+   - O (Offer): A natural Call to Action (e.g., "도움이 되셨다면 좋아요 부탁드려요!"). DO NOT ask the viewer to leave a specific comment word.
 2. Selling Points to Embed:
    - Convenience: Emphasize how easy and fast it is (e.g., "제자리에서", "1분만에").
    - Target: Speak directly to middle-aged modern people.
    - Clarity: Use structured numbers (e.g., "1단계", "2단계").
-   - Engagement: Induce social interaction (e.g., specific keyword comment).
+   - Engagement: Induce natural social interaction (e.g., likes). DO NOT ask for comments with specific words.
 3. Promo Rules:
-   - Format A (Pure Info): 100% helpful tips. Zero product mention. End with "도움이 되셨다면 좋아요와 저장 부탁드려요!"
+   - Format A (Pure Info): 100% helpful tips. Zero product mention. End with "도움이 되셨다면 좋아요 부탁드려요!"
    - Format B (Indirect Promo): Give tips (80%), then casually mention (20%) "I use a specific device/item for this. I'll leave the one I use in the comments!". DO NOT say the brand name "{product_name}" in the video.
    - Format C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, explaining its benefits.
 
@@ -397,7 +397,7 @@ Structure it exactly like this:
 3. **[Step 3 Name]** [Detailed explanation and tips]
 
 At the very end of this informational comment:
-If Format A: Write a polite closing encouraging them to save the video.
+If Format A: Write a polite closing encouraging them to like the video.
 If Format B: Add a natural CTA like "영상에서 말한 그 꿀템! 네이버에 '{product_name}'를 검색해 보세요."
 If Format C: Add a direct CTA to check out "{product_name}".
 
