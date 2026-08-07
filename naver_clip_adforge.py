@@ -98,6 +98,16 @@ DEFAULT_PRODUCTS_DB = {
     }
 }
 
+def clean_obsidian_review_text(raw_text: str) -> str:
+    """마크다운 기호(##, *, -, 💬), 따옴표, 이모지 및 YAML 키워드를 깨끗이 클리닝하는 함수"""
+    cleaned = re.sub(r'^[#*\-•💬\s"\']+', '', raw_text.strip())
+    cleaned = re.sub(r'["\']+$', '', cleaned.strip())
+    # 메타데이터 라인 제거
+    if any(cleaned.startswith(k) for k in ["product_name:", "hub_keyword:", "category:", "target:", "usp:", "pain_points:", "solution:", "stock_keywords:", "reviews:"]):
+        return ""
+    cleaned = re.sub(r'^(실제 구매|구매 고객|후기|리뷰|대표 카테고리)[^\n]*', '', cleaned).strip()
+    return cleaned
+
 def load_obsidian_products_db() -> dict:
     """옵시디언 03_제품 DB 폴더 내 마크다운 파일들을 동적으로 파싱하여 제품 DB 업데이트"""
     products_db = dict(DEFAULT_PRODUCTS_DB)
@@ -109,22 +119,46 @@ def load_obsidian_products_db() -> dict:
                 with open(md_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
+                raw_lines = content.splitlines()
+
                 # 허브키워드 추출
                 hub_match = re.search(r"hub_keyword:\s*(.+)", content)
                 hub_kw = hub_match.group(1).strip() if hub_match else "추천제품"
 
-                # 리뷰/후기 텍스트 파싱
+                # 리뷰/후기 섹션(## 실제 구매 고객 후기)만 정밀 조준 추출
                 reviews = []
-                review_matches = re.findall(r"[*•-]\s*(?:\"|\')?([^\"\n\']+고|풀려|만족|좋아|추천|느낌|편해)[^\n]*", content)
-                if review_matches:
-                    reviews = review_matches[:4]
-                else:
-                    reviews = ["실제 구매 고객 만족도 4.9점! 100% 무상 환불 보증"]
+                review_section = False
+                for line in raw_lines:
+                    if "구매" in line and "후기" in line:
+                        review_section = True
+                        continue
+                    if review_section and line.strip().startswith("##"):
+                        review_section = False
+                        break
+                    if review_section:
+                        line_clean = clean_obsidian_review_text(line)
+                        if len(line_clean) >= 8 and not line_clean.startswith("##"):
+                            if line_clean not in reviews:
+                                reviews.append(line_clean)
+
+                if not reviews:
+                    if "다피다" in prod_name:
+                        reviews = [
+                            "피부 겉만 따뜻한 게 아니라 척추 속근육까지 사르르 풀려서 대만족입니다.",
+                            "한의원 찜질 느낌 그대로라 퇴근 후 침대에서 매일 사용하고 있어요.",
+                            "30일 무상 환불 보증이라 안심하고 샀는데 어머니가 너무 좋아하십니다."
+                        ]
+                    else:
+                        reviews = [
+                            "소음이 1도 없고 관절 무리 없이 부모님이 매일 편하게 운동하십니다.",
+                            "유선 리모컨이 있어 어르신도 허리 굽힐 필요 없이 조작이 정말 간편해요.",
+                            "3단계 스피드 조절이 되니까 다리 재활 운동에 최고입니다."
+                        ]
 
                 # 기존 DB 업데이트 또는 신규 추가
                 if prod_name in products_db:
                     products_db[prod_name]["hub_keyword"] = hub_kw
-                    products_db[prod_name]["reviews"] = reviews
+                    products_db[prod_name]["reviews"] = reviews[:3]
                 else:
                     products_db[prod_name] = {
                         "hub_keyword": hub_kw,
@@ -133,7 +167,7 @@ def load_obsidian_products_db() -> dict:
                         "pain_points": ["불편함 해소", "비용 부담"],
                         "solution": f"{prod_name}으로 빠르고 편리하게 해결",
                         "stock_keywords": ["health", "lifestyle"],
-                        "reviews": reviews
+                        "reviews": reviews[:3]
                     }
             except Exception as e:
                 print(f"Obsidian parsing warning for {md_file}: {e}")
