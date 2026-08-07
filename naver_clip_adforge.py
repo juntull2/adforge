@@ -349,10 +349,17 @@ def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: s
         You are an expert AI video prompt engineer for MiniMax Hailuo AI.
         Below is a Korean short-form video script.
         I need you to break down this script into logical visual scenes (approx 3-5 scenes).
-        For each scene, provide a highly detailed English prompt to generate a cinematic, realistic video clip that matches the context.
-        The prompt should focus on visual descriptions (lighting, camera angle, subject, action).
-        Do NOT include text overlays or text inside the video prompt.
+        For each scene, provide a concise but highly detailed English prompt to generate a cinematic, realistic video clip that matches the context.
         
+        CRITICAL RULES FOR HAILUO AI PROMPTS:
+        1. Sequence: Always write in the order of "Subject -> Place -> Action". (e.g., A 40-year-old woman in a bright living room stretching her back).
+        2. Movements & Camera: Specify directions precisely (e.g., "moving from left to right"). Always specify camera height/movement (e.g., "eye-level camera", "smooth tracking shot").
+        3. Negative Prompts: Explicitly exclude unwanted elements (e.g., "no distorted faces, no blurry motion, no text overlays").
+        4. Character Consistency: If the same character appears across scenes, repeat phrases like "same woman, consistent face, same character, same hairstyle".
+        5. Transitions: Describe transitions as physical actions, not magical effects (e.g., "lighting gradually shifts", "during the spin the background changes").
+        6. Continuous Shots: To prevent unwanted camera cuts, add "eye-level camera, same distance, centered composition, smooth tracking shot, continuous single take, no cuts".
+        7. Conciseness: Keep the prompt concise and focus only on the core visual elements. Do NOT use overly complex sentences.
+
         Script:
         {script_text}
         
