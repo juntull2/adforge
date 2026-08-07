@@ -1,19 +1,18 @@
-import os
-import json
+from agents.base import BaseAgent
+import re
 
-class ClipIntelligenceAgent:
+class ClipIntelligenceAgent(BaseAgent):
     """
-    Clip Intelligence Agent / AdForge Reverse Engineering Engine (agents/clip.py)
-    역할: 네이버 클립 상위 노출 숏폼 레퍼런스 및 Whisper STT 영상 역설계 파싱
+    ClipIntelligenceAgent / AdForge Reverse Engineering Engine (agents/clip.py)
+    BaseAgent 상속 및 네이버 클립 상위 노출 숏폼 성공 구조 역설계 파싱
     """
     def __init__(self):
-        pass
+        super().__init__("ClipIntelligenceAgent")
 
-    def reverse_engineer_clip_structure(self, script_text: str, product_name: str) -> dict:
-        """
-        상위 노출 영상 구조 역설계: 옵시디언 4컬럼 표 (`구분 | 음성 | 화면 | 자막`) 및 마케터 소구점 분석
-        """
-        import re
+    def run(self, context: dict) -> dict:
+        script_text = context.get("script_text", "")
+        product_name = context.get("product_name", "다피다 허리 찜질기")
+
         sentences = [s.strip() for s in re.split(r'(?<=[.!?])|\n', script_text.strip()) if s.strip()]
         if not sentences:
             sentences = [script_text.strip()]
@@ -41,13 +40,16 @@ class ClipIntelligenceAgent:
             })
 
         first_sentence = sentences[0] if sentences else script_text
+        auto_kw = context.get("keyword", {}).get("target_keyword", "허리통증")
+        
         marketer_notes = [
-            f"**타깃 페르소나 훅**: '{first_sentence[:20]}...'라는 결핍 훅으로 극초반 3초 스크롤 멈춤 100% 형성.",
-            f"**대체재 단점 지적**: 파스/저가 마사지기의 한계를 지적하고 {product_name}의 기술적 차별성 강조.",
+            f"**타깃 페르소나 훅 ('{auto_kw}')**: '{first_sentence[:20]}...'라는 직관적 훅으로 극초반 결핍 공감대 100% 형성.",
+            f"**대체재 단점 지적**: 파스/저가 마사지기의 한계를 지적하고 {product_name}의 기술적 차별성 전달.",
             f"**자사 제품({product_name}) 트위스트 대입법**: 직장인 퇴근후 통증 ➡️ 부모님 효도선물 프레임 전환 제작 가능."
         ]
 
-        return {
+        context["clip_intelligence"] = {
             "script_table": script_table,
             "marketer_notes": marketer_notes
         }
+        return context

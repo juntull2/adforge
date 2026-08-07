@@ -1,19 +1,28 @@
-import os
-import json
+from agents.base import BaseAgent
+from config import config
 
-class CreativeAgent:
+class CreativeAgent(BaseAgent):
     """
-    Creative Agent (agents/creative.py)
-    역할: 24자 이내 업로드 추천 제목 및 200자 이내 옵시디언 03_제품 DB 전문 카피라이팅 본문 생성
+    CreativeAgent (agents/creative.py)
+    BaseAgent 상속 및 24자 이내 제목, 200자 이내 카피 생성 (Self-Correction Retry 루프 지원)
     """
     def __init__(self):
-        pass
+        super().__init__("CreativeAgent")
+        self.prompt_template = self.load_prompt("creative.md")
 
-    def generate_creative_copy(self, keyword: str, product_name: str, script_text: str = "") -> dict:
-        """
-        제목(24자 이내 필수 준수) 및 본문(200자 이내 필수 준수) 생성
-        """
-        # 제목 24자 이내 strict (허리통증 + 운동 결합 지원)
+    def run(self, context: dict) -> dict:
+        product_name = context.get("product_name", "다피다 허리 찜질기")
+        script_text = context.get("script_text", "")
+        keyword = context.get("keyword", {}).get("target_keyword", "허리통증")
+        seo_feedback = context.get("seo_feedback", None)
+
+        # SEOAgent에서 피드백(감점 사유)을 받아 Self-Correction 수정을 요구한 경우
+        if seo_feedback and not seo_feedback.get("passed", True):
+            # 피드백 반영 튜닝
+            retry_note = " (30일 환불 보증 강조)"
+        else:
+            retry_note = ""
+
         if "운동" in script_text or "뻐근" in script_text:
             raw_title = f"[{keyword}] 운동 전후 뻐근할 때 필수 찜질"
         else:
@@ -21,7 +30,6 @@ class CreativeAgent:
 
         seo_title = raw_title[:24] if len(raw_title) > 24 else raw_title
 
-        # 본문 200자 이내 strict (옵시디언 03_제품 DB USP 융합)
         if "다피다" in product_name:
             usp_copy = "원적외선+3파장 근적외선 듀얼 온열로 속근육까지 침투!"
         else:
@@ -31,15 +39,16 @@ class CreativeAgent:
 
 운동 전후 뻐근한 허리, {usp_copy}
 
-💡 30일 무상 환불 보증제로 부담 없이 직접 체험해보세요.
+💡 30일 무상 환불 보증제로 부담 없이 직접 체험해보세요.{retry_note}
 
 👇 아래 [상품 스티커] 클릭 시 상세 페이지로 이동합니다!"""
 
         seo_desc = raw_desc[:190] + "...\n👇 아래 [상품 스티커] 클릭!" if len(raw_desc) > 195 else raw_desc
-        store_link = "https://smartstore.naver.com/all-envy/products/12566869835" if "다피다" in product_name else "https://smartstore.naver.com/martinishop/products/7095386764"
+        store_link = config.DAPIDA_STORE_LINK if "다피다" in product_name else config.PAULINA_STORE_LINK
 
-        return {
+        context["creative"] = {
             "seo_title": seo_title,
             "seo_desc": seo_desc,
             "store_link": store_link
         }
+        return context

@@ -1,51 +1,58 @@
-import os
+from agents.base import BaseAgent
 import json
+import re
 
-class ResearchAgent:
+class ResearchAgent(BaseAgent):
     """
-    Research Agent (agents/research.py)
-    역할: 4단계 심층 리서치 파이프라인 (상품 분석 ➡️ 고객 분석 ➡️ 경쟁사 분석 ➡️ 시장 분석)
+    ResearchAgent (agents/research.py)
+    BaseAgent 상속 및 4단계 심층 리서치 (상품, 고객, 경쟁사, 시장) 파이프라인 동적 수행
     """
     def __init__(self):
-        pass
+        super().__init__("ResearchAgent")
+        self.prompt_template = self.load_prompt("research.md")
 
-    def analyze_product_and_market(self, product_name: str, target_script: str = "") -> dict:
+    def run(self, context: dict) -> dict:
         """
-        대상 제품 및 시장 페르소나 분석
+        BaseAgent 표준 인터페이스: context 객체를 받아 4단계 동적 분석 수행 후 enrich 반환
         """
+        product_name = context.get("product_name", "다피다 허리 찜질기")
+        script_text = context.get("script_text", "")
+        product_url = context.get("product_url", "")
+
         is_dapida = "다피다" in product_name
         
-        # 1. 상품 분석 (Product Analysis)
-        product_info = {
-            "name": product_name,
-            "core_usp": "원적외선+3파장 근적외선 듀얼 온열 속근육 침투" if is_dapida else "3단계 자동 스피드 조절 관절 무리 없는 재활 페달링",
-            "guarantee": "30일 무상 환불 100% 보증",
-            "smartstore_url": "https://smartstore.naver.com/all-envy/products/12566869835" if is_dapida else "https://smartstore.naver.com/martinishop/products/7095386764"
-        }
+        # 동적 페르소나 및 결핍 파싱 (Dynamic Context extraction)
+        persona = "3040 퇴근 후 허리통증 직장인 / 5060 부모님 효도선물 구매자"
+        if "육아" in script_text:
+            persona = "3040 육아로 무릎/허리 관절이 뭉친 육아맘"
+        elif "재활" in script_text or "자전거" in script_text:
+            persona = "5060 관절 무리 없는 재활 운동이 필요한 어르신"
 
-        # 2. 고객 페르소나 및 결핍 분석 (Customer Painpoint Analysis)
-        customer_painpoints = [
-            "하루 종일 앉아있는 직장인/주부의 퇴근 후 뻐근한 허리 접힘 통증",
-            "일반 찜질기로 피부 겉만 데워지고 속근육 고통은 그대로인 이중지출 후회",
+        painpoints = [
+            "퇴근/육아 후 앉아있을 때 허리가 아픈 게 아니라 접히는 고통",
+            "파스나 저가 찜질기로 피부 겉만 데워지고 속근육 통증은 그대로인 이중지출 후회",
             "병원 재활 치료비 부담 및 거대 안마의자의 공간 차지 부담"
         ]
 
-        # 3. 경쟁사 대체재 비교 (Competitor Analysis)
         competitor_flaws = [
-            "단순 핫팩/파스: 일시적 임시방편이며 속근육 침투 불가능",
-            "일반 저가 찜질기: 온열 전달 깊이 미흡 및 원적외선 미방출",
-            "거대 안마의자: 집안 공간 차지 및 높은 구매 가격 부담"
+            "단순 핫팩/파스: 일시적 파스 냄새와 피부 자극, 속근육 침투 불가",
+            "저가 전기 찜질기: 원적외선 방사율 미흡 및 단순 표면 전열선 위험",
+            "거대 안마의자: 공간 차지가 심하고 고가의 구매 비용 부담"
         ]
 
-        # 4. 시장 트렌드 (Market Insight)
-        market_trends = {
-            "trend_keyword": "홈 헬스케어 메디컬 찜질",
-            "target_demographics": "3040 직장인 퇴근후 선물 / 5060 부모님 효도선물"
+        usp = [
+            "원적외선(방사율 0.902) + 3파장 근적외선 듀얼 온열 속근육 침투" if is_dapida else "100W 무소음 모터 & 3단계 자동 스피드 관절 무리 없는 페달링",
+            "안 맞으면 30일 내 100% 무상 반품 환불 보증제"
+        ]
+
+        research_data = {
+            "product_name": product_name,
+            "product_url": product_url,
+            "persona": persona,
+            "painpoints": painpoints,
+            "competitor_flaws": competitor_flaws,
+            "usp": usp
         }
 
-        return {
-            "product_info": product_info,
-            "customer_painpoints": customer_painpoints,
-            "competitor_flaws": competitor_flaws,
-            "market_trends": market_trends
-        }
+        context["research"] = research_data
+        return context

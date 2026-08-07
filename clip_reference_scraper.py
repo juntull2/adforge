@@ -222,54 +222,59 @@ def audit_marketing_quality_strictly(script_text: str, target_product: str) -> d
 
 def generate_seo_and_marketing_from_user_script(user_script_text: str, target_product: str) -> dict:
     """
-    AdForge Naver Clip Creative OS Multi-Agent 파이프라인 통합 구동:
-    ResearchAgent ➡️ KeywordAgent ➡️ ClipIntelligenceAgent ➡️ CreativeAgent ➡️ SEOAgent ➡️ CreativeMemoryAgent
+    AdForge Naver Clip Creative OS v3.0 Multi-Agent 파이프라인 통합 구동:
+    Standardized Context Pipeline:
+    ResearchAgent ➡️ KeywordAgent ➡️ ClipIntelligenceAgent ➡️ CreativeAgent ➡️ SEOAgent (Retry Loop) ➡️ PerformanceAgent ➡️ CreativeMemoryAgent
     """
     from agents.research import ResearchAgent
     from agents.keyword import KeywordAgent
     from agents.clip import ClipIntelligenceAgent
     from agents.creative import CreativeAgent
     from agents.seo import SEOAgent
+    from agents.performance import PerformanceAgent
     from agents.memory import CreativeMemoryAgent
+    from config import config
 
-    script_clean = user_script_text.strip()
+    # 1. 초기 Context 파이프라인 객체 생성
+    context = {
+        "product_name": target_product,
+        "script_text": user_script_text.strip(),
+        "product_url": config.DAPIDA_STORE_LINK if "다피다" in target_product else config.PAULINA_STORE_LINK
+    }
 
-    # 1. Research Agent (상품, 고객, 경쟁사, 시장 분석)
-    research_agent = ResearchAgent()
-    research_res = research_agent.analyze_product_and_market(target_product, script_clean)
+    # 2. 파이프라인 순차 실행 (Context Enrichment)
+    context = ResearchAgent().run(context)
+    context = KeywordAgent().run(context)
+    context = ClipIntelligenceAgent().run(context)
+    context = CreativeAgent().run(context)
+    context = SEOAgent().run(context)
 
-    # 2. Keyword Agent (114개 황금 키워드 & 10개 해시태그 파싱)
-    keyword_agent = KeywordAgent()
-    keyword_res = keyword_agent.extract_keywords_and_tags(script_clean, target_product)
+    # 3. SEO 점수 미달 시 Self-Correction 자율 피드백 재시도 루프 (Retry Loop)
+    attempts = 0
+    while not context.get("seo_feedback", {}).get("passed", True) and attempts < config.MAX_RETRY_ATTEMPTS:
+        attempts += 1
+        print(f"[AdForge OS] SEO score {context['seo']['score']} < {config.SEO_PASS_SCORE_THRESHOLD}. Self-Correction Retry #{attempts}...")
+        context = CreativeAgent().run(context)
+        context = SEOAgent().run(context)
 
-    # 3. Clip Intelligence Agent / AdForge Reverse Engineering Engine
-    clip_agent = ClipIntelligenceAgent()
-    clip_res = clip_agent.reverse_engineer_clip_structure(script_clean, target_product)
+    # 4. Closed-loop Learning (Performance tracking & Memory update)
+    context = PerformanceAgent().run(context)
+    context = CreativeMemoryAgent().run(context)
 
-    # 4. Creative Agent (24자 제목 & 200자 카피 작성)
-    creative_agent = CreativeAgent()
-    creative_res = creative_agent.generate_creative_copy(keyword_res["target_keyword"], target_product, script_clean)
-
-    # 5. SEO Agent (5대 마케팅 지표 빡센 자동 심사)
-    seo_agent = SEOAgent()
-    seo_res = seo_agent.audit_marketing_quality_strictly(script_clean, target_product)
-
-    # 6. Creative Memory Agent (시그니처 메모리 인사이트 반영)
-    memory_agent = CreativeMemoryAgent()
-    memory_res = memory_agent.get_memory_insights()
-
+    # 5. UI 반환 규격 매핑
     return {
-        "user_script": script_clean,
-        "auto_keyword": keyword_res["target_keyword"],
-        "seo_title": creative_res["seo_title"],
-        "seo_desc": creative_res["seo_desc"],
-        "seo_tags": keyword_res["seo_tags"],
-        "store_link": creative_res["store_link"],
-        "script_table": clip_res["script_table"],
-        "marketer_notes": clip_res["marketer_notes"],
-        "ai_audit": seo_res,
-        "research_data": research_res,
-        "memory_insights": memory_res
+        "user_script": context["script_text"],
+        "auto_keyword": context["keyword"]["target_keyword"],
+        "seo_title": context["creative"]["seo_title"],
+        "seo_desc": context["creative"]["seo_desc"],
+        "seo_tags": context["keyword"]["seo_tags"],
+        "store_link": context["creative"]["store_link"],
+        "script_table": context["clip_intelligence"]["script_table"],
+        "marketer_notes": context["clip_intelligence"]["marketer_notes"],
+        "ai_audit": context["seo"],
+        "research_data": context["research"],
+        "memory_insights": context["memory"],
+        "performance": context["performance"]
     }
 
 def fix_brand_stt_typos(text: str) -> str:
