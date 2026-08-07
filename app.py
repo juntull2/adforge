@@ -24,11 +24,20 @@ st.markdown('<div class="main-header">🚀 AdForge :: 4050 숏폼 기획 & 영�
 st.markdown('<div class="sub-header">대본 기획부터 캡컷 프로젝트 생성, Hailuo AI 프롬프트까지 원스톱!</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
-# 전역 설정
+# 전역 설정 및 API 키 캐싱
 # -------------------------------------------------------------------
+API_KEY_FILE = "nv_api_key.txt"
+cached_api_key = os.environ.get("NVIDIA_API_KEY", "")
+if os.path.exists(API_KEY_FILE):
+    with open(API_KEY_FILE, "r", encoding="utf-8") as f:
+        cached_api_key = f.read().strip()
+
 col_key, col_model = st.columns(2)
 with col_key:
-    nvidia_api_key = st.text_input("🔑 NVIDIA API Key (대본 & 프롬프트 생성용)", type="password", placeholder="nvapi-...")
+    nvidia_api_key = st.text_input("🔑 NVIDIA API Key (대본 & 프롬프트 생성용)", type="password", value=cached_api_key, placeholder="nvapi-...")
+    if nvidia_api_key and nvidia_api_key != cached_api_key:
+        with open(API_KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(nvidia_api_key)
 with col_model:
     model_choice = st.selectbox(
         "🧠 NVIDIA 모델 선택",
