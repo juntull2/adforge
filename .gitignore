@@ -14,3 +14,5 @@ __pycache__/
 .DS_Store
 
 nv_api_key.txt
+
+el_api_key.txt
