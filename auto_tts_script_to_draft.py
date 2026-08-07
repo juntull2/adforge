@@ -18,6 +18,12 @@ async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-Su
     communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(output_path)
 
+def generate_voice_sample_audio_sync(voice_config, output_path: str = "sample_voice.mp3") -> str:
+    """선택한 AI 성우 보이스의 1초 미리듣기 오디오 MP3 파일 생성"""
+    sample_text = "안녕하세요! AdForge 릴스 숏폼 전용 AI 성우 보이스 미리듣기 샘플입니다."
+    asyncio.run(generate_tts_audio(sample_text, output_path, voice_config))
+    return output_path
+
 def create_capcut_with_tts(script_text: str, project_name: str = "허리_복대_음성더빙_광고", voice="ko-KR-SunHiNeural"):
     """
     대본(텍스트)을 읽어:
