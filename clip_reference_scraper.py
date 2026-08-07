@@ -222,162 +222,54 @@ def audit_marketing_quality_strictly(script_text: str, target_product: str) -> d
 
 def generate_seo_and_marketing_from_user_script(user_script_text: str, target_product: str) -> dict:
     """
-    옵시디언 04_광고 소재 레퍼런스 DB 001~017번 표준 양식 100% 정독 반영:
-    1. 대본 세부 구제분해 표: [구분] | [음성] | [화면 연출] | [자막]
-    2. 마케터 복기 & 소구점 (트위스트 팁): 타깃 페르소나, 대체재 극복, 자사제품 트위스트 대입법
-    3. 네이버 클립 SEO 알고리즘 최적화: 클릭률 CTR 제목, CVR 본문, 해시태그 15개, 스마트스토어 스티커 URL
+    AdForge Naver Clip Creative OS Multi-Agent 파이프라인 통합 구동:
+    ResearchAgent ➡️ KeywordAgent ➡️ ClipIntelligenceAgent ➡️ CreativeAgent ➡️ SEOAgent ➡️ CreativeMemoryAgent
     """
+    from agents.research import ResearchAgent
+    from agents.keyword import KeywordAgent
+    from agents.clip import ClipIntelligenceAgent
+    from agents.creative import CreativeAgent
+    from agents.seo import SEOAgent
+    from agents.memory import CreativeMemoryAgent
+
     script_clean = user_script_text.strip()
-    sentences = [s.strip() for s in re.split(r'(?<=[.!?])|\n', script_clean) if s.strip()]
-    if not sentences:
-        sentences = [script_clean]
 
-    # 1. 114개 황금 키워드 정밀 형태소/단어 매칭 (가짜/고정 fallback 완전 제거)
-    from naver_clip_adforge import NAVER_CLIP_TOP_KEYWORDS
-    matched_keywords = []
-    
-    # 대본에 포함된 모든 황금 키워드 탐색
-    for item in NAVER_CLIP_TOP_KEYWORDS:
-        kw = item["keyword"]
-        if kw in script_clean:
-            matched_keywords.append(kw)
-            
-    if matched_keywords:
-        auto_keyword = matched_keywords[0]
-    else:
-        # 대본 속 주요 명사 단어 파싱하여 황금 키워드 부분 매칭
-        for item in NAVER_CLIP_TOP_KEYWORDS:
-            kw = item["keyword"]
-            # 2글자 이상 부분 매칭 (예: '허리', '찜질', '관절', '어버이', '선물' 등)
-            for part in [kw[:2], kw[-2:]]:
-                if len(part) >= 2 and part in script_clean:
-                    matched_keywords.append(kw)
-                    break
-            if matched_keywords:
-                break
-        
-        if matched_keywords:
-            auto_keyword = matched_keywords[0]
-        else:
-            auto_keyword = "허리통증" if ("다피다" in target_product or "허리" in script_clean or "찜질" in script_clean) else "무릎관절운동"
-            matched_keywords.append(auto_keyword)
+    # 1. Research Agent (상품, 고객, 경쟁사, 시장 분석)
+    research_agent = ResearchAgent()
+    research_res = research_agent.analyze_product_and_market(target_product, script_clean)
 
-    # 2. 대본 내용 실시간 다이나믹 파싱 ➡️ 100% 대본 맞춤형 해시태그 10개 추출 (고정 해시태그 완제거)
-    # 대본 속 실제 등장 단어 / 맥락 키워드 파싱
-    content_tags = []
-    
-    # (1) 자동 매칭된 황금 키워드 태그들
-    for kw in matched_keywords[:4]:
-        tag = f"#{kw}"
-        if tag not in content_tags:
-            content_tags.append(tag)
-            
-    # (2) 대본에서 직접 발견된 맥락 단어 (퇴근, 침대, 반품, 통증, 직장인, 부모님 등)
-    script_context_candidates = [
-        ("퇴근", "#퇴근후"), ("앉아", "#앉아있는직장인"), ("침대", "#침대위힐링"),
-        ("반품", "#30일무상반품"), ("환불", "#100프로환불보증"), ("원적외선", "#원적외선찜질"),
-        ("근적외선", "#근적외선온열"), ("재활", "#관절재활"), ("자전거", "#전동재활자전거"),
-        ("찜질", "#허리온열찜질"), ("부모님", "#부모님효도선물"), ("아빠", "#70대아빠선물"),
-        ("어깨", "#뭉친어깨"), ("무릎", "#무릎관절통증"), ("손목", "#손목보호대")
-    ]
-    for trigger, c_tag in script_context_candidates:
-        if trigger in script_clean and c_tag not in content_tags:
-            content_tags.append(c_tag)
+    # 2. Keyword Agent (114개 황금 키워드 & 10개 해시태그 파싱)
+    keyword_agent = KeywordAgent()
+    keyword_res = keyword_agent.extract_keywords_and_tags(script_clean, target_product)
 
-    # (3) 대상 제품 브랜드/제품명 태그
-    prod_tag = f"#{target_product.replace(' ', '')}"
-    if prod_tag not in content_tags:
-        content_tags.append(prod_tag)
-        
-    # (4) 스마트스토어/브랜드 태그
-    brand_tag = "#다피다" if "다피다" in target_product else "#파우리나"
-    if brand_tag not in content_tags:
-        content_tags.append(brand_tag)
+    # 3. Clip Intelligence Agent / AdForge Reverse Engineering Engine
+    clip_agent = ClipIntelligenceAgent()
+    clip_res = clip_agent.reverse_engineer_clip_structure(script_clean, target_product)
 
-    # (5) 10개까지 부족분은 대본 속 실제 명사 단어로 채움
-    words = [w.strip() for w in re.findall(r'[가-힣]{2,}', script_clean)]
-    for w in words:
-        if len(content_tags) >= 10:
-            break
-        w_tag = f"#{w}"
-        if w_tag not in content_tags and len(w) <= 8 and w not in ["사람", "느낌", "모드", "이거"]:
-            content_tags.append(w_tag)
+    # 4. Creative Agent (24자 제목 & 200자 카피 작성)
+    creative_agent = CreativeAgent()
+    creative_res = creative_agent.generate_creative_copy(keyword_res["target_keyword"], target_product, script_clean)
 
-    seo_tags = " ".join(content_tags[:10])
+    # 5. SEO Agent (5대 마케팅 지표 빡센 자동 심사)
+    seo_agent = SEOAgent()
+    seo_res = seo_agent.audit_marketing_quality_strictly(script_clean, target_product)
 
-    # 3. 옵시디언 001~017번 표준 구분 태그 기반 세부 구조분해 표 구성
-    category_labels = ["후킹/공감", "공감/통증", "기술력/효과", "대체재/차별성", "구매유도/CTA"]
-    visual_guides = [
-        "퇴근/육아하는 일상 모습 ➡️ 통증으로 고통스러워하는 시각적 훅 (흑백 전환)",
-        "파스/기존 마사지기 사용하는 모습 ➡️ 한계점 강조 빨간 X 그래픽",
-        f"{target_product} 작동 모습 클로즈업 ➡️ 속근육까지 침투하는 모션 그래픽",
-        "거대한 안마의자/병원 치료 대비 3초 간편 착용 비교 교차 연출",
-        "30일 무상 환불 뱃지 강조 ➡️ 프로필/스마트스토어 스티커 클릭 유도"
-    ]
-
-    script_table = []
-    for idx, sentence in enumerate(sentences):
-        label = category_labels[idx] if idx < len(category_labels) else category_labels[-1]
-        visual = visual_guides[idx] if idx < len(visual_guides) else visual_guides[-1]
-        on_screen_text = sentence[:22] + "..." if len(sentence) > 22 else sentence
-        
-        script_table.append({
-            "구분": f"**{label}**",
-            "음성 (Audio Script)": sentence,
-            "화면 (Visual)": visual,
-            "자막 (On-Screen Text)": on_screen_text
-        })
-
-    # 4. 옵시디언 표준 💡 마케터 복기 & 소구점 (트위스트 팁) 생성
-    first_sentence = sentences[0]
-    marketer_notes = [
-        f"**타깃 페르소나 극대화 ('{auto_keyword}')**: '{first_sentence[:20]}...'라는 직관적 훅으로 극초반 결핍 공감대 100% 형성.",
-        f"**대체재 단점 극복 (페인포인트 분석)**: 단순 파스나 거대한 안마의자의 한계를 지적하고, {target_product}만의 기술적 차별성 전달.",
-        f"**직관적 시각 앵커링**: 속근육 원적외선/근적외선 침투 연출을 시각화하여 이성적 구매 명분 완비.",
-        f"**자사 제품({target_product}) 트위스트 대입법**:",
-        f"  * **타깃 변경**: 직장인 퇴근후 통증 ➡️ 5060 부모님 효도선물 / 3040 육아맘",
-        f"  * **메시지 변경**: 단순 온열 찜질 ➡️ 한의원 메디컬 온열 이원화 명분으로 프레임 전환 제작 가능."
-    ]
-
-    # 5. AI 마케터 빡센 자동 심사 채점
-    ai_audit_res = audit_marketing_quality_strictly(script_clean, target_product)
-
-    # 6. 옵시디언 마케팅 헌법 반영: 제목 24자 이내 & 본문 설명 200자 이내 규격 엄격 적용
-    first_clean = sentences[0].replace("[", "").replace("]", "").strip()
-    if len(first_clean) > 13:
-        title_body = first_clean[:13] + "..."
-    else:
-        title_body = first_clean
-
-    raw_title = f"[{auto_keyword}] {title_body}"
-    seo_title = raw_title[:24] if len(raw_title) > 24 else raw_title
-
-    if "다피다" in target_product:
-        usp_copy = "원적외선+3파장 근적외선 듀얼 온열로 속근육까지 침투!"
-    else:
-        usp_copy = "3단계 자동 스피드 조절로 관절 무리 없는 재활 페달링!"
-
-    raw_desc = f"""🔥 {auto_keyword} 고민이셨다면 15초 집중!
-
-{usp_copy}
-
-💡 30일 무상 환불 보증제로 부담 없이 직접 체험해보세요.
-
-👇 아래 [상품 스티커] 클릭 시 상세 페이지로 이동합니다!"""
-
-    seo_desc = raw_desc[:190] + "...\n👇 아래 [상품 스티커] 클릭!" if len(raw_desc) > 195 else raw_desc
-    store_link = "https://smartstore.naver.com/all-envy/products/12566869835" if "다피다" in target_product else "https://smartstore.naver.com/martinishop/products/7095386764"
+    # 6. Creative Memory Agent (시그니처 메모리 인사이트 반영)
+    memory_agent = CreativeMemoryAgent()
+    memory_res = memory_agent.get_memory_insights()
 
     return {
         "user_script": script_clean,
-        "auto_keyword": auto_keyword,
-        "seo_title": seo_title,
-        "seo_desc": seo_desc,
-        "seo_tags": seo_tags,
-        "store_link": store_link,
-        "script_table": script_table,
-        "marketer_notes": marketer_notes,
-        "ai_audit": ai_audit_res
+        "auto_keyword": keyword_res["target_keyword"],
+        "seo_title": creative_res["seo_title"],
+        "seo_desc": creative_res["seo_desc"],
+        "seo_tags": keyword_res["seo_tags"],
+        "store_link": creative_res["store_link"],
+        "script_table": clip_res["script_table"],
+        "marketer_notes": clip_res["marketer_notes"],
+        "ai_audit": seo_res,
+        "research_data": research_res,
+        "memory_insights": memory_res
     }
 
 def fix_brand_stt_typos(text: str) -> str:

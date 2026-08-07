@@ -505,6 +505,21 @@ with tab3:
                 st.text_area("🏷️ SEO 상위 노출 해시태그 (최대 10개 제한 준수):", value=s_res["seo_tags"], height=80, key="st_tags")
                 st.text_input("🔗 연동 스마트스토어 상품 스티커 URL:", value=s_res["store_link"], key="st_store")
 
+            st.markdown("---")
+            st.markdown("### 🧠 Creative Memory Engine (AdForge 시그니처 차별화 파이프라인)")
+            if "memory_insights" in s_res:
+                mem = s_res["memory_insights"]
+                st.info(f"💡 **Creative Memory 축적 현황**: 현재 총 `{mem['total_remembered_logs']}건`의 성과 로그 및 고효율 훅/CTA 조합이 AI 기억 엔진에 아카이빙되어 생성 가중치에 동적 반영 중입니다.")
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    st.markdown("#### 🏆 성과 우수 기억 훅 (Top Memory Hooks):")
+                    for h_item in mem["top_hooks"][:3]:
+                        st.markdown(f"* `{h_item['hook']}` *(CTR 평균 {h_item['ctr_avg']})*")
+                with col_m2:
+                    st.markdown("#### 🎯 성과 우수 기억 CTA (Top Memory CTAs):")
+                    for c_item in mem["top_ctas"][:2]:
+                        st.markdown(f"* `{c_item['cta']}` *(CVR 평균 {c_item['cvr_avg']})*")
+
     st.markdown("---")
     st.markdown("### 📌 네이버 클립 스마트스토어 상품 스티커 10초 등록 방법 (PC & 모바일)")
     
