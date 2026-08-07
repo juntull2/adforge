@@ -1,4 +1,5 @@
 import os
+import re
 import streamlit as st
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
@@ -100,18 +101,41 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
             raw_output = st.write_stream(script_stream_generator())
             st.session_state["raw_script_output"] = raw_output
             
-            # Parsing the output to split script, comment, and description
-            if "====COMMENT====" in raw_output:
-                parts = raw_output.split("====COMMENT====")
-                st.session_state["parsed_script"] = parts[0].strip()
-                if "====DESCRIPTION====" in parts[1]:
-                    sub_parts = parts[1].split("====DESCRIPTION====")
-                    st.session_state["parsed_comment"] = sub_parts[0].strip()
-                    st.session_state["parsed_description"] = sub_parts[1].strip()
+            # Parsing the output robustly with regex
+            script_part = raw_output
+            comment_part = ""
+            desc_part = ""
+            
+            comment_matches = list(re.finditer(r'={2,}\s*COMMENT\s*={2,}', raw_output, re.IGNORECASE))
+            desc_matches = list(re.finditer(r'={2,}\s*DESCRIPTION\s*={2,}', raw_output, re.IGNORECASE))
+            
+            if comment_matches and desc_matches:
+                # Use the last occurrence in case the reasoning block also included it
+                c_match = comment_matches[-1]
+                d_match = desc_matches[-1]
+                
+                if c_match.start() < d_match.start():
+                    script_part = raw_output[:c_match.start()].strip()
+                    comment_part = raw_output[c_match.end():d_match.start()].strip()
+                    desc_part = raw_output[d_match.end():].strip()
                 else:
-                    st.session_state["parsed_comment"] = parts[1].strip()
-            else:
-                st.session_state["parsed_script"] = raw_output.strip()
+                    script_part = raw_output[:d_match.start()].strip()
+                    desc_part = raw_output[d_match.end():c_match.start()].strip()
+                    comment_part = raw_output[c_match.end():].strip()
+            elif comment_matches:
+                c_match = comment_matches[-1]
+                script_part = raw_output[:c_match.start()].strip()
+                comment_part = raw_output[c_match.end():].strip()
+            elif desc_matches:
+                d_match = desc_matches[-1]
+                script_part = raw_output[:d_match.start()].strip()
+                desc_part = raw_output[d_match.end():].strip()
+                
+            # If reasoning text is at the beginning of script_part, we can optionally clean it,
+            # but usually it's fine.
+            st.session_state["parsed_script"] = script_part
+            st.session_state["parsed_comment"] = comment_part
+            st.session_state["parsed_description"] = desc_part
 
 # Show parsed comment & description if exists
 col_out1, col_out2 = st.columns(2)
