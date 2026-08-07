@@ -43,10 +43,11 @@ with col_model:
     model_choice = st.selectbox(
         "🧠 NVIDIA 모델 선택",
         options=[
-            "nvidia/nemotron-3-ultra-550b-a55b",
-            "meta/llama-3.1-70b-instruct",
+            "nvidia/nemotron-4-340b-instruct",
             "meta/llama-3.1-405b-instruct",
-            "nvidia/llama-3.1-nemotron-70b-instruct"
+            "meta/llama-3.1-70b-instruct",
+            "nvidia/nemotron-3-ultra-550b-a55b",
+            "mistralai/mixtral-8x22b-instruct-v0.1"
         ]
     )
 
