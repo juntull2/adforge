@@ -570,8 +570,16 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         full_sentence = struct["full_sentence"]
         phrases = struct["phrases"]
 
+        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', full_sentence).strip()
+        if not clean_audio_text:
+            continue
+
         mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
-        asyncio.run(generate_tts_audio(full_sentence, mp3_path, voice_config=voice))
+        try:
+            asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
+        except Exception as e:
+            print(f"  [오디오 생성 실패 건너뜀] {e}")
+            continue
 
         # 오디오 무음 정밀 트림
         trim_audio_silence(mp3_path)
