@@ -42,7 +42,7 @@ st.markdown("---")
 # -------------------------------------------------------------------
 st.subheader("1. Content Research (레퍼런스 구조 조사)")
 with st.expander("🔍 벤치마킹할 네이버 클립 영상 링크 분석", expanded=False):
-    clip_url = st.text_input("네이버 클립 URL 입력 (예: https://m.clip.naver.com/...)")
+    clip_url = st.text_area("네이버 클립 URL 또는 영상 자막(대본) 전문 입력")
     if st.button("레퍼런스 구조 단순 분석"):
         if clip_url:
             with st.spinner("분석 중..."):

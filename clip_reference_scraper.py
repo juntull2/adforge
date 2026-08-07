@@ -49,14 +49,25 @@ def analyze_custom_clip_link(url_or_text: str, keyword: str = "추천소재") ->
         ("해결책/정보", "제품/정보 제공"),
         ("CTA (행동 유도)", "행동 유도 텍스트")
     ]
-    script_table = []
-    for idx, (sec_title, visual_desc) in enumerate(sections):
-        text_part = sentences[idx] if idx < len(sentences) else (sentences[-1] if sentences else parsed_script)
+    if is_url and len(sentences) <= 2:
         script_table.append({
-            "section": sec_title,
-            "visual": visual_desc,
-            "text": text_part[:50] + "..." if len(text_part) > 50 else text_part
+            "section": "제목/메타데이터",
+            "visual": "URL 자동 수집",
+            "text": parsed_script
         })
+        script_table.append({
+            "section": "안내",
+            "visual": "전체 대본 분석 불가",
+            "text": "(네이버 클립 URL 방식으로는 시스템상 전체 대본을 가져올 수 없습니다. 상세 구조 분석을 원하시면 영상 대본 텍스트를 직접 붙여넣어 주세요.)"
+        })
+    else:
+        for idx, (sec_title, visual_desc) in enumerate(sections):
+            text_part = sentences[idx] if idx < len(sentences) else (sentences[-1] if sentences else parsed_script)
+            script_table.append({
+                "section": sec_title,
+                "visual": visual_desc,
+                "text": text_part[:50] + "..." if len(text_part) > 50 else text_part
+            })
 
     return {
         "title": clip_title,
