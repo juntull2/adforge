@@ -333,6 +333,84 @@ def generate_seo_recommendation(script_text: str, api_key: str):
 
 # -------------------------------------------------------------------
 
+def generate_strategic_script_stream(
+    topic_category: str,
+    sub_topic: str,
+    video_format: str,
+    product_name: str,
+    api_key: str,
+    model_name: str = "nvidia/nemotron-3-ultra-550b-a55b"
+):
+    """4050 여성을 타겟으로 하는 네이버 클립 대본 생성 (스트리밍)"""
+    if not api_key:
+        yield "API 키가 설정되지 않았습니다."
+        return
+        
+    try:
+        from openai import OpenAI
+        client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key=api_key
+        )
+        
+        system_prompt = f"""You are an expert content strategist for Naver Clip, targeting 40~50-year-old women.
+You write polite, trustworthy, and engaging 'senior format' scripts (using ~해요, ~습니다).
+
+Current Task:
+- Category: {topic_category}
+- Specific Topic: {sub_topic}
+- Product Context: {product_name}
+- Selected Format: {video_format}
+
+Format Guidelines:
+A (Pure Info): 100% helpful tips. Zero product mention. End with "도움이 되셨다면 좋아요와 저장 부탁드려요!"
+B (Indirect Promo): Give tips first, then casually mention "I use a specific device/item for this. I'll leave the one I use in the comments!". DO NOT say the brand name "{product_name}" in the video.
+C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, explaining its benefits.
+
+OUTPUT STRUCTURE:
+Write ONLY the content requested below, without any extra markdown formatting or conversational text.
+Separate the video script and the comment CTA with exactly this delimiter: "====COMMENT===="
+
+[Video Script]
+Write the narration text for a 30-40 second short-form video.
+Format: just raw text that a TTS can read nicely. No timestamps, no visual directions.
+
+====COMMENT====
+[Comment CTA]
+If Format A: Write a polite comment encouraging engagement (no product).
+If Format B: Write a comment promoting "{product_name}", e.g., "영상에서 말한 그 제품! 네이버에 '{product_name}'를 검색해 보세요."
+If Format C: Write a comment with a link or search CTA for "{product_name}".
+"""
+
+        kwargs = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": system_prompt}],
+            "stream": True,
+            "max_tokens": 4096,
+            "temperature": 0.7,
+            "top_p": 0.95
+        }
+        
+        if "nemotron-3-ultra-550b" in model_name.lower():
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}, "reasoning_budget": 4096}
+            kwargs["max_tokens"] = 16384
+            
+        completion = client.chat.completions.create(**kwargs)
+        
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+                
+            reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+            if reasoning:
+                yield reasoning
+                
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+                
+    except Exception as e:
+        yield f"오류 발생: {str(e)}"
+
 def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: str = "nvidia/nemotron-3-ultra-550b-a55b"):
     """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
     if not api_key:
