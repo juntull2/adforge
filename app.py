@@ -448,12 +448,22 @@ with tab3:
             
             user_script_input = st.text_area(
                 "📝 제작하신 숏폼 영상의 실제 대본(또는 자막 텍스트) 입력:",
-                value="퇴근이 아니라 허리만 약은 중인 사람, 하루종일 앉아 있으니까 허리가 아픈 게 아니라 접히는 느낌이 남. 그래서 차진게 답이다. 허리 찜질기 다 비슷한 줄 알았는데, 답이다는 허리 상태에 맞게 모드를 골랐을 수 있습니다. 허리 전체가 뻗은 한 나름 원적외선. 신경 쓰이는 나름 근적외선. 요즘은 퇴근하면 침대보다 이거부터 차진. 안 맞으면 30일 무료 반품 가능. 퇴근했으면 허리도 퇴근해야 돼.",
+                value="",
+                placeholder="제작하신 숏폼 영상의 실제 대본 또는 자막 텍스트를 이곳에 직접 입력해 주세요...",
                 height=160,
                 key="s_text_area"
             )
             
-            if st.button("⚡ 대본 AI 구조분해 & SEO 템플릿 생성", key="btn_run_s_analysis"):
+            col_btn1, col_btn2 = st.columns([2, 1])
+            with col_btn1:
+                btn_run = st.button("⚡ 대본 AI 구조분해 & SEO 템플릿 생성", key="btn_run_s_analysis")
+            with col_btn2:
+                if st.button("🔄 새로 작성하기 (초기화)", key="btn_reset_s"):
+                    if "user_script_seo_res" in st.session_state:
+                        del st.session_state["user_script_seo_res"]
+                    st.rerun()
+
+            if btn_run:
                 if user_script_input.strip():
                     import importlib
                     import clip_reference_scraper
