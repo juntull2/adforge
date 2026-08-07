@@ -24,7 +24,18 @@ st.markdown('<div class="sub-header">대본만 넣으면 캡컷 프로젝트 생
 # -------------------------------------------------------------------
 # 전역 설정
 # -------------------------------------------------------------------
-gemini_api_key = st.text_input("🔑 Gemini API Key (Hailuo 프롬프트 자동 생성용)", type="password")
+col_key, col_model = st.columns(2)
+with col_key:
+    nvidia_api_key = st.text_input("🔑 NVIDIA API Key (Hailuo 프롬프트 자동 생성용)", type="password", placeholder="nvapi-...")
+with col_model:
+    model_choice = st.selectbox(
+        "🧠 NVIDIA 모델 선택",
+        options=[
+            "meta/llama-3.1-70b-instruct",
+            "meta/llama-3.1-405b-instruct",
+            "nvidia/llama-3.1-nemotron-70b-instruct"
+        ]
+    )
 
 # -------------------------------------------------------------------
 # 대본 입력 및 캡컷 자동화
@@ -61,11 +72,11 @@ with col2:
     if st.button("🤖 Hailuo AI 장면 프롬프트 추출", use_container_width=True):
         if not script_text.strip():
             st.error("대본이 비어있습니다!")
-        elif not gemini_api_key:
-            st.error("API Key를 입력해주세요.")
+        elif not nvidia_api_key:
+            st.error("NVIDIA API Key를 입력해주세요.")
         else:
-            with st.spinner("장면별 프롬프트 분석 중..."):
-                hailuo_result = generate_hailuo_prompts(script_text, gemini_api_key)
+            with st.spinner(f"장면별 프롬프트 분석 중... ({model_choice})"):
+                hailuo_result = generate_hailuo_prompts(script_text, nvidia_api_key, model_choice)
                 st.session_state["hailuo_prompts"] = hailuo_result
 
 # -------------------------------------------------------------------

@@ -333,33 +333,41 @@ def generate_seo_recommendation(script_text: str, api_key: str):
 
 # -------------------------------------------------------------------
 
-def generate_hailuo_prompts(script_text: str, api_key: str):
-    """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기"""
+def generate_hailuo_prompts(script_text: str, api_key: str, model_name: str = "meta/llama-3.1-70b-instruct"):
+    """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기 (NVIDIA API 사용)"""
     if not api_key:
         return "API 키가 설정되지 않았습니다."
         
-    genai.configure(api_key=api_key)
-    prompt = f"""
-    You are an expert AI video prompt engineer for MiniMax Hailuo AI.
-    Below is a Korean short-form video script.
-    I need you to break down this script into logical visual scenes (approx 3-5 scenes).
-    For each scene, provide a highly detailed English prompt to generate a cinematic, realistic video clip that matches the context.
-    The prompt should focus on visual descriptions (lighting, camera angle, subject, action).
-    Do NOT include text overlays or text inside the video prompt.
-    
-    Script:
-    {script_text}
-    
-    Output Format:
-    [Scene 1] <Korean summary of the scene>
-    Prompt: <English Prompt for Hailuo AI>
-    
-    [Scene 2] ...
-    """
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        from openai import OpenAI
+        client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key=api_key
+        )
+        prompt = f"""
+        You are an expert AI video prompt engineer for MiniMax Hailuo AI.
+        Below is a Korean short-form video script.
+        I need you to break down this script into logical visual scenes (approx 3-5 scenes).
+        For each scene, provide a highly detailed English prompt to generate a cinematic, realistic video clip that matches the context.
+        The prompt should focus on visual descriptions (lighting, camera angle, subject, action).
+        Do NOT include text overlays or text inside the video prompt.
+        
+        Script:
+        {script_text}
+        
+        Output Format:
+        [Scene 1] <Korean summary of the scene>
+        Prompt: <English Prompt for Hailuo AI>
+        
+        [Scene 2] ...
+        """
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=1024
+        )
+        return response.choices[0].message.content.strip()
     except Exception as e:
         return f"프롬프트 생성 중 오류가 발생했습니다: {str(e)}"
 
