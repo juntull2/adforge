@@ -96,9 +96,9 @@ with st.sidebar:
     )
     
     st.markdown("---")
-    st.subheader("🎬 대본 포맷 선택 (레퍼런스 DB)")
+    st.subheader("🎯 4단계 콘텐츠 퍼널 단계 선택")
     format_choice = st.selectbox(
-        "마케팅 스토리라인 포맷",
+        "퍼널 진행 단계 선택",
         options=list(SCRIPT_FORMAT_NAMES.keys()),
         format_func=lambda x: SCRIPT_FORMAT_NAMES[x]
     )
