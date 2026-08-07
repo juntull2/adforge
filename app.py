@@ -6,11 +6,11 @@ from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     PRODUCTS_DB,
     generate_naver_clip_script,
-    apply_user_feedback_to_script,
     SCRIPT_FORMAT_NAMES,
     NAVER_CLIP_TOP_KEYWORDS,
     OBSIDIAN_VAULT_PATH
 )
+from agents.creative import apply_user_feedback_to_script
 from auto_stock_downloader import fetch_and_download_mixkit_stock_videos
 
 # -------------------------------------------------------------------
