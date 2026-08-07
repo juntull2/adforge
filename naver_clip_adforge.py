@@ -493,6 +493,13 @@ async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-Su
     communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(output_path)
 
+def generate_voice_sample_audio_sync(voice_config, output_path: str = "sample_voice.mp3") -> str:
+    """선택한 AI 성우 보이스의 1초 미리듣기 오디오 MP3 파일 생성"""
+    import asyncio
+    sample_text = "안녕하세요! AdForge 릴스 숏폼 전용 AI 성우 보이스 미리듣기 샘플입니다."
+    asyncio.run(generate_tts_audio(sample_text, output_path, voice_config))
+    return output_path
+
 def build_capcut_project_for_naver_clip(product_name: str, keyword: str, voice="ko-KR-SunHiNeural", format_type: str = "fear"):
     seo_title, script_text = generate_naver_clip_script(product_name, keyword, format_type=format_type)
     project_name = f"네이버클립_{keyword.replace(' ', '_')}"

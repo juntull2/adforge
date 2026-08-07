@@ -6,6 +6,7 @@ from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     PRODUCTS_DB,
     generate_naver_clip_script,
+    generate_voice_sample_audio_sync,
     SCRIPT_FORMAT_NAMES,
     NAVER_CLIP_TOP_KEYWORDS,
     OBSIDIAN_VAULT_PATH
@@ -102,8 +103,16 @@ with st.sidebar:
         format_func=lambda x: SCRIPT_FORMAT_NAMES[x]
     )
     
+    # 💡 [요구사항 1] 선택한 포맷 대본 자동 생성 불러오기 버튼을 포맷 선택 바로 아래에 배치
+    if st.button("💡 선택한 포맷 대본 자동 생성 불러오기", key="btn_sidebar_gen_script"):
+        seo_title, script = generate_naver_clip_script(product_choice, keyword_input, format_type=format_choice)
+        st.session_state["script_text"] = script
+        st.session_state["seo_title"] = seo_title
+        st.success(f"[{SCRIPT_FORMAT_NAMES[format_choice]}] 대본이 생성되었습니다!")
+        st.rerun()
+
     st.markdown("---")
-    voice_choice = st.selectbox(
+    voice_tuple = st.selectbox(
         "🎙️ AI 성우 보이스 & 릴스 톤 선택",
         options=[
             ("🐸 릴스 개구리/캐주얼 톤 (톡톡 튀는 릴스 캐릭터)", {"voice": "ko-KR-SunHiNeural", "rate": "+15%", "pitch": "+25Hz"}),
@@ -114,7 +123,17 @@ with st.sidebar:
             ("👨‍💼 마케팅 남성 - 인준 (지적이고 차분한 톤)", {"voice": "ko-KR-InJoonNeural", "rate": "+0%", "pitch": "+0Hz"})
         ],
         format_func=lambda x: x[0]
-    )[1]
+    )
+    voice_choice = voice_tuple[1]
+
+    # 🎧 [요구사항 2] 성우 보이스 샘플 미리듣기 플레이어 연동
+    if st.button("🎧 선택한 성우 샘플 보이스 미리듣기", key="btn_preview_voice"):
+        with st.spinner("AI 성우 보이스 미리듣기 샘플 생성 중..."):
+            audio_path = generate_voice_sample_audio_sync(voice_choice, "sample_voice.mp3")
+            st.session_state["sample_voice_path"] = audio_path
+
+    if "sample_voice_path" in st.session_state and os.path.exists(st.session_state["sample_voice_path"]):
+        st.audio(st.session_state["sample_voice_path"], format="audio/mp3")
 
     st.markdown("---")
     st.subheader("📐 자막 및 화면 고정 값")
