@@ -148,20 +148,26 @@ with tab1:
     with col1:
         st.subheader("📝 숏폼 대본 추출 및 편집")
         
-        # 기본 대본 자동 로드 버튼
-        if st.button("💡 선택한 포맷 대본 자동 생성 불러오기"):
-            seo_title, script = generate_naver_clip_script(product_choice, keyword_input, format_type=format_choice)
-            st.session_state["script_text"] = script
-            st.session_state["seo_title"] = seo_title
-            st.success(f"[{SCRIPT_FORMAT_NAMES[format_choice]}] 대본이 자동 생성되었습니다!")
+        # 대본 생성 및 초기화 버튼들
+        col_b1, col_b2 = st.columns([1.5, 1])
+        with col_b1:
+            if st.button("💡 선택한 포맷 대본 자동 생성 불러오기"):
+                seo_title, script = generate_naver_clip_script(product_choice, keyword_input, format_type=format_choice)
+                st.session_state["script_text"] = script
+                st.session_state["seo_title"] = seo_title
+                st.success(f"[{SCRIPT_FORMAT_NAMES[format_choice]}] 대본이 자동 생성되었습니다!")
+        with col_b2:
+            if st.button("🔄 대본 초기화 (새 프로젝트)"):
+                if "script_text" in st.session_state:
+                    del st.session_state["script_text"]
+                if "seo_title" in st.session_state:
+                    del st.session_state["seo_title"]
+                st.rerun()
 
         script_input = st.text_area(
             "대본 내용 (문장별로 자연스럽게 읽어드립니다)",
-            value=st.session_state.get("script_text", """허리 삐끗했을 때 파스 붙이고 누워만 계셨다면 몸속 염증 신호를 절대 방치하지 마세요!
-갑자기 굳은 척추 속근육은 겉만 따뜻하게 해선 굳은 부위가 더 딱딱해집니다.
-핵심은 3파장 근적외선으로 피부 속 3cm 깊은 척추 마디까지 직접 열을 전달하는 건데요.
-원적외선과 근적외선이 동시에 나오는 전용 복대를 차주면 굳어있던 척추가 순식간에 풀립니다.
-더 늦기 전에 30일 무료 환불 보증으로 안심하고 확인해 보세요."""),
+            value=st.session_state.get("script_text", ""),
+            placeholder="💡 좌측 [선택한 포맷 대본 자동 생성 불러오기] 버튼을 누르시거나, 원하시는 대본 텍스트를 직접 입력해 주세요...",
             height=260
         )
         
