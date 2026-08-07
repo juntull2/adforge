@@ -381,9 +381,9 @@ Format Guidelines & Rules:
    - Format C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, explaining its benefits.
 
 OUTPUT STRUCTURE:
-You MUST output exactly THREE sections (Script, Comment, Description), separated by exactly these delimiters: "====COMMENT====" and "====DESCRIPTION====". Do not omit any section!
+You MUST output exactly THREE sections (Script, Comment, Description), separated by exactly these delimiters: "====SCRIPT====", "====COMMENT====", and "====DESCRIPTION====". Do not omit any section!
 
-[Video Script]
+====SCRIPT====
 Write the narration text for a 30-40 second short-form video.
 Format: just raw text that a TTS can read nicely. No timestamps, no visual directions.
 

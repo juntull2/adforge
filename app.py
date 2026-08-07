@@ -105,33 +105,34 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
             comment_part = ""
             desc_part = ""
             
+            script_matches = list(re.finditer(r'={2,}\s*SCRIPT\s*={2,}', raw_output, re.IGNORECASE))
             comment_matches = list(re.finditer(r'={2,}\s*COMMENT\s*={2,}', raw_output, re.IGNORECASE))
             desc_matches = list(re.finditer(r'={2,}\s*DESCRIPTION\s*={2,}', raw_output, re.IGNORECASE))
             
-            if comment_matches and desc_matches:
-                # Use the last occurrence in case the reasoning block also included it
-                c_match = comment_matches[-1]
-                d_match = desc_matches[-1]
+            # Find the indices of each delimiter
+            s_idx = script_matches[-1].end() if script_matches else 0
+            c_idx = comment_matches[-1].start() if comment_matches else -1
+            c_end = comment_matches[-1].end() if comment_matches else -1
+            d_idx = desc_matches[-1].start() if desc_matches else -1
+            d_end = desc_matches[-1].end() if desc_matches else -1
+            
+            if script_matches and comment_matches and desc_matches:
+                script_part = raw_output[s_idx:c_idx].strip()
+                comment_part = raw_output[c_end:d_idx].strip()
+                desc_part = raw_output[d_end:].strip()
+            elif script_matches and comment_matches:
+                script_part = raw_output[s_idx:c_idx].strip()
+                comment_part = raw_output[c_end:].strip()
+            elif comment_matches and desc_matches:
+                script_part = raw_output[:c_idx].strip()
+                comment_part = raw_output[c_end:d_idx].strip()
+                desc_part = raw_output[d_end:].strip()
+            else:
+                # Fallback if delimiters are missing
+                script_part = raw_output.strip()
                 
-                if c_match.start() < d_match.start():
-                    script_part = raw_output[:c_match.start()].strip()
-                    comment_part = raw_output[c_match.end():d_match.start()].strip()
-                    desc_part = raw_output[d_match.end():].strip()
-                else:
-                    script_part = raw_output[:d_match.start()].strip()
-                    desc_part = raw_output[d_match.end():c_match.start()].strip()
-                    comment_part = raw_output[c_match.end():].strip()
-            elif comment_matches:
-                c_match = comment_matches[-1]
-                script_part = raw_output[:c_match.start()].strip()
-                comment_part = raw_output[c_match.end():].strip()
-            elif desc_matches:
-                d_match = desc_matches[-1]
-                script_part = raw_output[:d_match.start()].strip()
-                desc_part = raw_output[d_match.end():].strip()
-                
-            # If reasoning text is at the beginning of script_part, we can optionally clean it,
-            # but usually it's fine.
+            # If AI left conversational text like "Here is the script:", we can try to strip it,
+            # but using ====SCRIPT==== delimiter usually prevents this.
             st.session_state["parsed_script"] = script_part
             st.session_state["parsed_comment"] = comment_part
             st.session_state["parsed_description"] = desc_part
