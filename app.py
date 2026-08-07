@@ -44,7 +44,8 @@ with col_model:
         "🧠 NVIDIA 모델 선택",
         options=[
             "meta/llama-3.1-70b-instruct",
-            "nvidia/llama-3.1-nemotron-70b-instruct"
+            "nvidia/llama-3.1-nemotron-70b-instruct",
+            "nvidia/nemotron-3-ultra-550b-a55b"
         ]
     )
 
