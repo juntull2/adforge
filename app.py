@@ -168,21 +168,13 @@ with tab1:
     with col1:
         st.subheader("📝 숏폼 대본 추출 및 편집")
         
-        # 대본 생성 및 초기화 버튼들
-        col_b1, col_b2 = st.columns([1.5, 1])
-        with col_b1:
-            if st.button("💡 선택한 포맷 대본 자동 생성 불러오기"):
-                seo_title, script = generate_naver_clip_script(product_choice, keyword_input, format_type=format_choice)
-                st.session_state["script_text"] = script
-                st.session_state["seo_title"] = seo_title
-                st.success(f"[{SCRIPT_FORMAT_NAMES[format_choice]}] 대본이 자동 생성되었습니다!")
-        with col_b2:
-            if st.button("🔄 대본 초기화 (새 프로젝트)"):
-                if "script_text" in st.session_state:
-                    del st.session_state["script_text"]
-                if "seo_title" in st.session_state:
-                    del st.session_state["seo_title"]
-                st.rerun()
+        # 대본 초기화 버튼
+        if st.button("🔄 대본 초기화 (새 프로젝트)"):
+            if "script_text" in st.session_state:
+                del st.session_state["script_text"]
+            if "seo_title" in st.session_state:
+                del st.session_state["seo_title"]
+            st.rerun()
 
         script_input = st.text_area(
             "대본 내용 (문장별로 자연스럽게 읽어드립니다)",
