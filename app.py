@@ -156,123 +156,9 @@ with st.sidebar:
 # -------------------------------------------------------------------
 # 메인 영역: 탭 구성 (1. 숏폼 제작 / 2. 네이버 클립 상위 레퍼런스 / 3. 완성 영상 검증)
 # -------------------------------------------------------------------
-tab1, tab2, tab3 = st.tabs([
-    "🎬 1. 숏폼 프로젝트 1초 자동 생성", 
-    "🔥 2. 네이버 클립 6탭 상위 키워드 & 레퍼런스 1클릭 관찰",
-    "✅ 3. 완성 영상 검증 & 네이버 클립 업로드 체크리스트"
-])
 
-with tab1:
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        st.subheader("📝 숏폼 대본 추출 및 편집")
-        
-        # 대본 초기화 버튼
-        if st.button("🔄 대본 초기화 (새 프로젝트)"):
-            if "script_text" in st.session_state:
-                del st.session_state["script_text"]
-            if "seo_title" in st.session_state:
-                del st.session_state["seo_title"]
-            st.rerun()
-
-        script_input = st.text_area(
-            "대본 내용 (문장별로 자연스럽게 읽어드립니다)",
-            value=st.session_state.get("script_text", ""),
-            placeholder="💡 좌측 [선택한 포맷 대본 자동 생성 불러오기] 버튼을 누르시거나, 원하시는 대본 텍스트를 직접 입력해 주세요...",
-            height=240
-        )
-
-        col_fb1, col_fb2 = st.columns([2.5, 1])
-        with col_fb1:
-            user_feedback_in = st.text_input("💡 마케터 수정 피드백 (예: 부모님 선물 톤으로 변경해 줘, 30일 환불 강조해 줘 등):", key="in_script_fb", placeholder="예: 부모님 선물 톤으로 변경해 줘, 30일 환불 보증 문구 강조해 줘 등")
-        with col_fb2:
-            st.write("")
-            st.write("")
-            if st.button("✨ 마케터 피드백 반영 AI 대본 수정", key="btn_apply_script_fb"):
-                if user_feedback_in.strip() and script_input.strip():
-                    new_title, updated_script = apply_user_feedback_to_script(script_input, user_feedback_in, product_choice)
-                    st.session_state["script_text"] = updated_script
-                    st.session_state["seo_title"] = new_title
-                    st.success("🎉 입력하신 마케터 피드백이 반영되어 대본이 실시간으로 수정되었습니다!")
-                    st.rerun()
-                else:
-                    st.warning("수정 피드백 멘트와 대본 텍스트를 확인해 주세요.")
-        
-        # 선택한 제품의 옵시디언 상세페이지 리뷰/특징 프리뷰
-        with st.expander(f"📌 [{product_choice}] 스마트스토어 상세페이지 특징 & 구매자 후기 보기"):
-            store_url = selected_prod_info.get("smartstore_url", "")
-            if store_url:
-                st.markdown(f"🛒 **스마트스토어 공식 상세페이지**: [바로가기 링크]({store_url})")
-            st.write(f"**USP (핵심 차별점)**: {selected_prod_info.get('usp', '없음')}")
-            st.write(f"**타깃 페르소나**: {selected_prod_info.get('target', '없음')}")
-            st.write("**구매 고객 실제 후기 파싱**: ")
-            for r in selected_prod_info.get("reviews", []):
-                st.markdown(f"- 💬 *\"{r}\"*")
-
-    with col2:
-        st.subheader("🎬 영상 소스 키워드 세팅")
-        st.caption("필요한 분위기나 연출 장면 키워드를 영문(콤마 구분)으로 입력하면 고화질 HD 비디오 소스가 자동 수급됩니다.")
-        
-        default_stock_kw = ", ".join(selected_prod_info.get("stock_keywords", ["back pain", "massage"]))
-        video_keywords_input = st.text_input(
-            "영상 소스 키워드 (예: back pain, massage, stretching)",
-            value=default_stock_kw
-        )
-        
-        # 다운로드된 비디오 소스 목록 확인
-        stock_dir = os.path.join(os.getcwd(), "stock_videos")
-        existing_videos = glob.glob(os.path.join(stock_dir, "*.mp4"))
-        
-        st.markdown(f"**현재 보유 중인 비디오 소스**: `{len(existing_videos)}개`")
-        
-        if st.button("📥 스톡 비디오 소스 5개 추가 자동 다운로드"):
-            with st.spinner("Mixkit 고화질 스톡 비디오 다운로드 중..."):
-                kws = [k.strip() for k in video_keywords_input.split(",") if k.strip()]
-                for kw in kws:
-                    fetch_and_download_mixkit_stock_videos(kw, count=3, output_dir=stock_dir)
-                st.rerun()
-
-    st.markdown("---")
-
-    # 메인 생성 실행 버튼
-    if st.button("🚀 캡컷 9:16 네이버 클립 프로젝트 생성하기"):
-        if not script_input.strip():
-            st.error("대본을 입력해 주세요!")
-        else:
-            with st.spinner("AI 더빙 ➡️ 무음 컷트 ➡️ Pretendard 자막 ➡️ 비디오 소스 컷 연동 중..."):
-                try:
-                    # 영상 소스 다운로드 확인
-                    kws = [k.strip() for k in video_keywords_input.split(",") if k.strip()]
-                    if kws and len(existing_videos) < 3:
-                        for kw in kws:
-                            fetch_and_download_mixkit_stock_videos(kw, count=3, output_dir=stock_dir)
-
-                    # CapCut 프로젝트 생성 엔진 가동
-                    project_name, seo_title = build_capcut_project_for_naver_clip(
-                        product_name=product_choice,
-                        keyword=keyword_input,
-                        voice=voice_choice,
-                        format_type=format_choice
-                    )
-
-                    st.balloons()
-                    st.success(f"🎉 성공! CapCut 프로젝트 '{project_name}' 생성이 완료되었습니다!")
-                    
-                    st.markdown(f"""
-                    ### 📱 네이버 클립 게시 가이드
-                    - **프로젝트 이름**: `{project_name}` (CapCut 앱 열면 바로 보입니다)
-                    - **네이버 클립 추천 제목**: `{seo_title}`
-                    - **비율**: 9:16 (1080x1920 세로 숏폼)
-                    - **자막 폰트**: Pretendard Black (크기 14.5)
-                    - **더빙 싱크**: 0.01초 칼싱크 적용 완료
-
-                    > 💡 **CapCut 실행 안내**: CapCut 앱 화면에서 `뒤로가기(←)`를 누르고 목록을 새로고침하여 `{project_name}`을 열어보세요!
-                    """)
-                except Exception as e:
-                    st.error(f"프로젝트 생성 중 오류가 발생했습니다: {e}")
-
-with tab2:
+st.markdown("---")
+with st.expander("🔥 1단계: 네이버 클립 6탭 이내 상위 노출 황금 키워드 및 레퍼런스 관찰", expanded=False):
     st.subheader(f"🔥 네이버 클립 6탭 이내 상위 노출 황금 키워드 ({len(NAVER_CLIP_TOP_KEYWORDS)}개 정밀 스캔 완료)")
     st.caption("제공해 주신 키워드 데이터 시트에서 네이버 검색 1~6탭 이내에 '네이버 클립'이 실제 노출 중인 황금 검색어들입니다.")
     
@@ -385,7 +271,121 @@ with tab2:
 # -------------------------------------------------------------------
 # 3번 탭: 완성 영상/대본 AI 분석 & 네이버 클립 SEO 진단기 (고도화)
 # -------------------------------------------------------------------
-with tab3:
+
+st.markdown("---")
+with st.container():
+    st.subheader("🎬 2단계: 숏폼 대본 생성 및 영상 편집")
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+            
+        # 대본 초기화 버튼
+        if st.button("🔄 대본 초기화 (새 프로젝트)"):
+            if "script_text" in st.session_state:
+                del st.session_state["script_text"]
+            if "seo_title" in st.session_state:
+                del st.session_state["seo_title"]
+            st.rerun()
+
+        script_input = st.text_area(
+            "대본 내용 (문장별로 자연스럽게 읽어드립니다)",
+            value=st.session_state.get("script_text", ""),
+            placeholder="💡 좌측 [선택한 포맷 대본 자동 생성 불러오기] 버튼을 누르시거나, 원하시는 대본 텍스트를 직접 입력해 주세요...",
+            height=240
+        )
+
+        col_fb1, col_fb2 = st.columns([2.5, 1])
+        with col_fb1:
+            user_feedback_in = st.text_input("💡 마케터 수정 피드백 (예: 부모님 선물 톤으로 변경해 줘, 30일 환불 강조해 줘 등):", key="in_script_fb", placeholder="예: 부모님 선물 톤으로 변경해 줘, 30일 환불 보증 문구 강조해 줘 등")
+        with col_fb2:
+            st.write("")
+            st.write("")
+            if st.button("✨ 마케터 피드백 반영 AI 대본 수정", key="btn_apply_script_fb"):
+                if user_feedback_in.strip() and script_input.strip():
+                    new_title, updated_script = apply_user_feedback_to_script(script_input, user_feedback_in, product_choice)
+                    st.session_state["script_text"] = updated_script
+                    st.session_state["seo_title"] = new_title
+                    st.success("🎉 입력하신 마케터 피드백이 반영되어 대본이 실시간으로 수정되었습니다!")
+                    st.rerun()
+                else:
+                    st.warning("수정 피드백 멘트와 대본 텍스트를 확인해 주세요.")
+        
+        # 선택한 제품의 옵시디언 상세페이지 리뷰/특징 프리뷰
+        with st.expander(f"📌 [{product_choice}] 스마트스토어 상세페이지 특징 & 구매자 후기 보기"):
+            store_url = selected_prod_info.get("smartstore_url", "")
+            if store_url:
+                st.markdown(f"🛒 **스마트스토어 공식 상세페이지**: [바로가기 링크]({store_url})")
+            st.write(f"**USP (핵심 차별점)**: {selected_prod_info.get('usp', '없음')}")
+            st.write(f"**타깃 페르소나**: {selected_prod_info.get('target', '없음')}")
+            st.write("**구매 고객 실제 후기 파싱**: ")
+            for r in selected_prod_info.get("reviews", []):
+                st.markdown(f"- 💬 *\"{r}\"*")
+
+    with col2:
+        st.subheader("🎬 영상 소스 키워드 세팅")
+        st.caption("필요한 분위기나 연출 장면 키워드를 영문(콤마 구분)으로 입력하면 고화질 HD 비디오 소스가 자동 수급됩니다.")
+        
+        default_stock_kw = ", ".join(selected_prod_info.get("stock_keywords", ["back pain", "massage"]))
+        video_keywords_input = st.text_input(
+            "영상 소스 키워드 (예: back pain, massage, stretching)",
+            value=default_stock_kw
+        )
+        
+        # 다운로드된 비디오 소스 목록 확인
+        stock_dir = os.path.join(os.getcwd(), "stock_videos")
+        existing_videos = glob.glob(os.path.join(stock_dir, "*.mp4"))
+        
+        st.markdown(f"**현재 보유 중인 비디오 소스**: `{len(existing_videos)}개`")
+        
+        if st.button("📥 스톡 비디오 소스 5개 추가 자동 다운로드"):
+            with st.spinner("Mixkit 고화질 스톡 비디오 다운로드 중..."):
+                kws = [k.strip() for k in video_keywords_input.split(",") if k.strip()]
+                for kw in kws:
+                    fetch_and_download_mixkit_stock_videos(kw, count=3, output_dir=stock_dir)
+                st.rerun()
+
+    st.markdown("---")
+
+    # 메인 생성 실행 버튼
+    if st.button("🚀 캡컷 9:16 네이버 클립 프로젝트 생성하기"):
+        if not script_input.strip():
+            st.error("대본을 입력해 주세요!")
+        else:
+            with st.spinner("AI 더빙 ➡️ 무음 컷트 ➡️ Pretendard 자막 ➡️ 비디오 소스 컷 연동 중..."):
+                try:
+                    # 영상 소스 다운로드 확인
+                    kws = [k.strip() for k in video_keywords_input.split(",") if k.strip()]
+                    if kws and len(existing_videos) < 3:
+                        for kw in kws:
+                            fetch_and_download_mixkit_stock_videos(kw, count=3, output_dir=stock_dir)
+
+                    # CapCut 프로젝트 생성 엔진 가동
+                    project_name, seo_title = build_capcut_project_for_naver_clip(
+                        product_name=product_choice,
+                        keyword=keyword_input,
+                        voice=voice_choice,
+                        format_type=format_choice
+                    )
+
+                    st.balloons()
+                    st.success(f"🎉 성공! CapCut 프로젝트 '{project_name}' 생성이 완료되었습니다!")
+                    
+                    st.markdown(f"""
+                    ### 📱 네이버 클립 게시 가이드
+                    - **프로젝트 이름**: `{project_name}` (CapCut 앱 열면 바로 보입니다)
+                    - **네이버 클립 추천 제목**: `{seo_title}`
+                    - **비율**: 9:16 (1080x1920 세로 숏폼)
+                    - **자막 폰트**: Pretendard Black (크기 14.5)
+                    - **더빙 싱크**: 0.01초 칼싱크 적용 완료
+
+                    > 💡 **CapCut 실행 안내**: CapCut 앱 화면에서 `뒤로가기(←)`를 누르고 목록을 새로고침하여 `{project_name}`을 열어보세요!
+                    """)
+                except Exception as e:
+                    st.error(f"프로젝트 생성 중 오류가 발생했습니다: {e}")
+
+
+st.markdown("---")
+with st.expander("✅ 3단계: 완성 영상 검증 & 네이버 클립 업로드 체크리스트", expanded=False):
     st.subheader("🚀 완성 영상 & 제작 대본 AI 실시간 분석 & 네이버 클립 SEO 진단기")
     st.caption("제작 완료된 MP4 동영상 파일을 직접 업로드하시거나 대본 텍스트를 입력하시면, AI가 [100% 음성 대본 추출 / 옵시디언 4컬럼 구조분해 / 마케터 복기 소구점 / SEO 복붙 템플릿]을 자동으로 완성해 드립니다.")
     
