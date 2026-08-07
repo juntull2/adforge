@@ -282,14 +282,15 @@ with tab2:
                 else:
                     st.error("분석할 영상 링크나 자막 텍스트를 입력해 주세요.")
 
-    # 직접 분석 결과 미리보기 (동영상 소스 표출 완전 제거 & 접기 버튼 추가)
-    if "custom_clip_analysis_result" in st.session_state:
+    # 직접 분석 결과 미리보기 (NoneType 및 키 오류 방어 보정)
+    if "custom_clip_analysis_result" in st.session_state and isinstance(st.session_state["custom_clip_analysis_result"], dict):
         c_res = st.session_state["custom_clip_analysis_result"]
+        kw_display = c_res.get("keyword", c_res.get("auto_keyword", "네이버클립"))
         
         with st.container():
             st.markdown(f"""
             <div style='background-color: #1E2640; padding: 15px; border-radius: 12px; margin: 15px 0; border: 1px solid #10B981;'>
-                <h3 style='color: #34D399; margin-top:0;'>🧠 [{c_res['keyword']}] 실제 클립 AI 마케팅 분석 결과</h3>
+                <h3 style='color: #34D399; margin-top:0;'>🧠 [{kw_display}] 실제 클립 AI 마케팅 분석 결과</h3>
             </div>
             """, unsafe_allow_html=True)
             
@@ -299,10 +300,11 @@ with tab2:
                     del st.session_state["custom_clip_analysis_result"]
                     st.rerun()
 
-            if "custom_clip_analysis_result" in st.session_state:
+            if "script_table" in c_res:
                 st.markdown("#### 📜 4단계 대본 및 화면 분석 표")
                 st.table(c_res["script_table"])
 
+            if "marketer_notes" in c_res:
                 st.markdown("#### 💡 마케터 복기 & 소구점 (자사 제품 트위스트 팁)")
                 for note in c_res["marketer_notes"]:
                     st.markdown(f"* 💡 {note}")
