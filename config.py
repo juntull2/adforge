@@ -20,8 +20,9 @@ class Config:
     SEO_PASS_SCORE_THRESHOLD = 80
     MAX_RETRY_ATTEMPTS = 3
     
-    # Brand default links
+    # Brand default links & Creator Studio Channel URL
     DAPIDA_STORE_LINK = "https://smartstore.naver.com/all-envy/products/12566869835"
     PAULINA_STORE_LINK = "https://smartstore.naver.com/martinishop/products/7095386764"
+    NAVER_CREATOR_STUDIO_HEALTHYLIFE1_URL = "https://creator.tv.naver.com/channel/healthylife1/content/video"
 
 config = Config()
