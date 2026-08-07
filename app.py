@@ -15,7 +15,7 @@ st.markdown('''
 <style>
     .main-header { font-size: 2.2rem; font-weight: 800; color: #00E676; margin-bottom: 0.2rem; }
     .sub-header { font-size: 1.05rem; color: #A0AEC0; margin-bottom: 1.5rem; }
-    .prompt-box { background-color: #2D3748; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-family: monospace; white-space: pre-wrap; }
+    .prompt-box { background-color: #F0F4F8; color: #1A202C; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-family: monospace; white-space: pre-wrap; border: 1px solid #CBD5E0; }
     .comment-box { background-color: #2b1f31; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #d53f8c; }
 </style>
 ''', unsafe_allow_html=True)
@@ -126,7 +126,10 @@ voice_choice = st.selectbox(
     "🎙️ AI 성우 보이스 선택",
     options=[
         ("👩‍💼 마케팅 여성 - 선희 (차분/신뢰)", "ko-KR-SunHiNeural"),
+        ("👩‍🏫 아나운서 여성 - 지민 (깔끔/명확)", "ko-KR-JiMinNeural"),
+        ("👵 다정한 아주머니 - 순복 (포근/시니어)", "ko-KR-SoonBokNeural"),
         ("👨‍💼 마케팅 남성 - 인준 (지적/차분)", "ko-KR-InJoonNeural"),
+        ("👨‍🏫 신뢰감 남성 - 봉진 (묵직/안정)", "ko-KR-BongJinNeural"),
         ("🎧 유튜버 청년 - 현수 (친근/밝음)", "ko-KR-HyunsuNeural")
     ],
     format_func=lambda x: x[0]
