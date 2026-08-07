@@ -95,9 +95,10 @@ def analyze_custom_clip_link_or_text(input_text_or_url: str, keyword: str = "추
             f"네이버 클립 원본 라이브 URL: {source_url}",
             "첫 3초 시청 완독률을 극대화하는 직관적 결핍 고발형 훅 구조 적용.",
             "나레이션 없이 자막 자극 및 밈(Meme) 교차 연출로 시각 몰입도 극대화.",
-            "자사 제품(다피다 허리 찜질기 / 파우리나 재활자전거) 숏폼 대본 카피라이팅에 즉시 트위스트 적용 가능."
+            f"자사 제품({keyword}) 숏폼 대본 카피라이팅에 즉시 트위스트 적용 가능."
         ]
     }
+    return clip_data
 
 def audit_marketing_quality_strictly(script_text: str, target_product: str) -> dict:
     """
