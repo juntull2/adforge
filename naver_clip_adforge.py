@@ -333,10 +333,11 @@ def generate_seo_recommendation(script_text: str, api_key: str):
 
 # -------------------------------------------------------------------
 
-def generate_hailuo_prompts(script_text: str, api_key: str, model_name: str = "meta/llama-3.1-70b-instruct"):
-    """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기 (NVIDIA API 사용)"""
+def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: str = "nvidia/nemotron-3-ultra-550b-a55b"):
+    """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
     if not api_key:
-        return "API 키가 설정되지 않았습니다."
+        yield "API 키가 설정되지 않았습니다."
+        return
         
     try:
         from openai import OpenAI
@@ -361,15 +362,35 @@ def generate_hailuo_prompts(script_text: str, api_key: str, model_name: str = "m
         
         [Scene 2] ...
         """
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7,
-            max_tokens=1024
-        )
-        return response.choices[0].message.content.strip()
+        
+        kwargs = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": True,
+            "max_tokens": 4096,
+            "temperature": 1,
+            "top_p": 0.95
+        }
+        
+        if "nemotron-3-ultra-550b" in model_name.lower():
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}, "reasoning_budget": 4096}
+            kwargs["max_tokens"] = 16384
+            
+        completion = client.chat.completions.create(**kwargs)
+        
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+                
+            reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+            if reasoning:
+                yield reasoning
+                
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+                
     except Exception as e:
-        return f"프롬프트 생성 중 오류가 발생했습니다: {str(e)}"
+        yield f"\n\n프롬프트 생성 중 오류가 발생했습니다: {str(e)}"
 
 # -------------------------------------------------------------------
 # 6. AI TTS + 배경 비디오 소스 + Pretendard 자막 100% 자동 제작

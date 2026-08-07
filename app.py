@@ -2,7 +2,7 @@ import os
 import streamlit as st
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
-    generate_hailuo_prompts
+    generate_hailuo_prompts_stream
 )
 
 # -------------------------------------------------------------------
@@ -31,6 +31,7 @@ with col_model:
     model_choice = st.selectbox(
         "🧠 NVIDIA 모델 선택",
         options=[
+            "nvidia/nemotron-3-ultra-550b-a55b",
             "meta/llama-3.1-70b-instruct",
             "meta/llama-3.1-405b-instruct",
             "nvidia/llama-3.1-nemotron-70b-instruct"
@@ -76,7 +77,14 @@ with col2:
             st.error("NVIDIA API Key를 입력해주세요.")
         else:
             with st.spinner(f"장면별 프롬프트 분석 중... ({model_choice})"):
-                hailuo_result = generate_hailuo_prompts(script_text, nvidia_api_key, model_choice)
+                st.markdown("---")
+                st.subheader("💡 추출 중인 Hailuo AI 프롬프트 (실시간)")
+                
+                def stream_generator():
+                    for chunk in generate_hailuo_prompts_stream(script_text, nvidia_api_key, model_choice):
+                        yield chunk
+                        
+                hailuo_result = st.write_stream(stream_generator())
                 st.session_state["hailuo_prompts"] = hailuo_result
 
 # -------------------------------------------------------------------
