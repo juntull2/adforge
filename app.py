@@ -137,16 +137,16 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
             st.session_state["parsed_comment"] = comment_part
             st.session_state["parsed_description"] = desc_part
 
-# Show parsed comment & description if exists
+# Show parsed comment & description always
 col_out1, col_out2 = st.columns(2)
 with col_out1:
-    if st.session_state.get("parsed_comment"):
-        st.markdown("##### 💬 유튜브/클립용 고정 댓글 (CTA)")
-        st.markdown(f'<div class="comment-box">{st.session_state["parsed_comment"]}</div>', unsafe_allow_html=True)
+    st.markdown("##### 💬 유튜브/클립용 고정 댓글 (CTA)")
+    c_val = st.session_state.get("parsed_comment", "")
+    st.text_area("댓글 복사", value=c_val, height=150, label_visibility="collapsed")
 with col_out2:
-    if st.session_state.get("parsed_description"):
-        st.markdown("##### 📝 영상 설명 & 해시태그 (200자 내)")
-        st.markdown(f'<div class="comment-box" style="border-left-color: #3182ce;">{st.session_state["parsed_description"]}</div>', unsafe_allow_html=True)
+    st.markdown("##### 📝 영상 본문 설명 & 해시태그")
+    d_val = st.session_state.get("parsed_description", "")
+    st.text_area("설명 복사", value=d_val, height=150, label_visibility="collapsed")
 
 st.markdown("---")
 
