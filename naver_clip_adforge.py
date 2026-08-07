@@ -253,165 +253,83 @@ def get_or_download_stock_videos(keywords: list) -> list:
 # -------------------------------------------------------------------
 # 6. 스마트스토어 상세페이지 결합 6가지+2가지 신규 대본 포맷 생성 엔진
 # -------------------------------------------------------------------
-SCRIPT_FORMAT_NAMES = {
-    "fear": "⚠️ 공포/손해회피형 (방치 시 척추 속근육 굳어짐 & 손해 차단)",
-    "hospital": "🏥 병원예약 직전형 (병원 비용 부담 & 원적외선/근적외선 선택 모드 훅)",
-    "double_spend": "💸 이중지출 후회형 (괜히 싼 거 샀다가 후회 & 제대로 된 찜질기 훅)",
-    "review": "💬 내돈내산/후기유포형 (한의원 치료 대체 & 구매자 평점 4.9)",
-    "aggro": "🚨 사과문/어그로형 (정가 20만 원 직구 사신 분 죄송합니다)",
-    "expert": "🩺 전문가/연구소형 (피부 속 3cm 침투 & 생체역학 100W 무소음)",
-    "empathy": "💡 공감/일상형 (왜 찜질해도 돌아서면 다시 아플까? 해소)",
-    "info": "📖 정보80%+제품20%형 (한의원 온열 꿀팁 80% + 제품 20%)"
-}
 
-def generate_naver_clip_script(product_name: str, keyword: str, format_type: str = "fear"):
-    prod = PRODUCTS_DB.get(product_name, DEFAULT_PRODUCTS_DB["다피다 허리 찜질기"])
-    reviews_sample = prod.get("reviews", ["한의원 찜질 느낌 그대로라 집에서 매일 써요."])
-    review_quote = reviews_sample[0] if reviews_sample else "진작 살걸 그랬어요!"
+import google.generativeai as genai
 
-    if format_type == "hospital":  # 병원예약 직전형 (2026-08-03.md 실전 대본)
-        seo_title = f"[{keyword}] 허리 때문에 병원 예약 직전까지 갔다가 이걸 알게 됨"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword} 고통 때문에 병원 예약 직전까지 갔다가 진짜 인생 꿀템을 알게 됨!
-            앉았다 일어날 때마다 허리가 뻣뻣하고 아침에 일어나도 전혀 개운하지가 않았는데요.
-            병원은 가야 할 것 같은데 시간도, 비용도 너무 부담돼서 집에서 먼저 관리해 보기로 함.
-            그러다 찾은 게 다피다인데 다 비슷한 줄 알았더니 허리 상태에 맞게 원적외선, 근적외선 모드를 골라 쓸 수 있었음!
-            전체적으로 뻐근한 날은 원적외선, 유독 특정 부위 아픈 날은 근적외선으로 푸니까 퇴근 후 필수가 됨.
-            안 맞으면? 30일 내 100% 반품 가능! 부담 없이 직접 써보고 결정해 보셈.
-            """
+def generate_naver_clip_script(product_name: str, topic: str, api_key: str):
+    """AI 대본 기획 (4050 여성 건강 타깃 맞춤형)"""
+    if not api_key:
+        return f"[{topic}] 건강 정보", "API 키가 설정되지 않았습니다. 대시보드 설정에서 API 키를 입력해주세요."
+        
+    genai.configure(api_key=api_key)
+    prod = PRODUCTS_DB.get(product_name, DEFAULT_PRODUCTS_DB.get("다피다 허리 찜질기", {}))
+    usp = prod.get("usp", "")
+    reviews = " ".join(prod.get("reviews", []))
+    
+    prompt = f"""
+    당신은 4050 여성 대상 네이버 클립(숏폼) 전문 건강 콘텐츠 기획자입니다.
+    주제(키워드): {topic}
+    제품명: {product_name}
+    제품 강점(USP): {usp}
+    고객 후기 요약: {reviews}
+    
+    [필수 가이드라인]
+    1. 대상: 40대~50대 여성 (본인 건강 관리, 부모님 건강 걱정, 집안일 등 일상 통증)
+    2. 형식: 숏폼 영상용 내레이션 대본 (약 20~30초 분량, 3~5문장 내외)
+    3. 구성: [초반 3초 후킹 및 공감] -> [건강/정보 제공] -> [자연스러운 해결책/제품 언급]
+    4. 가드레일 (매우 중요): 
+       - 의료적 효능을 확정하거나 단정하는 표현 절대 금지 (예: "완치됩니다", "치료됩니다" ❌).
+       - 과도한 공포 조성 금지 (예: "방치하면 큰일 납니다", "평생 고생합니다" ❌).
+       - 일상에서 느끼는 불편함을 부드럽게 공감하는 어조 사용 (예: "뻐근하시죠?", "집에서 간편하게 관리해보세요" ⭕).
+    5. 출력 형식:
+       첫 줄은 반드시 SEO 제목 (예: [{topic}] 집에서 쉽게 따라하는 건강 관리법)
+       두 번째 줄부터는 내레이션 대본만 순수하게 작성. (행동 지시문, 음악, 효과음 등 불필요한 텍스트 기재 금지)
+    
+    위 가이드라인에 맞춰 자연스럽고 유익한 건강 정보 숏폼 대본을 작성해주세요.
+    """
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        content_lines = response.text.strip().split('\\n', 1)
+        if len(content_lines) > 1:
+            seo_title = content_lines[0].strip()
+            script_text = content_lines[1].strip()
         else:
-            script_text = f"""
-            부모님 하체 근력 때문에 전문 재활 센터 예약 직전까지 갔다가 이걸 알게 됨!
-            병원 재활 치료비도 부담되고 매번 모셔다드리기도 힘들었는데…
-            집에서 허리 굽힐 필요 없는 유선 리모컨과 100W 무소음 모터로 안전하게 재활하십니다.
-            안 맞으면 30일 무료 반품 가능하니 부담 없이 꼭 확인해 보세요!
-            """
+            seo_title = f"[{topic}] 건강 정보"
+            script_text = content_lines[0].strip()
+            
+        # 간단한 정제
+        seo_title = seo_title.replace("**", "")
+        script_text = script_text.replace("**", "").replace("-", "")
+        
+        return seo_title, script_text
+    except Exception as e:
+        return f"[{topic}] 건강 꿀팁", f"대본 생성 중 오류가 발생했습니다: {str(e)}"
 
-    elif format_type == "double_spend":  # 이중지출 후회형 (2026-08-03.md 실전 대본)
-        seo_title = f"[{keyword}] 허리찜질기 괜히 싼 거 샀다가 돈만 두 번 썼습니다"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword} 찜질기 괜히 싼 거 샀다가 돈만 두 번 썼음!
-            가격만 보고 샀는데 피부 겉만 데워지고 속근육 고통은 그대로라 결국 다시 알아봤는데요.
-            괜히 처음부터 제대로 된 걸 살 걸 후회하다 바꾼 게 다피다입니다.
-            상태에 맞게 방사율 0.902 원적외선과 3파장 근적외선 모드를 골라 쓰니까 깊은 속근육까지 사르르 풀려요.
-            안 맞으면 30일 내 100% 반품 가능하니 괜히 두 번 사지 말고 직접 써보고 결정해 보셈!
-            """
-        else:
-            script_text = f"""
-            부모님 재활 기구 괜히 어설프고 싼 거 샀다가 돈만 두 번 썼습니다!
-            소음 심하고 관절에 무리 가서 결국 100W 무소음 모터의 파우리나로 다시 바꿨는데요.
-            노인생체역학 관절각도와 리모컨 조작으로 집에서 부모님이 매일 안전하게 운동하십니다.
-            괜히 두 번 사지 말고 제대로 된 걸로 한 번에 선택해 보세요!
-            """
-
-    elif format_type == "fear":  # 공포/손해회피형
-        seo_title = f"[{keyword}] 방치하면 척추 속근육 더 굳습니다! 피부 속 3cm 온열 긴급 처방"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword} 고통, 파스만 붙이고 방치하면 척추 속근육이 더 딱딱하게 굳어버립니다!
-            겉만 데우는 일반 패드로는 피부 속 3cm 척추 마디까지 열이 침투하지 못하는데요.
-            방사율 0.902 원적외선과 3파장 근적외선이 동시에 나오는 찜질복대를 차주시면…
-            굳어있던 척추 속근육이 3초 만에 사르르 풀립니다.
-            실제 후기에서도 "{review_quote}"라고 입증된 속근육 케어!
-            더 늦기 전에 30일 무료 환불 보증으로 안심하고 확인해 보세요.
-            """
-        else:
-            script_text = f"""
-            부모님 하체 근력이 줄어드는데 무작정 무리해서 걷게 하시면 관절이 다 굳어 위험합니다!
-            그대로 방치하면 나중에 요양병원 신세를 지게 될지도 모릅니다.
-            노인생체역학 관절각도와 100W 무소음 모터가 적용된 전동 자전거로 안전하게 재활해야 하는데요.
-            허리 굽힐 필요 없는 유선 리모컨으로 집에서도 부모님이 편안하게 근력을 회복하십니다.
-            부모님 건강, 더 늦기 전에 미리 챙겨드리세요!
-            """
-
-    elif format_type == "review":  # 내돈내산/후기유포형
-        seo_title = f"[{keyword}] 한의원 영수증만 쌓이던 나… 내돈내산 100% 만족 꿀템 공개"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword} 때문에 한의원 치료비만 수십 만원 쌓이던 차에 진짜 내돈내산 정착템 찾았습니다.
-            구매자 평점 4.9점에 "{review_quote}"라는 후기 보고 샀는데 대만족이에요.
-            피부 속 3cm 척추 마디까지 들어가는 원적외선과 근적외선이 동시에 나오니까…
-            복대 차자마자 굳은 허리가 풀려 300g 초경량으로 옷 속에 차고 집안일도 너무 편합니다.
-            30일 써보고 마음에 안 들면 100% 환불까지 되니 망설일 이유가 없네요!
-            """
-        else:
-            script_text = f"""
-            부모님 하체 근력이 떨어져서 온갖 재활 기구 알아보다 내돈내산으로 정착한 꿀템입니다.
-            "{review_quote}"라는 후기 그대로 부모님이 집에서 매일 편하게 운동하세요.
-            100W 무소음 모터라 층간소음 걱정 없고, 리모컨이 있어 허리 굽힐 필요도 없습니다.
-            병원 재활 비용 아끼는 부모님 선물로 적극 추천합니다!
-            """
-
-    elif format_type == "aggro":  # 사과문/어그로형
-        seo_title = f"[{keyword}] 정가 20만 원 주고 근적외선 기기 직구하신 분들께 사과드립니다"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword}로 비싼 근적외선 기기 정가 20만 원 넘게 주고 사신 분들 정말 죄송합니다!
-            원적외선 방사율 0.902에 3파장 근적외선이 동시에 나오는 300g 초슬림 복대가 이미 있었네요.
-            피부 속 3cm 척추 마디까지 3초 만에 열을 전달해서 굳어있던 허리가 순식간에 풀립니다.
-            30일 무료 환불 보증까지 있으니 이제 비싼 치료비에 속지 마세요!
-            """
-        else:
-            script_text = f"""
-            비싼 전문 재활 센터 등록하시고 부모님 고생시키신 분들 정말 죄송합니다!
-            집에서 리모컨 하나로 안전하게 부모님 하체 근력을 회복시키는 100W 무소음 자전거가 있었네요.
-            노인생체역학 각도로 관절 손상 없이 어르신 하체 근육을 부드럽게 풀어줍니다.
-            늦기 전에 지금 바로 확인해 보세요!
-            """
-
-    elif format_type == "expert":  # 전문가/연구소형
-        seo_title = f"[{keyword}] 임상 노하우로 밝히는 척추 속근육 3초 온열 이완 법칙"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword} 관리 시 핵심은 겉피부가 아닌 피부 속 3cm 척추 속근육 이완입니다.
-            원적외선 방사율 0.902 및 3파장 근적외선 동시 발열 기술이 적용된 찜질복대를 착용하면…
-            깊은 척추 마디까지 온열 효과가 침투하여 만성 통증 완화에 탁월한 효과를 보입니다.
-            300g 초경량 무선 설계와 30일 무료 환불 보증으로 척추 건강을 지켜내세요.
-            """
-        else:
-            script_text = f"""
-            노년기 하체 근력 저하 관리 시 핵심은 관절에 무리를 주지 않는 생체역학 각도입니다.
-            100W 무소음 모터 기술과 유선 리모컨 조작으로 부드러운 양방향 자극을 전달하여 근육 노화를 예방합니다.
-            전문가 케어 시스템을 집에서 안전하게 경험해 보세요.
-            """
-
-    elif format_type == "empathy":  # 공감/일상형
-        seo_title = f"[{keyword}] 왜 집에서 허리 찜질하면 그때뿐이고 돌아서면 다시 아플까?"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword}로 고생할 때 왜 집에서 찜질하면 그때뿐이고 돌아서면 다시 아플까요?
-            겉피부만 데우는 일반 패드와 달리 척추 속 3cm 깊은 속근육까지 열이 들어가야 하기 때문입니다.
-            원적외선과 근적외선이 동시에 나오는 전용 복대를 차주시면 굳은 속근육이 사르르 풀려요.
-            300g 초경량 무선이라 차고 집안일도 OK! 30일 써보고 100% 환불 보증까지 확인해 보세요.
-            """
-        else:
-            script_text = f"""
-            부모님이 부쩍 다리에 힘이 없다며 집안에만 계신 모습을 보면 속상하셨죠?
-            무작정 걷게 하시기보다 노인 전용 각도의 재활 자전거로 부드럽게 시작해 보세요.
-            100W 무소음 모터와 리모컨으로 집에서도 부모님이 안전하고 재미있게 운동하십니다.
-            """
-
-    else:  # 정보80%+제품20%형
-        seo_title = f"[{keyword}] 한의원 원장이 숨겨둔 3초 통증 완화법 (적외선 찜질복대 활용)"
-        if product_name == "다피다 허리 찜질기":
-            script_text = f"""
-            {keyword}로 갑자기 허리가 굳었을 때 유용한 3초 통증 완화 꿀팁입니다!
-            첫째, 무작정 누워만 계시지 말고 척추 속근육을 온열로 완화시켜야 합니다.
-            둘째, 한의원에서 쓰이는 원적외선과 3파장 근적외선이 동시에 나오는 복대를 활용하는 건데요.
-            피부 속 3cm 깊은 척추 마디까지 열을 전해 순식간에 일상생활이 가능해집니다.
-            30일 무료 환불 보증까지 있으니 안심하고 확인해 보세요!
-            """
-        else:
-            script_text = f"""
-            어르신 하체 근력 회복을 위한 3대 안전 가이드라인입니다.
-            첫째, 관절에 무리가 가는 무리한 걸음수를 강요하지 마세요.
-            둘째, 노인생체역학 각도가 적용된 100W 무소음 자전거로 안전하게 재활하세요.
-            집에서도 리모컨 조작으로 부모님 하체 건강을 안전하게 유지하실 수 있습니다.
-            """
-
-    return seo_title, script_text.strip()
+def generate_seo_recommendation(script_text: str, api_key: str):
+    """AI SEO 추천 (제목/키워드/해시태그/Hook/CTA)"""
+    if not api_key:
+        return "API 키가 설정되지 않아 SEO 추천을 생성할 수 없습니다."
+        
+    genai.configure(api_key=api_key)
+    prompt = f"""
+    다음은 네이버 클립 숏폼 대본입니다:
+    {script_text}
+    
+    이 대본을 바탕으로 4050 여성 타깃에 최적화된 네이버 클립용 SEO 추천안을 작성해주세요.
+    
+    [출력 형식 - 반드시 이 양식을 지켜주세요]
+    - 추천 제목: (어그로가 아닌 정보성 제목)
+    - 추천 해시태그: (5개 내외)
+    - 추천 Hook: (영상 첫 3초 시선 끌기용 화면 텍스트)
+    - 추천 CTA: (고정 댓글이나 영상 마지막에 들어갈 행동 유도 문구)
+    """
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as e:
+        return f"SEO 추천 생성 중 오류가 발생했습니다: {str(e)}"
 
 # -------------------------------------------------------------------
 # 6. AI TTS + 배경 비디오 소스 + Pretendard 자막 100% 자동 제작
@@ -437,8 +355,7 @@ async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-Su
     communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
     await communicate.save(output_path)
 
-def build_capcut_project_for_naver_clip(product_name: str, keyword: str, voice="ko-KR-SunHiNeural", format_type: str = "fear"):
-    seo_title, script_text = generate_naver_clip_script(product_name, keyword, format_type=format_type)
+def build_capcut_project_for_naver_clip(product_name: str, keyword: str, script_text: str, seo_title: str, voice="ko-KR-SunHiNeural"):
     project_name = f"네이버클립_{keyword.replace(' ', '_')}"
     
     prod_data = PRODUCTS_DB.get(product_name, PRODUCTS_DB["다피다 허리 찜질기"])
