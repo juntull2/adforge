@@ -435,6 +435,40 @@ def generate_naver_clip_script(product_name: str, keyword: str, format_type: str
 
     return seo_title, script_text.strip()
 
+def apply_user_feedback_to_script(current_script: str, user_feedback: str, product_name: str) -> tuple:
+    """사용자가 입력한 마케터 피드백(예: 부모님 선물 톤, 30일 환불 강조, 직장인 훅 등)을 반영하여 대본 재작성"""
+    fb_clean = user_feedback.strip()
+    if not fb_clean or not current_script.strip():
+        return f"[{product_name}] 피드백 반영 대본", current_script
+    
+    lines = [l.strip() for l in current_script.splitlines() if l.strip()]
+    if not lines:
+        lines = [current_script]
+        
+    updated_lines = list(lines)
+    
+    # 1. 훅/초반 연출 변경 피드백
+    if any(k in fb_clean for k in ["훅", "3초", "어그로", "시작"]):
+        updated_lines[0] = f"🔥 {fb_clean}! " + updated_lines[0]
+        
+    # 2. 부모님/효도선물 톤 전환
+    if any(k in fb_clean for k in ["부모님", "효도", "선물", "어르신", "아빠"]):
+        updated_lines[0] = f"부모님 {product_name} 선물로 고민 중이셨다면 딱 15초만 집중해 보세요!"
+        if len(updated_lines) > 1:
+            updated_lines[-1] = "부모님 건강, 안 맞으면 30일 100% 무료 반품 가능하니 부담 없이 미리 선물해 보세요!"
+            
+    # 3. 30일 환불/보증 강조
+    if any(k in fb_clean for k in ["환불", "반품", "보증", "30일"]):
+        updated_lines[-1] = "💡 안 맞으면 30일 내 100% 무상 환불 보증제 적용! 실패 없는 직접 체험으로 결정하세요."
+
+    # 4. 직장인/퇴근 톤 강조
+    if any(k in fb_clean for k in ["직장인", "퇴근", "앉아"]):
+        updated_lines[0] = "🔥 퇴근 후 허리가 아픈 게 아니라 접히는 고통을 느끼는 직장인이라면 집중!"
+
+    new_script = "\n".join(updated_lines)
+    new_title = f"[{fb_clean[:6]}] {product_name} 피드백 반영"
+    return new_title[:24], new_script
+
 # -------------------------------------------------------------------
 # 6. AI TTS + 배경 비디오 소스 + Pretendard 자막 100% 자동 제작
 # -------------------------------------------------------------------

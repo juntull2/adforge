@@ -6,6 +6,7 @@ from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     PRODUCTS_DB,
     generate_naver_clip_script,
+    apply_user_feedback_to_script,
     SCRIPT_FORMAT_NAMES,
     NAVER_CLIP_TOP_KEYWORDS,
     OBSIDIAN_VAULT_PATH
@@ -168,8 +169,24 @@ with tab1:
             "대본 내용 (문장별로 자연스럽게 읽어드립니다)",
             value=st.session_state.get("script_text", ""),
             placeholder="💡 좌측 [선택한 포맷 대본 자동 생성 불러오기] 버튼을 누르시거나, 원하시는 대본 텍스트를 직접 입력해 주세요...",
-            height=260
+            height=240
         )
+
+        col_fb1, col_fb2 = st.columns([2.5, 1])
+        with col_fb1:
+            user_feedback_in = st.text_input("💡 마케터 수정 피드백 (예: 부모님 선물 톤으로 변경해 줘, 30일 환불 강조해 줘 등):", key="in_script_fb", placeholder="예: 부모님 선물 톤으로 변경해 줘, 30일 환불 보증 문구 강조해 줘 등")
+        with col_fb2:
+            st.write("")
+            st.write("")
+            if st.button("✨ 마케터 피드백 반영 AI 대본 수정", key="btn_apply_script_fb"):
+                if user_feedback_in.strip() and script_input.strip():
+                    new_title, updated_script = apply_user_feedback_to_script(script_input, user_feedback_in, product_choice)
+                    st.session_state["script_text"] = updated_script
+                    st.session_state["seo_title"] = new_title
+                    st.success("🎉 입력하신 마케터 피드백이 반영되어 대본이 실시간으로 수정되었습니다!")
+                    st.rerun()
+                else:
+                    st.warning("수정 피드백 멘트와 대본 텍스트를 확인해 주세요.")
         
         # 선택한 제품의 옵시디언 상세페이지 리뷰/특징 프리뷰
         with st.expander(f"📌 [{product_choice}] 스마트스토어 상세페이지 특징 & 구매자 후기 보기"):
