@@ -15,12 +15,12 @@ class PerformanceAgent(BaseAgent):
         clip_url = context.get("clip_url", "")
         perf_data = context.get("performance_data", {})
 
-        # 실제 집행 성과 데이터 추적 및 가공
-        views = perf_data.get("views", 12500)
-        likes = perf_data.get("likes", 380)
-        ctr = perf_data.get("ctr", 4.2)
-        cvr = perf_data.get("cvr", 2.8)
-        completion_rate = perf_data.get("completion_rate", 68.5)
+        # 실제 집행 성과 데이터 추적 (실제 집행 데이터가 입력되지 않았을 시 0)
+        views = perf_data.get("views", 0)
+        likes = perf_data.get("likes", 0)
+        ctr = perf_data.get("ctr", 0.0)
+        cvr = perf_data.get("cvr", 0.0)
+        completion_rate = perf_data.get("completion_rate", 0.0)
 
         hook = context.get("script_text", "").split('.')[0] if context.get("script_text") else "퇴근 후 허리가 아픈 게 아니라 접히는 느낌이 난다"
         cta = "안 맞으면 30일 무료 반품 가능하니 직접 써보고 결정해 보셈!"

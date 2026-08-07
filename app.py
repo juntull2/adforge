@@ -252,12 +252,11 @@ with tab2:
         
         col_in1, col_in2 = st.columns([3, 1])
         with col_in1:
-            input_kw = st.text_input("타깃 카테고리/키워드 (예: 70대아빠선물, 허리통증 등):", "70대아빠선물", key="input_kw_custom")
+            input_kw = st.text_input("타깃 카테고리/키워드 (예: 허리통증, 부모님선물 등):", value="", placeholder="분석할 키워드를 직접 입력하세요 (예: 허리통증, 부모님선물 등)", key="input_kw_custom")
             custom_input_text = st.text_area("네이버 클립 실제 영상 링크 URL 또는 자막 텍스트 입력:", 
-                value="https://m.naver.com/shorts/?mediaId=0C6841EC560D66102F4948747A9C392FD1A4",
-                placeholder="예: https://m.naver.com/shorts/... 또는 실제 영상 자막 텍스트 입력",
-                height=90
-            )
+                value="",
+                placeholder="예: https://m.naver.com/shorts/... 또는 실제 영상 자막 텍스트를 입력해 주세요.",
+                height=100, key="input_custom_text")
             chk_no_audio = st.checkbox("🔇 영상에 음성 나레이션 없음 (BGM 및 자막/시각 연출 중심 소재인 경우 체크)", value=False)
         with col_in2:
             st.write("")

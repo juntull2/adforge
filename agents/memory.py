@@ -31,18 +31,6 @@ class CreativeMemoryAgent(BaseAgent):
                 )
             """)
             
-            # 초기 샘플 성과 데이터 삽입 (테이블 비어있을 시)
-            cursor.execute("SELECT COUNT(*) FROM creative_memory")
-            if cursor.fetchone()[0] == 0:
-                sample_data = [
-                    ("퇴근 후 허리가 아픈 게 아니라 접히는 느낌이 난다", "안 맞으면 30일 무료 반품 가능!", "#허리통증 #다피다", 4.8, 3.2, 1.25),
-                    ("허리 찜질기 괜히 싼 거 샀다가 돈만 두 번 썼음", "30일 무상 환불 혜택 확인!", "#허리통증 #다피다허리찜질기", 4.5, 2.9, 1.20),
-                    ("방치하면 척추 속근육 더 굳습니다!", "아래 스티커 누르고 상세페이지 이동!", "#허리운동 #스트레칭", 4.1, 2.6, 1.15)
-                ]
-                cursor.executemany("""
-                    INSERT INTO creative_memory (hook, cta, tags, ctr, cvr, weight)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, sample_data)
             conn.commit()
             conn.close()
         except Exception as e:
