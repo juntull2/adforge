@@ -78,81 +78,6 @@ st.markdown(f'<div class="sub-header">대본과 필요 영상 키워드만 입�
 # -------------------------------------------------------------------
 # 사이드바: 마케팅 옵션 세팅
 # -------------------------------------------------------------------
-with st.sidebar:
-    st.header("⚙️ 마케팅 숏폼 세팅")
-    
-    product_options = list(PRODUCTS_DB.keys())
-    product_choice = st.selectbox(
-        "📦 타겟 제품 선택 (Obsidian DB 연동)",
-        options=product_options
-    )
-    
-    selected_prod_info = PRODUCTS_DB.get(product_choice, {})
-    default_kw = selected_prod_info.get("hub_keyword", "허리아플때")
-    
-    keyword_input = st.text_input(
-        "🔍 네이버 SEO 타겟 키워드",
-        value=default_kw
-    )
-    
-    st.markdown("---")
-    st.subheader("🎯 4단계 콘텐츠 퍼널 단계 선택")
-    format_choice = st.selectbox(
-        "퍼널 진행 단계 선택",
-        options=list(SCRIPT_FORMAT_NAMES.keys()),
-        format_func=lambda x: SCRIPT_FORMAT_NAMES[x]
-    )
-    
-    # 💡 [요구사항 1] 선택한 포맷 대본 자동 생성 불러오기 버튼을 포맷 선택 바로 아래에 배치
-    if st.button("💡 선택한 포맷 대본 자동 생성 불러오기", key="btn_sidebar_gen_script"):
-        seo_title, script = generate_naver_clip_script(product_choice, keyword_input, format_type=format_choice)
-        st.session_state["script_text"] = script
-        st.session_state["seo_title"] = seo_title
-        st.success(f"[{SCRIPT_FORMAT_NAMES[format_choice]}] 대본이 생성되었습니다!")
-        st.rerun()
-
-    st.markdown("---")
-    voice_tuple = st.selectbox(
-        "🎙️ AI 성우 보이스 & 릴스 톤 선택",
-        options=[
-            ("🐸 릴스 개구리/캐주얼 톤 (톡톡 튀는 릴스 캐릭터)", {"voice": "ko-KR-SunHiNeural", "rate": "+15%", "pitch": "+25Hz"}),
-            ("⚡ 릴스 숏폼 빠른 톤 (경쾌한 릴스 리뷰어)", {"voice": "ko-KR-InJoonNeural", "rate": "+20%", "pitch": "+15Hz"}),
-            ("✨ 릴스 귀여운 아기 톤 (앙증맞은 숏폼 톤)", {"voice": "ko-KR-SunHiNeural", "rate": "+10%", "pitch": "+40Hz"}),
-            ("🎧 릴스 청년 유튜버 톤 (친근하고 밝은 톤)", {"voice": "ko-KR-HyunsuNeural", "rate": "+8%", "pitch": "+5Hz"}),
-            ("👩‍💼 마케팅 여성 - 선희 (또렷하고 신뢰감 있는 톤)", {"voice": "ko-KR-SunHiNeural", "rate": "+0%", "pitch": "+0Hz"}),
-            ("👨‍💼 마케팅 남성 - 인준 (지적이고 차분한 톤)", {"voice": "ko-KR-InJoonNeural", "rate": "+0%", "pitch": "+0Hz"})
-        ],
-        format_func=lambda x: x[0]
-    )
-    voice_choice = voice_tuple[1]
-
-    # 🎧 [요구사항 2] 성우 보이스 샘플 미리듣기 플레이어 연동
-    if st.button("🎧 선택한 성우 샘플 보이스 미리듣기", key="btn_preview_voice"):
-        with st.spinner("AI 성우 보이스 미리듣기 샘플 생성 중..."):
-            audio_path = generate_voice_sample_audio_sync(voice_choice, "sample_voice.mp3")
-            st.session_state["sample_voice_path"] = audio_path
-
-    if "sample_voice_path" in st.session_state and os.path.exists(st.session_state["sample_voice_path"]):
-        st.audio(st.session_state["sample_voice_path"], format="audio/mp3")
-
-    st.markdown("---")
-    st.subheader("📐 자막 및 화면 고정 값")
-    st.info("""
-    - **화면 비율**: 9:16 (1080x1920 세로 숏폼)
-    - **자막 폰트**: Pretendard Black (시스템 연동)
-    - **글자 크기**: 14.5 (왕글씨 1줄 순차 전환)
-    - **데드존 보정**: 하단 UI 안 가리도록 중하단 배치
-    - **싱크 보정**: 앞/뒤 무음 0.01초 칼 컷트 적용
-    """)
-    
-    with st.expander("🎯 노리몰 영상팀 업무가이드 & KPI"):
-        st.markdown("""
-        * **핵심 행동 목표**: 일 유효 고객 **150명 유입** 달성
-        * **전환율 목표 (CVR)**: **5%** (100명 중 5명 구매)
-        * **프로 마케터 마인드셋**: "단순 영상 제작 X ➡️ 특정 키워드/후킹으로 유입 및 매출 증명"
-        * **편집 원칙**: 15~30초 완독률, 2~3초 화면 컷 전환, 첫 3초 강력한 훅 헤드라인
-        """)
-
 # -------------------------------------------------------------------
 # 메인 영역: 탭 구성 (1. 숏폼 제작 / 2. 네이버 클립 상위 레퍼런스 / 3. 완성 영상 검증)
 # -------------------------------------------------------------------
@@ -273,8 +198,83 @@ with st.expander("🔥 1단계: 네이버 클립 6탭 이내 상위 노출 황�
 # -------------------------------------------------------------------
 
 st.markdown("---")
-with st.container():
-    st.subheader("🎬 2단계: 숏폼 대본 생성 및 영상 편집")
+with st.expander("🎬 2단계: 숏폼 프로젝트 1초 자동 생성", expanded=True):
+    st.markdown("### ⚙️ 마케팅 옵션 세팅 (기존 사이드바)")
+    
+    product_options = list(PRODUCTS_DB.keys())
+    product_choice = st.selectbox(
+        "📦 타겟 제품 선택 (Obsidian DB 연동)",
+        options=product_options
+    )
+    
+    selected_prod_info = PRODUCTS_DB.get(product_choice, {})
+    default_kw = selected_prod_info.get("hub_keyword", "허리아플때")
+    
+    keyword_input = st.text_input(
+        "🔍 네이버 SEO 타겟 키워드",
+        value=default_kw
+    )
+    
+    st.markdown("---")
+    st.subheader("🎯 4단계 콘텐츠 퍼널 단계 선택")
+    format_choice = st.selectbox(
+        "퍼널 진행 단계 선택",
+        options=list(SCRIPT_FORMAT_NAMES.keys()),
+        format_func=lambda x: SCRIPT_FORMAT_NAMES[x]
+    )
+    
+    # 💡 [요구사항 1] 선택한 포맷 대본 자동 생성 불러오기 버튼을 포맷 선택 바로 아래에 배치
+    if st.button("💡 선택한 포맷 대본 자동 생성 불러오기", key="btn_sidebar_gen_script"):
+        seo_title, script = generate_naver_clip_script(product_choice, keyword_input, format_type=format_choice)
+        st.session_state["script_text"] = script
+        st.session_state["seo_title"] = seo_title
+        st.success(f"[{SCRIPT_FORMAT_NAMES[format_choice]}] 대본이 생성되었습니다!")
+        st.rerun()
+
+    st.markdown("---")
+    voice_tuple = st.selectbox(
+        "🎙️ AI 성우 보이스 & 릴스 톤 선택",
+        options=[
+            ("🐸 릴스 개구리/캐주얼 톤 (톡톡 튀는 릴스 캐릭터)", {"voice": "ko-KR-SunHiNeural", "rate": "+15%", "pitch": "+25Hz"}),
+            ("⚡ 릴스 숏폼 빠른 톤 (경쾌한 릴스 리뷰어)", {"voice": "ko-KR-InJoonNeural", "rate": "+20%", "pitch": "+15Hz"}),
+            ("✨ 릴스 귀여운 아기 톤 (앙증맞은 숏폼 톤)", {"voice": "ko-KR-SunHiNeural", "rate": "+10%", "pitch": "+40Hz"}),
+            ("🎧 릴스 청년 유튜버 톤 (친근하고 밝은 톤)", {"voice": "ko-KR-HyunsuNeural", "rate": "+8%", "pitch": "+5Hz"}),
+            ("👩‍💼 마케팅 여성 - 선희 (또렷하고 신뢰감 있는 톤)", {"voice": "ko-KR-SunHiNeural", "rate": "+0%", "pitch": "+0Hz"}),
+            ("👨‍💼 마케팅 남성 - 인준 (지적이고 차분한 톤)", {"voice": "ko-KR-InJoonNeural", "rate": "+0%", "pitch": "+0Hz"})
+        ],
+        format_func=lambda x: x[0]
+    )
+    voice_choice = voice_tuple[1]
+
+    # 🎧 [요구사항 2] 성우 보이스 샘플 미리듣기 플레이어 연동
+    if st.button("🎧 선택한 성우 샘플 보이스 미리듣기", key="btn_preview_voice"):
+        with st.spinner("AI 성우 보이스 미리듣기 샘플 생성 중..."):
+            audio_path = generate_voice_sample_audio_sync(voice_choice, "sample_voice.mp3")
+            st.session_state["sample_voice_path"] = audio_path
+
+    if "sample_voice_path" in st.session_state and os.path.exists(st.session_state["sample_voice_path"]):
+        st.audio(st.session_state["sample_voice_path"], format="audio/mp3")
+
+    st.markdown("---")
+    st.subheader("📐 자막 및 화면 고정 값")
+    st.info("""
+    - **화면 비율**: 9:16 (1080x1920 세로 숏폼)
+    - **자막 폰트**: Pretendard Black (시스템 연동)
+    - **글자 크기**: 14.5 (왕글씨 1줄 순차 전환)
+    - **데드존 보정**: 하단 UI 안 가리도록 중하단 배치
+    - **싱크 보정**: 앞/뒤 무음 0.01초 칼 컷트 적용
+    """)
+    
+    with st.expander("🎯 노리몰 영상팀 업무가이드 & KPI"):
+        st.markdown("""
+        * **핵심 행동 목표**: 일 유효 고객 **150명 유입** 달성
+        * **전환율 목표 (CVR)**: **5%** (100명 중 5명 구매)
+        * **프로 마케터 마인드셋**: "단순 영상 제작 X ➡️ 특정 키워드/후킹으로 유입 및 매출 증명"
+        * **편집 원칙**: 15~30초 완독률, 2~3초 화면 컷 전환, 첫 3초 강력한 훅 헤드라인
+        """)
+
+    st.markdown("---")
+    st.markdown("### 📝 대본 생성 및 피드백")
     col1, col2 = st.columns([1, 1])
 
     with col1:
