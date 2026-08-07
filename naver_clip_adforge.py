@@ -376,9 +376,17 @@ Format: just raw text that a TTS can read nicely. No timestamps, no visual direc
 
 ====COMMENT====
 [Comment CTA]
-If Format A: Write a polite comment encouraging engagement (no product).
-If Format B: Write a comment promoting "{product_name}", e.g., "영상에서 말한 그 제품! 네이버에 '{product_name}'를 검색해 보세요."
-If Format C: Write a comment with a link or search CTA for "{product_name}".
+Write a rich, highly detailed pinned comment that supplements the video content (like a mini-blog post).
+Structure it exactly like this:
+**[Catchy Title related to the topic]**
+1. **[Step 1 Name]** [Detailed explanation and tips]
+2. **[Step 2 Name]** [Detailed explanation and tips]
+3. **[Step 3 Name]** [Detailed explanation and tips]
+
+At the very end of this informational comment:
+If Format A: Write a polite closing encouraging them to save the video.
+If Format B: Add a natural CTA like "영상에서 말한 그 꿀템! 네이버에 '{product_name}'를 검색해 보세요."
+If Format C: Add a direct CTA to check out "{product_name}".
 
 ====DESCRIPTION====
 [Video Description & Hashtags]
