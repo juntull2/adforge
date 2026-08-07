@@ -508,27 +508,53 @@ def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: s
 # 6. AI TTS + 배경 비디오 소스 + Pretendard 자막 100% 자동 제작
 # -------------------------------------------------------------------
 async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-SunHiNeural"):
-    if isinstance(voice_config, dict):
-        voice = voice_config.get("voice", "ko-KR-SunHiNeural")
-        rate = voice_config.get("rate", "+0%")
-        pitch = voice_config.get("pitch", "+0Hz")
-    elif isinstance(voice_config, str) and voice_config.startswith("{"):
-        try:
-            cfg = json.loads(voice_config)
-            voice = cfg.get("voice", "ko-KR-SunHiNeural")
-            rate = cfg.get("rate", "+0%")
-            pitch = cfg.get("pitch", "+0Hz")
-        except Exception:
-            voice, rate, pitch = voice_config, "+0%", "+0Hz"
-    else:
-        voice = voice_config
-        rate = "+0%"
-        pitch = "+0Hz"
-
-    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch)
+    """
+    Microsoft Edge TTS 엔진을 사용하여 텍스트를 음성(mp3)으로 변환
+    """
+    communicate = edge_tts.Communicate(text, voice_config)
     await communicate.save(output_path)
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural"):
+import requests
+
+def generate_elevenlabs_tts(text: str, output_path: str, voice_id: str, api_key: str):
+    """
+    ElevenLabs API를 사용하여 텍스트를 음성(mp3)으로 변환
+    """
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": api_key
+    }
+    
+    data = {
+        "text": text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75
+        }
+    }
+    
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"ElevenLabs API Error: {response.status_code} - {response.text}")
+        
+    with open(output_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key=""):
+    """
+    순수 자동화 로직:
+    1. 대본 텍스트를 문장/구절(Phrases) 단위로 분리
+    2. TTS 오디오 생성 및 무음 제거 (Edge TTS or ElevenLabs)
+    3. 오디오 길이에 맞춰 스톡 비디오 컷 편집
+    4. 구절(Phrase) 단위로 100% 정밀 캡컷 자막(TextSegment) 싱크 배치
+    5. 캡컷 draft_content.json 파일 빌드 (포팅)
+    """
     import time
     project_name = f"AutoProject_{int(time.time())}"
     
@@ -576,7 +602,15 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
         mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
         try:
-            asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
+            if voice.startswith("el_"):
+                # ElevenLabs TTS
+                real_voice_id = voice.replace("el_", "")
+                if not el_api_key:
+                    raise Exception("ElevenLabs API Key가 없습니다.")
+                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
+            else:
+                # Edge TTS
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
         except Exception as e:
             print(f"  [오디오 생성 실패 건너뜀] {e}")
             continue

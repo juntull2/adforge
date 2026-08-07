@@ -131,6 +131,9 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
                 # Fallback if delimiters are missing
                 script_part = raw_output.strip()
                 
+            # 한 문장마다 강제 줄바꿈 처리 (마침표, 물음표, 느낌표 뒤)
+            script_part = re.sub(r'([.?!])\s+', r'\1\n', script_part)
+                
             # If AI left conversational text like "Here is the script:", we can try to strip it,
             # but using ====SCRIPT==== delimiter usually prevents this.
             st.session_state["parsed_script"] = script_part
@@ -158,18 +161,38 @@ st.subheader("STEP 2: 캡컷 연동 & Hailuo 프롬프트 추출")
 default_script = st.session_state.get("parsed_script", "")
 script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨)", value=default_script, height=200)
 
-voice_choice = st.selectbox(
-    "🎙️ AI 성우 보이스 선택",
-    options=[
-        ("👩‍💼 마케팅 여성 - 선희 (차분/신뢰)", "ko-KR-SunHiNeural"),
-        ("👩‍🏫 아나운서 여성 - 지민 (깔끔/명확)", "ko-KR-JiMinNeural"),
-        ("👵 다정한 아주머니 - 순복 (포근/시니어)", "ko-KR-SoonBokNeural"),
-        ("👨‍💼 마케팅 남성 - 인준 (지적/차분)", "ko-KR-InJoonNeural"),
-        ("👨‍🏫 신뢰감 남성 - 봉진 (묵직/안정)", "ko-KR-BongJinNeural"),
-        ("🎧 유튜버 청년 - 현수 (친근/밝음)", "ko-KR-HyunsuNeural")
-    ],
-    format_func=lambda x: x[0]
-)[1]
+col_v1, col_v2 = st.columns(2)
+
+EL_API_KEY_FILE = "el_api_key.txt"
+cached_el_api_key = os.environ.get("ELEVENLABS_API_KEY", "")
+if os.path.exists(EL_API_KEY_FILE):
+    with open(EL_API_KEY_FILE, "r", encoding="utf-8-sig") as f:
+        cached_el_api_key = f.read().strip()
+
+with col_v1:
+    voice_choice = st.selectbox(
+        "🎙️ AI 성우 보이스 선택",
+        options=[
+            ("🌟 [프리미엄] 매력적인 여성 - Rachel", "el_21m00Tcm4TlvDq8ikWAM"),
+            ("🌟 [프리미엄] 다이내믹 남성 - Drew", "el_29vD33N1CtxCmqQRPOHJ"),
+            ("🌟 [프리미엄] 발랄한 여성 - Bella", "el_EXAVITQu4vr4xnSDxMaL"),
+            ("🌟 [프리미엄] 묵직한 중년 남성 - Antoni", "el_ErXwobaYiN019PkySvjV"),
+            ("---", ""),
+            ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),
+            ("👩‍🏫 [무료] 아나운서 여성 - 지민", "ko-KR-JiMinNeural"),
+            ("👵 [무료] 다정한 아주머니 - 순복", "ko-KR-SoonBokNeural"),
+            ("👨‍💼 [무료] 마케팅 남성 - 인준", "ko-KR-InJoonNeural"),
+            ("👨‍🏫 [무료] 신뢰감 남성 - 봉진", "ko-KR-BongJinNeural"),
+            ("🎧 [무료] 유튜버 청년 - 현수", "ko-KR-HyunsuNeural")
+        ],
+        format_func=lambda x: x[0]
+    )[1]
+
+with col_v2:
+    el_api_key = st.text_input("🔑 ElevenLabs API Key (프리미엄 선택 시 필수)", type="password", value=cached_el_api_key, placeholder="sk_...")
+    if el_api_key and el_api_key != cached_el_api_key:
+        with open(EL_API_KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(el_api_key)
 
 col1, col2 = st.columns(2)
 
@@ -180,8 +203,13 @@ with col1:
         else:
             with st.spinner("CapCut 초안 프로젝트 렌더링 중..."):
                 try:
-                    proj_name = build_capcut_project_for_naver_clip(script_text, voice_choice)
-                    st.success(f"성공적으로 캡컷 프로젝트 '{proj_name}' 초안을 생성했습니다! 캡컷 앱에서 확인해주세요.")
+                    if voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    else:
+                        proj_name = build_capcut_project_for_naver_clip(script_text, voice_choice, el_api_key=el_api_key)
+                        st.success(f"성공적으로 캡컷 프로젝트 '{proj_name}' 초안을 생성했습니다! 캡컷 앱에서 확인해주세요.")
                 except Exception as e:
                     st.error(f"오류 발생: {e}")
 
