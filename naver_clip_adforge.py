@@ -99,13 +99,13 @@ DEFAULT_PRODUCTS_DB = {
 }
 
 def clean_obsidian_review_text(raw_text: str) -> str:
-    """마크다운 기호(##, *, -, 💬), 따옴표, 이모지 및 YAML 키워드를 깨끗이 클리닝하는 함수"""
-    cleaned = re.sub(r'^[#*\-•💬\s"\']+', '', raw_text.strip())
-    cleaned = re.sub(r'["\']+$', '', cleaned.strip())
+    """마크다운 기호(##, *, -, 💬), 따옴표, 이모지 및 YAML 키워드를 완벽히 클리닝하는 함수"""
+    # 불필요한 마크다운 기호 및 이모지 전면 제거
+    cleaned = re.sub(r'[#*\-•💬\s"\']+', ' ', raw_text).strip()
+    cleaned = re.sub(r'^(실제 구매|구매 고객|후기|리뷰|대표 카테고리|허브키워드|네이밍|카테고리)[^\n]*', '', cleaned).strip()
     # 메타데이터 라인 제거
     if any(cleaned.startswith(k) for k in ["product_name:", "hub_keyword:", "category:", "target:", "usp:", "pain_points:", "solution:", "stock_keywords:", "reviews:"]):
         return ""
-    cleaned = re.sub(r'^(실제 구매|구매 고객|후기|리뷰|대표 카테고리)[^\n]*', '', cleaned).strip()
     return cleaned
 
 def load_obsidian_products_db() -> dict:
@@ -137,28 +137,16 @@ def load_obsidian_products_db() -> dict:
                         break
                     if review_section:
                         line_clean = clean_obsidian_review_text(line)
-                        if len(line_clean) >= 8 and not line_clean.startswith("##"):
+                        # 20자 이상의 완전한 실제 구매 후기 문장만 수용
+                        if len(line_clean) >= 20 and not any(junk in line_clean for junk in ["##", "카테고", "*", "\""]):
                             if line_clean not in reviews:
                                 reviews.append(line_clean)
 
-                if not reviews:
-                    if "다피다" in prod_name:
-                        reviews = [
-                            "피부 겉만 따뜻한 게 아니라 척추 속근육까지 사르르 풀려서 대만족입니다.",
-                            "한의원 찜질 느낌 그대로라 퇴근 후 침대에서 매일 사용하고 있어요.",
-                            "30일 무상 환불 보증이라 안심하고 샀는데 어머니가 너무 좋아하십니다."
-                        ]
-                    else:
-                        reviews = [
-                            "소음이 1도 없고 관절 무리 없이 부모님이 매일 편하게 운동하십니다.",
-                            "유선 리모컨이 있어 어르신도 허리 굽힐 필요 없이 조작이 정말 간편해요.",
-                            "3단계 스피드 조절이 되니까 다리 재활 운동에 최고입니다."
-                        ]
-
-                # 기존 DB 업데이트 또는 신규 추가
+                # 기존 DB 업데이트 (파싱된 클린 후기가 1개 이상 있을 때만 덮어쓰기)
                 if prod_name in products_db:
                     products_db[prod_name]["hub_keyword"] = hub_kw
-                    products_db[prod_name]["reviews"] = reviews[:3]
+                    if reviews:
+                        products_db[prod_name]["reviews"] = reviews[:4]
                 else:
                     products_db[prod_name] = {
                         "hub_keyword": hub_kw,
@@ -167,7 +155,7 @@ def load_obsidian_products_db() -> dict:
                         "pain_points": ["불편함 해소", "비용 부담"],
                         "solution": f"{prod_name}으로 빠르고 편리하게 해결",
                         "stock_keywords": ["health", "lifestyle"],
-                        "reviews": reviews[:3]
+                        "reviews": reviews[:4] if reviews else DEFAULT_PRODUCTS_DB.get(prod_name, {}).get("reviews", [])
                     }
             except Exception as e:
                 print(f"Obsidian parsing warning for {md_file}: {e}")
