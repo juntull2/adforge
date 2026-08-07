@@ -368,8 +368,7 @@ B (Indirect Promo): Give tips first, then casually mention "I use a specific dev
 C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, explaining its benefits.
 
 OUTPUT STRUCTURE:
-Write ONLY the content requested below, without any extra markdown formatting or conversational text.
-Separate the video script, comment CTA, and video description with exactly these delimiters: "====COMMENT====" and "====DESCRIPTION===="
+You MUST output exactly THREE sections (Script, Comment, Description), separated by exactly these delimiters: "====COMMENT====" and "====DESCRIPTION====". Do not omit any section!
 
 [Video Script]
 Write the narration text for a 30-40 second short-form video.
