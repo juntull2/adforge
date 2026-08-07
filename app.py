@@ -29,7 +29,7 @@ st.markdown('<div class="sub-header">대본 기획부터 캡컷 프로젝트 생
 API_KEY_FILE = "nv_api_key.txt"
 cached_api_key = os.environ.get("NVIDIA_API_KEY", "")
 if os.path.exists(API_KEY_FILE):
-    with open(API_KEY_FILE, "r", encoding="utf-8") as f:
+    with open(API_KEY_FILE, "r", encoding="utf-8-sig") as f:
         cached_api_key = f.read().strip()
 
 col_key, col_model = st.columns(2)
