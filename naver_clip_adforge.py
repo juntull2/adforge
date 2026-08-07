@@ -364,14 +364,17 @@ Current Task:
 - Selected Format: {video_format}
 
 Format Guidelines & Rules:
-1. Storyline (Empathy/Emotion): The script MUST follow the "Empathy Viral Structure" (상황 -> 공감 -> 해소). 
-   - 1. 상황 (Situation): Present a relatable daily struggle (e.g., "오후 3시만 되면 허리가 뻐근하시죠?").
-   - 2. 공감 (Empathy): Acknowledge their pain deeply.
-   - 3. 해소 (Resolution): Provide a clear, actionable tip or solution.
-2. Hooking (First 3 Seconds): The very first sentence MUST be a "Twist Hook". Use one of these:
-   - 역설(Paradox) / 위험(Danger): "유산소 운동, 오히려 독이 될 수 있습니다."
-   - 수치화(Numbers): "7일 만에 허리 통증이 사라진 비밀"
-   - 감정/일상 섞기: "남들 다 편하게 잘 때 나만 허리 아파서 뒤척이는 이유"
+1. Storyline (PASTOR Framework): The script MUST follow the "PASTOR" structure.
+   - P (Problem): Hook them in the first 3 seconds by stating a specific pain point (e.g., "조금만 서 있어도 허리가 뻐근하시죠?").
+   - A (Amplify): Explain the cause of the problem to build professional trust (e.g., "척추 기립근이 잠들었기 때문입니다.").
+   - S (Solution): Provide a low-barrier, easy solution (e.g., "제자리에서 1분 만에 세우는 특급 비법!").
+   - T (Transformation): Explain step-by-step actions and the positive transformation (e.g., "무너진 척추 기둥을 세워줍니다.").
+   - O (Offer): A strong Call to Action (e.g., "저장하시고 '척추기립근'이라고 남겨주세요").
+2. Selling Points to Embed:
+   - Convenience: Emphasize how easy and fast it is (e.g., "제자리에서", "1분만에").
+   - Target: Speak directly to middle-aged modern people.
+   - Clarity: Use structured numbers (e.g., "1단계", "2단계").
+   - Engagement: Induce social interaction (e.g., specific keyword comment).
 3. Promo Rules:
    - Format A (Pure Info): 100% helpful tips. Zero product mention. End with "도움이 되셨다면 좋아요와 저장 부탁드려요!"
    - Format B (Indirect Promo): Give tips (80%), then casually mention (20%) "I use a specific device/item for this. I'll leave the one I use in the comments!". DO NOT say the brand name "{product_name}" in the video.
@@ -552,7 +555,8 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     temp_dir = os.path.join(os.getcwd(), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=12)
+    # 2~3줄 형태로 꽉 차게 보이기 위해 max_chars_per_phrase=18 적용
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
 
     print(f"\n========================================================")
     print(f"[네이버 클립 프로젝트 생성 시작] {project_name}")
@@ -606,14 +610,17 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
             phrase_timerange = Timerange(phrase_start_us, phrase_duration_us)
 
+            # 3초(3,000,000 us) 이전 구간은 후킹 강조 스타일, 이후는 일반 스타일
+            is_hook = current_time_us < 3000000
+
             style = TextStyle(
                 size=14.5,
-                color=(1.0, 1.0, 1.0),
+                color=(1.0, 0.9, 0.0) if is_hook else (1.0, 1.0, 1.0),
                 bold=True,
                 align=1
             )
-            border = TextBorder(color=(0.0, 0.0, 0.0), width=45.0)
-            clip_settings = ClipSettings(transform_x=0.0, transform_y=-0.48)
+            border = TextBorder(color=(0.0, 0.0, 0.0), width=45.0 if is_hook else 25.0)
+            clip_settings = ClipSettings(transform_x=0.0, transform_y=-0.35 if is_hook else -0.48)
 
             text_seg = TextSegment(
                 text=phrase,
