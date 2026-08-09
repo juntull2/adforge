@@ -1,5 +1,6 @@
 import os
 import re
+import pandas as pd
 import streamlit as st
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
@@ -52,6 +53,90 @@ with col_model:
 st.markdown("---")
 
 # -------------------------------------------------------------------
+# 구글 시트 연동 (키워드 추천)
+# -------------------------------------------------------------------
+st.subheader("📊 타겟 키워드 분석 데이터 (Google Sheet 연동)")
+
+@st.cache_data(ttl=3600)
+def load_keyword_data():
+    sheet_url = "https://docs.google.com/spreadsheets/d/1-xfToD-ns9nBwj7Eh0URGOKc_YWcxxt5a3vJXgRqz9Q/export?format=csv"
+    try:
+        df = pd.read_csv(sheet_url)
+        # 컬럼명의 개행문자 제거 및 공백 정리
+        df.columns = df.columns.str.replace(r'\n', ' ', regex=True).str.strip()
+        
+        if '키워드' in df.columns:
+            df = df.dropna(subset=['키워드'])
+            # 첫 번째 데이터 행이 고유번호 안내인 경우 제외
+            if len(df) > 0 and df.iloc[0]['키워드'] == '고유번호':
+                df = df.iloc[1:]
+                
+        # --- 네이버 클립 6탭 이내 노출 조건 필터링 ---
+        tab_cols = ['1탭', '2탭', '3탭', '4탭', '5탭', '6탭']
+        mask = pd.Series([False] * len(df), index=df.index)
+        for col in tab_cols:
+            if col in df.columns:
+                mask = mask | df[col].astype(str).str.contains('네이버 클립', na=False)
+        df = df[mask]
+        # ---------------------------------------------
+        
+        # 필터링할 주요 컬럼만 추출 (정규화된 이름에 맞춰서)
+        display_cols = []
+        target_cols = ['키워드', '전체  검색량', 'MB  검색량', '블로그  글개수', '1탭', '2탭', '3탭', '4탭', '5탭', '6탭']
+        for c in target_cols:
+            if c in df.columns:
+                display_cols.append(c)
+            elif c.replace('  ', ' ') in df.columns:
+                display_cols.append(c.replace('  ', ' '))
+                
+        return df[display_cols] if display_cols else df
+    except Exception as e:
+        st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
+        return None
+
+df_keywords = load_keyword_data()
+
+selected_keyword = ""
+if df_keywords is not None and not df_keywords.empty:
+    st.markdown("아래 표에서 키워드를 선택하면 **'세부 주제'**에 자동으로 입력됩니다.")
+    
+    # 1. 네이버 모바일 검색 링크 추가 및 컬럼 순서 재배치 (키워드 바로 옆)
+    df_keywords['네이버 검색'] = "https://m.search.naver.com/search.naver?query=" + df_keywords['키워드']
+    cols = df_keywords.columns.tolist()
+    cols.insert(1, cols.pop(cols.index('네이버 검색')))
+    df_keywords = df_keywords[cols]
+    
+    # 2. '네이버 클립' 셀 강조 스타일링
+    def highlight_clip(val):
+        if '네이버 클립' in str(val):
+            return 'background-color: #00C73C; color: white; font-weight: bold;'
+        return ''
+    
+    tab_cols = [c for c in df_keywords.columns if '탭' in c]
+    styled_df = df_keywords.style.map(highlight_clip, subset=tab_cols)
+    
+    event = st.dataframe(
+        styled_df, 
+        use_container_width=True, 
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="single-row",
+        column_config={
+            "네이버 검색": st.column_config.LinkColumn(
+                "모바일 검색",
+                display_text="🔍 검색하기"
+            )
+        }
+    )
+    
+    if len(event.selection.rows) > 0:
+        selected_idx = event.selection.rows[0]
+        selected_keyword = df_keywords.iloc[selected_idx]['키워드']
+        st.success(f"✅ 선택된 키워드: **{selected_keyword}**")
+
+st.markdown("---")
+
+# -------------------------------------------------------------------
 # STEP 1: 4050 타겟 맞춤 대본 기획
 # -------------------------------------------------------------------
 st.subheader("STEP 1: 4050 타겟 맞춤 대본 기획")
@@ -63,7 +148,7 @@ with col_cat:
         ["1순위: 건강 (관여도 높은 질병, 허리 보호 등)", "2순위: 골프 (시니어 스포츠)", "3순위: 미용 (주름, 머리 등)"]
     )
 with col_sub:
-    sub_topic = st.text_input("✏️ 세부 주제", placeholder="예) 일상 속 허리를 보호하는 법")
+    sub_topic = st.text_input("✏️ 세부 주제", value=selected_keyword, placeholder="예) 일상 속 허리를 보호하는 법")
 
 col_fmt, col_prod = st.columns(2)
 with col_fmt:
@@ -77,6 +162,22 @@ with col_fmt:
     )
 with col_prod:
     product_name = st.text_input("📦 연결할 제품명", value="다피다 허리찜질기")
+
+with st.expander("⚙️ 고급 대본 기획 설정 (프롬프트 & 벤치마킹)", expanded=False):
+    st.markdown("AI에게 역할을 부여하는 프롬프트와, 따라 하고 싶은 대박 숏폼 대본(벤치마킹)을 직접 입력하여 생성 퀄리티를 비약적으로 높여보세요.")
+    
+    default_system_prompt = """당신은 10년 차 탑티어 영상 광고 기획자이자 카피라이터입니다. 당신의 목표는 제공된 [제품 정보]와 [벤치마킹 대본]을 결합하여, 시청자가 3초 만에 몰입하고 결국 구매 버튼을 누르게 만드는 폭발적인 숏폼 광고 대본을 작성하는 것입니다.
+
+핵심 목표: 단순한 제품 설명이 아닌, 벤치마킹 대본의 '성공 방정식(흐름, 톤앤매너)'을 완벽하게 이식하여 완전히 새로운 제품의 후킹 대본을 창조해냅니다.
+
+작성 규칙:
+1. 벤치마킹 분석: 벤치마킹 대본에서 시선을 끄는 방식, 감정을 자극하는 포인트, 구체적인 수치 활용법, 과장이나 비유법을 분석하여 새 대본에 동일한 리듬으로 적용하세요.
+2. 3초 후킹: 영상의 첫 3초는 무조건 '시선 강탈' 또는 '강한 공감/충격'을 주어야 합니다.
+3. 구체화 및 감정 자극: 소비자가 겪는 불편함(Pain Point)을 날카롭게 찌르고 감정을 자극하세요. 이후 우리 제품이 어떻게 그 문제를 구체적이고 확실하게 해결해 주는지 제시하세요.
+4. 행동 유도: 대본의 마지막은 무조건 명확한 행동 유도(프로필 링크 클릭, 댓글 확인 등)로 마무리하세요."""
+    
+    custom_system_prompt = st.text_area("🔧 시스템 프롬프트 (영상 광고 기획자 롤플레잉)", value=default_system_prompt, height=250)
+    benchmark_script = st.text_area("📈 벤치마킹 대본 (참고할 타사 대박 숏폼 대본 원문)", value="", placeholder="예: 이거 모르면 평생 후회합니다! 매일 아침 얼굴 붓기 1분만에 빼는 비법...", height=150)
 
 if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_width=True):
     if not nvidia_api_key:
@@ -93,7 +194,14 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
             st.markdown("##### 💡 대본 작성 중 (실시간)")
             def script_stream_generator():
                 for chunk in generate_strategic_script_stream(
-                    topic_category, sub_topic, video_format, product_name, nvidia_api_key, model_choice
+                    topic_category, 
+                    sub_topic, 
+                    video_format, 
+                    product_name, 
+                    nvidia_api_key,
+                    model_choice,
+                    custom_system_prompt,
+                    benchmark_script
                 ):
                     yield chunk
                     
@@ -170,13 +278,18 @@ if os.path.exists(EL_API_KEY_FILE):
         cached_el_api_key = f.read().strip()
 
 with col_v1:
-    voice_choice = st.selectbox(
+    selected_voice = st.selectbox(
         "🎙️ AI 성우 보이스 선택",
         options=[
             ("🌟 [프리미엄] 매력적인 여성 - Rachel", "el_21m00Tcm4TlvDq8ikWAM"),
             ("🌟 [프리미엄] 다이내믹 남성 - Drew", "el_29vD33N1CtxCmqQRPOHJ"),
             ("🌟 [프리미엄] 발랄한 여성 - Bella", "el_EXAVITQu4vr4xnSDxMaL"),
             ("🌟 [프리미엄] 묵직한 중년 남성 - Antoni", "el_ErXwobaYiN019PkySvjV"),
+            ("---", ""),
+            ("🐟 [Fish Audio] 건강한 여성 목소리", "fish_0340360282524779a06c68b76d80f773"),
+            ("🐟 [Fish Audio] 3040 건강정보 단호한 아내", "fish_d93d9edfdc7649ce9fa573cfa7be504f"),
+            ("🐟 [Fish Audio] 활기찬 건강 보이스", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
+            ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom"),
             ("---", ""),
             ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),
             ("👩‍🏫 [무료] 아나운서 여성 - 지민", "ko-KR-JiMinNeural"),
@@ -189,27 +302,65 @@ with col_v1:
     )[1]
 
 with col_v2:
-    el_api_key = st.text_input("🔑 ElevenLabs API Key (프리미엄 선택 시 필수)", type="password", value=cached_el_api_key, placeholder="sk_...")
+    el_api_key = st.text_input("🔑 ElevenLabs API Key", type="password", value=cached_el_api_key, placeholder="sk_...")
     if el_api_key and el_api_key != cached_el_api_key:
         with open(EL_API_KEY_FILE, "w", encoding="utf-8") as f:
             f.write(el_api_key)
+            
+    FISH_API_KEY_FILE = "fish_api_key.txt"
+    cached_fish_api_key = os.environ.get("FISH_API_KEY", "")
+    if os.path.exists(FISH_API_KEY_FILE):
+        with open(FISH_API_KEY_FILE, "r", encoding="utf-8-sig") as f:
+            cached_fish_api_key = f.read().strip()
+            
+    fish_api_key = st.text_input("🔑 Fish Audio API Key", type="password", value=cached_fish_api_key)
+    if fish_api_key and fish_api_key != cached_fish_api_key:
+        with open(FISH_API_KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(fish_api_key)
+            
+    if selected_voice == "fish_custom":
+        fish_reference_id = st.text_input("🐟 Fish Audio Reference ID", placeholder="예: 62243d5...")
+        actual_voice_choice = f"fish_{fish_reference_id}" if fish_reference_id else "fish_"
+    else:
+        actual_voice_choice = selected_voice
 
 col1, col2 = st.columns(2)
 
 with col1:
+    from naver_clip_adforge import get_capcut_projects, build_capcut_project_for_naver_clip
+    templates = get_capcut_projects()
+    template_options = [("none", "템플릿 안 함 (맨땅에서 자동 생성)")] + [(t[1], f"🎬 {t[0]}") for t in templates]
+    
+    selected_template = st.selectbox(
+        "🛠️ 캡컷 템플릿 선택 (디자인/효과 훔쳐오기)",
+        options=template_options,
+        format_func=lambda x: x[1]
+    )[0]
+    
     if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True):
         if not script_text.strip():
             st.error("대본이 비어있습니다!")
         else:
             with st.spinner("CapCut 초안 프로젝트 렌더링 중..."):
                 try:
-                    if voice_choice == "":
+                    if actual_voice_choice == "":
                         st.error("올바른 성우를 선택해주세요.")
-                    elif voice_choice.startswith("el_") and not el_api_key:
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
                         st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
                     else:
-                        proj_name = build_capcut_project_for_naver_clip(script_text, voice_choice, el_api_key=el_api_key)
-                        st.success(f"성공적으로 캡컷 프로젝트 '{proj_name}' 초안을 생성했습니다! 캡컷 앱에서 확인해주세요.")
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        project_name = build_capcut_project_for_naver_clip(
+                            script_text=script_text,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            template_folder=selected_template
+                        )
+                        st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
+                        st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
                 except Exception as e:
                     st.error(f"오류 발생: {e}")
 

@@ -339,7 +339,9 @@ def generate_strategic_script_stream(
     video_format: str,
     product_name: str,
     api_key: str,
-    model_name: str = "nvidia/nemotron-3-ultra-550b-a55b"
+    model_name: str = "nvidia/nemotron-3-ultra-550b-a55b",
+    custom_system_prompt: str = "",
+    benchmark_script: str = ""
 ):
     """4050 여성을 타겟으로 하는 네이버 클립 대본 생성 (스트리밍)"""
     if not api_key:
@@ -353,16 +355,25 @@ def generate_strategic_script_stream(
             api_key=api_key
         )
         
-        system_prompt = f"""You are an expert content strategist and performance marketer for Naver Clip, targeting 40~50-year-old women.
+        base_prompt = custom_system_prompt.strip()
+        if not base_prompt:
+            base_prompt = """You are an expert content strategist and performance marketer for Naver Clip, targeting 40~50-year-old women.
 You write polite, trustworthy, and highly engaging 'senior format' scripts (using ~해요, ~습니다).
-You MUST follow the company's "1M Viral Formula" and "DA Ad Twist Formula".
+You MUST follow the company's "1M Viral Formula" and "DA Ad Twist Formula"."""
+
+        system_prompt = f"""{base_prompt}
 
 Current Task:
 - Category: {topic_category}
 - Specific Topic: {sub_topic}
 - Product Context: {product_name}
 - Selected Format: {video_format}
+"""
+        
+        if benchmark_script.strip():
+            system_prompt += f"\n[벤치마킹 할 타사 대박 숏폼 대본 원문]\n{benchmark_script.strip()}\n위 벤치마킹 대본의 후킹 방식, 톤앤매너, 구조를 모방하여 아래 가이드라인에 맞게 새 대본을 작성하세요.\n"
 
+        system_prompt += f"""
 Format Guidelines & Rules:
 1. Storyline (PASTOR Framework): The script MUST follow the "PASTOR" structure.
    - P (Problem): Hook them in the first 3 seconds by stating a specific pain point (e.g., "조금만 서 있어도 허리가 뻐근하시죠?").
@@ -546,7 +557,206 @@ def generate_elevenlabs_tts(text: str, output_path: str, voice_id: str, api_key:
             if chunk:
                 f.write(chunk)
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key=""):
+def generate_fish_audio_tts(text: str, output_path: str, reference_id: str, api_key: str):
+    """
+    Fish Audio API를 사용하여 텍스트를 음성(mp3)으로 변환
+    """
+    url = "https://api.fish.audio/v1/tts"
+    
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    data = {
+        "text": text,
+        "format": "mp3",
+    }
+    
+    if reference_id:
+        data["reference_id"] = reference_id
+        
+    response = requests.post(url, json=data, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Fish Audio API Error: {response.status_code} - {response.text}")
+        
+    with open(output_path, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=1024):
+            if chunk:
+                f.write(chunk)
+
+def get_capcut_projects():
+    import os
+    import json
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if not local_app_data:
+        local_app_data = os.path.expanduser("~\\AppData\\Local")
+    base_path = os.path.join(local_app_data, "CapCut", "User Data", "Projects", "com.lveditor.draft")
+    projects = []
+    if os.path.exists(base_path):
+        for folder in os.listdir(base_path):
+            info_file = os.path.join(base_path, folder, "draft_meta_info.json")
+            if os.path.exists(info_file):
+                try:
+                    with open(info_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        name = data.get("draft_name", folder)
+                        projects.append((name, folder))
+                except:
+                    pass
+    return sorted(projects, key=lambda x: x[0])
+
+def build_from_template(script_text: str, voice: str, api_key: str, template_folder_name: str):
+    import time, shutil, uuid, copy
+    from pydub import AudioSegment as PydubAudio
+    
+    project_name = f"AutoProject_{int(time.time())}"
+    temp_dir = os.path.join(os.getcwd(), "temp_audio")
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    local_app_data = os.environ.get("LOCALAPPDATA")
+    if not local_app_data:
+        local_app_data = os.path.expanduser("~\\AppData\\Local")
+    base_path = os.path.join(local_app_data, "CapCut", "User Data", "Projects", "com.lveditor.draft")
+    
+    src_folder = os.path.join(base_path, template_folder_name)
+    dst_folder = os.path.join(base_path, project_name)
+    if not os.path.exists(src_folder):
+        raise Exception(f"템플릿 폴더를 찾을 수 없습니다: {src_folder}")
+    
+    shutil.copytree(src_folder, dst_folder)
+    
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
+    
+    combined_audio = PydubAudio.empty()
+    phrase_timings = []
+    current_us = 0
+    
+    for s_idx, struct in enumerate(sentence_structures, 1):
+        full_sentence = struct["full_sentence"]
+        phrases = struct["phrases"]
+        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', full_sentence).strip()
+        if not clean_audio_text:
+            continue
+            
+        mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
+        try:
+            if voice.startswith("el_"):
+                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=voice.replace("el_", ""), api_key=api_key)
+            elif voice.startswith("fish_"):
+                fish_api_key = os.environ.get("FISH_API_KEY", "")
+                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=voice.replace("fish_", ""), api_key=fish_api_key)
+            else:
+                import asyncio
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
+        except Exception as e:
+            print(f"오디오 생성 실패: {e}")
+            continue
+            
+        trim_audio_silence(mp3_path)
+        seg = PydubAudio.from_mp3(mp3_path)
+        sentence_duration_us = int(len(seg) * 1000)
+        combined_audio += seg
+        
+        phrase_effective_lens = [calculate_effective_speech_length(p) for p in phrases]
+        total_effective_len = sum(phrase_effective_lens) or 1.0
+        phrase_start_us = current_us
+        
+        for p_idx, (phrase, eff_len) in enumerate(zip(phrases, phrase_effective_lens)):
+            if p_idx == len(phrases) - 1:
+                phrase_dur = (current_us + sentence_duration_us) - phrase_start_us
+            else:
+                phrase_dur = int(sentence_duration_us * (eff_len / total_effective_len))
+            
+            phrase_timings.append({
+                "text": phrase,
+                "start": phrase_start_us,
+                "duration": phrase_dur
+            })
+            phrase_start_us += phrase_dur
+            
+        current_us += sentence_duration_us
+        
+    final_audio_path = os.path.join(temp_dir, f"{project_name}_merged.mp3")
+    combined_audio.export(final_audio_path, format="mp3")
+    total_audio_dur_us = current_us
+    
+    meta_file = os.path.join(dst_folder, "draft_meta_info.json")
+    with open(meta_file, 'r', encoding='utf-8') as f:
+        meta = json.load(f)
+    meta["draft_name"] = project_name
+    with open(meta_file, 'w', encoding='utf-8') as f:
+        json.dump(meta, f, ensure_ascii=False)
+        
+    content_file = os.path.join(dst_folder, "draft_content.json")
+    with open(content_file, 'r', encoding='utf-8') as f:
+        content = json.load(f)
+        
+    if "audios" in content["materials"] and len(content["materials"]["audios"]) > 0:
+        main_audio = content["materials"]["audios"][0]
+        local_audio_path = os.path.join(dst_folder, "merged.mp3")
+        shutil.copy2(final_audio_path, local_audio_path)
+        main_audio["path"] = local_audio_path
+        main_audio["duration"] = total_audio_dur_us
+        
+        for track in content["tracks"]:
+            if track["type"] == "audio":
+                for seg in track["segments"]:
+                    if seg["material_id"] == main_audio["id"]:
+                        seg["source_timerange"]["duration"] = total_audio_dur_us
+                        seg["target_timerange"]["duration"] = total_audio_dur_us
+
+    if "videos" in content["materials"] and len(content["materials"]["videos"]) > 0:
+        for track in content.get("tracks", []):
+            if track["type"] == "video" and not track.get("is_sub_video", False):
+                if len(track["segments"]) > 0:
+                    last_seg = track["segments"][-1]
+                    last_seg["target_timerange"]["duration"] = total_audio_dur_us - last_seg["target_timerange"]["start"]
+
+    if "texts" in content["materials"] and len(content["materials"]["texts"]) > 0:
+        tmpl_text_mat = content["materials"]["texts"][0]
+        tmpl_text_seg = None
+        text_track = None
+        for track in content.get("tracks", []):
+            if track["type"] == "text":
+                if len(track["segments"]) > 0:
+                    tmpl_text_seg = track["segments"][0]
+                    text_track = track
+                    break
+                    
+        if text_track and tmpl_text_seg:
+            text_track["segments"] = []
+            content["materials"]["texts"] = []
+            
+            def _gen_id(): return str(uuid.uuid4()).upper()
+            
+            for pt in phrase_timings:
+                new_mat = copy.deepcopy(tmpl_text_mat)
+                new_mat["id"] = _gen_id()
+                try:
+                    c_obj = json.loads(new_mat["content"])
+                    c_obj["text"] = pt["text"]
+                    new_mat["content"] = json.dumps(c_obj, ensure_ascii=False)
+                except:
+                    pass
+                content["materials"]["texts"].append(new_mat)
+                
+                new_seg = copy.deepcopy(tmpl_text_seg)
+                new_seg["id"] = _gen_id()
+                new_seg["material_id"] = new_mat["id"]
+                new_seg["target_timerange"]["start"] = pt["start"]
+                new_seg["target_timerange"]["duration"] = pt["duration"]
+                text_track["segments"].append(new_seg)
+
+    with open(content_file, 'w', encoding='utf-8') as f:
+        json.dump(content, f, ensure_ascii=False)
+        
+    print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
+    return project_name
+
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None):
+    if template_folder and template_folder != "none":
+        return build_from_template(script_text, voice, el_api_key, template_folder)
     """
     순수 자동화 로직:
     1. 대본 텍스트를 문장/구절(Phrases) 단위로 분리
@@ -608,6 +818,13 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 if not el_api_key:
                     raise Exception("ElevenLabs API Key가 없습니다.")
                 generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
+            elif voice.startswith("fish_"):
+                # Fish Audio TTS
+                fish_reference_id = voice.replace("fish_", "")
+                fish_api_key = os.environ.get("FISH_API_KEY", "")
+                if not fish_api_key:
+                    raise Exception("Fish Audio API Key가 없습니다.")
+                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
             else:
                 # Edge TTS
                 asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
