@@ -19,10 +19,10 @@ from pycapcut.metadata.effect_meta import EffectMeta
 os.environ["PATH"] += os.pathsep + r"C:\Program Files\FFmpeg\bin"
 
 # -------------------------------------------------------------------
-# Pretendard Black 실제 윈도우 시스템 폰트 경로 연동
+# 여기어때 잘난체 실제 윈도우 시스템 폰트 경로 연동
 # -------------------------------------------------------------------
-PRETENDARD_BLACK_PATH = "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Black.otf"
-PRETENDARD_BLACK_NAME = "Pretendard Black"
+JALNAN_PATH = "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Jalnan2TTF.ttf"
+JALNAN_NAME = "Jalnan2"
 
 class CustomFont:
     def __init__(self, font_name: str, font_path: str):
@@ -31,7 +31,7 @@ class CustomFont:
         self.resource_id = ""
         self.value = EffectMeta(font_name, False, "", "", "", [])
 
-PRETENDARD_BLACK_FONT = CustomFont(PRETENDARD_BLACK_NAME, PRETENDARD_BLACK_PATH)
+JALNAN_FONT = CustomFont(JALNAN_NAME, JALNAN_PATH)
 
 # TextSegment.export_material Monkey-Patching
 _orig_export_material = TextSegment.export_material
@@ -43,17 +43,17 @@ def _custom_export_material(self):
         if "styles" in content_obj and len(content_obj["styles"]) > 0:
             content_obj["styles"][0]["font"] = {
                 "id": "",
-                "name": PRETENDARD_BLACK_NAME,
-                "path": PRETENDARD_BLACK_PATH,
-                "title": PRETENDARD_BLACK_NAME
+                "name": JALNAN_NAME,
+                "path": JALNAN_PATH,
+                "title": JALNAN_NAME
             }
             ret["content"] = json.dumps(content_obj, ensure_ascii=False)
     except Exception:
         pass
 
-    ret["font_name"] = PRETENDARD_BLACK_NAME
-    ret["font_title"] = PRETENDARD_BLACK_NAME
-    ret["font_path"] = PRETENDARD_BLACK_PATH
+    ret["font_name"] = JALNAN_NAME
+    ret["font_title"] = JALNAN_NAME
+    ret["font_path"] = JALNAN_PATH
     ret["font_resource_id"] = ""
     ret["font_id"] = ""
     return ret
@@ -202,36 +202,49 @@ def calculate_effective_speech_length(text: str) -> float:
     punct_count = len(re.findall(r'[,!?…]', text))
     return letters_count + (punct_count * 1.5)
 
-def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 12):
-    raw_sentences = re.split(r'(?<=[.!?…])|\n', script_text)
+def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 10):
+    # 1. 문장 단위(오디오 생성 단위)는 구두점(.!?…) 기준으로만 분리 (원본 \n 유지)
+    raw_sentences = re.split(r'(?<=[.!?…])', script_text)
+    
     sentence_structures = []
-
+    
     for raw in raw_sentences:
-        sentence = raw.strip()
-        if not sentence:
+        sentence_raw = raw.strip(' \t\r')
+        if not sentence_raw.strip():
             continue
+            
+        # 오디오 생성을 위한 깨끗한 문장 (엔터를 공백으로 치환)
+        clean_sentence = sentence_raw.replace('\n', ' ').strip()
+        clean_sentence = re.sub(r'\s+', ' ', clean_sentence)
         
-        if len(sentence) <= max_chars_per_phrase:
-            phrases = [sentence]
+        # 2. 자막 쪼개기 (엔터 기준 최우선 적용)
+        if '\n' in sentence_raw:
+            # 사용자가 직접 엔터로 자막 단위를 명시한 경우
+            phrases = [p.strip() for p in sentence_raw.split('\n') if p.strip()]
         else:
-            words = sentence.split(" ")
-            phrases = []
-            current_phrase = ""
-            for word in words:
-                if len(current_phrase) + len(word) + 1 <= max_chars_per_phrase:
-                    current_phrase += (" " if current_phrase else "") + word
-                else:
-                    if current_phrase:
-                        phrases.append(current_phrase)
-                    current_phrase = word
-            if current_phrase:
-                phrases.append(current_phrase)
-
+            # 엔터가 없는 경우, 기존 글자 수 기반 쪼개기 알고리즘 폴백
+            sentence = clean_sentence
+            if len(sentence) <= max_chars_per_phrase:
+                phrases = [sentence]
+            else:
+                words = sentence.split(" ")
+                phrases = []
+                current_phrase = ""
+                for word in words:
+                    if len(current_phrase) + len(word) + 1 <= max_chars_per_phrase:
+                        current_phrase += (" " if current_phrase else "") + word
+                    else:
+                        if current_phrase:
+                            phrases.append(current_phrase)
+                        current_phrase = word
+                if current_phrase:
+                    phrases.append(current_phrase)
+                    
         sentence_structures.append({
-            "full_sentence": sentence,
+            "full_sentence": clean_sentence,
             "phrases": phrases
         })
-
+        
     return sentence_structures
 
 # -------------------------------------------------------------------
@@ -375,27 +388,33 @@ Current Task:
 
         system_prompt += f"""
 Format Guidelines & Rules:
-1. Storyline (PASTOR Framework): The script MUST follow the "PASTOR" structure.
-   - P (Problem): Hook them in the first 3 seconds by stating a specific pain point (e.g., "조금만 서 있어도 허리가 뻐근하시죠?").
-   - A (Amplify): Explain the cause of the problem to build professional trust (e.g., "척추 기립근이 잠들었기 때문입니다.").
-   - S (Solution): Provide a low-barrier, easy solution (e.g., "제자리에서 1분 만에 세우는 특급 비법!").
-   - T (Transformation): Explain step-by-step actions and the positive transformation (e.g., "무너진 척추 기둥을 세워줍니다.").
-   - O (Offer): A natural Call to Action (e.g., "도움이 되셨다면 좋아요 부탁드려요!"). DO NOT ask the viewer to leave a specific comment word.
-2. Selling Points to Embed:
-   - Convenience: Emphasize how easy and fast it is (e.g., "제자리에서", "1분만에").
-   - Target: Speak directly to middle-aged modern people.
-   - Clarity: Use structured numbers (e.g., "1단계", "2단계").
-   - Engagement: Induce natural social interaction (e.g., likes). DO NOT ask for comments with specific words.
-3. Promo Rules:
-   - Format A (Pure Info): 100% helpful tips. Zero product mention. End with "도움이 되셨다면 좋아요 부탁드려요!"
-   - Format B (Indirect Promo): Give tips (80%), then casually mention (20%) "I use a specific device/item for this. I'll leave the one I use in the comments!". DO NOT say the brand name "{product_name}" in the video.
-   - Format C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, explaining its benefits.
+1. Storyline (PASTOR Framework with Viral Twists): The script MUST follow the "PASTOR" structure, enhanced with viral marketing psychology.
+   - P (Problem & Hook): Hook them in the first 3 seconds. DO NOT use generic questions like "뻐근하시죠?". Use one of these Twists:
+     * Sensory Metaphor (e.g., "하체 전체를 큰 바위 덩어리가 누르고 있는 느낌, 저만 그런가요?")
+     * Reverse Psychology / Exclusion (e.g., "60kg 이하는 절대 쓰지 마세요", "어설프게 아픈 분들은 사지 마세요")
+     * Specific Persona (e.g., "육퇴 후 지친 육아맘", "하루 종일 서서 일하는 직장인")
+   - A (Amplify): Explain the CAUSE of the problem in 1-2 sentences to build trust. Do NOT repeat or restate the pain point from P again.
+   - S (Solution & Mid-roll CTA): Just before revealing the solution, insert a Mid-roll CTA (e.g., "비법 알아보기 전, 좋아요 먼저 누르고 따라하세요!"). Then introduce the easy solution name.
+   - T (Transformation): Explain step-by-step actions (use "1단계", "2단계"). Describe the physical change with Sensational Wording (e.g., "시원하다" -> "혈류가 심장으로 솟구친다", "악악 소리 날 정도로 조져주는"). Each step should build on the previous one naturally.
+   - O (Offer & Psychology): Apply Sunk Cost psychology (e.g., "올해 또 예쁜 쓰레기 사서 중복 투자하실 건가요?"). End with a specific comment CTA keyword (e.g., "댓글에 '하체 가뿐'이라고 남겨주세요"). NEVER end with just "도움이 되셨다면 좋아요 부탁드려요".
+2. Tone & Length:
+   - Write in an Organic Native Tone. Sound like a real person's review, not a polished TV ad.
+   - Length: The script MUST be 10-15 sentences (approx 45-60 seconds long). Keep each sentence short for fast-paced TTS reading.
+3. Coherence Rules (CRITICAL — self-review before outputting):
+   - ZERO repeated phrases or sentences. Read the entire script before outputting — if the same idea or similar wording appears twice, delete the duplicate immediately.
+   - Each sentence must flow naturally into the next. Do NOT use the same subject ("그") or transition at the beginning of consecutive sentences.
+   - Transitions between PASTOR stages must feel seamless, not abrupt. Use bridging words if needed (e.g., "그래서", "근데", "사실은").
+   - The Hook (P) must NEVER be repeated or paraphrased again anywhere in the script.
+4. Promo Rules:
+   - Format A (Pure Info): 100% helpful tips. Zero product mention. End with specific comment CTA.
+   - Format B (Indirect Promo): Give tips (80%), then casually mention (20%) "I use a specific item for this. I'll leave the one I use in the comments!". DO NOT say the brand name "{product_name}" in the video.
+   - Format C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, comparing it to bad alternatives (e.g., "거대하고 비싼 안마의자 대신").
 
 OUTPUT STRUCTURE:
 You MUST output exactly THREE sections (Script, Comment, Description), separated by exactly these delimiters: "====SCRIPT====", "====COMMENT====", and "====DESCRIPTION====". Do not omit any section!
 
 ====SCRIPT====
-Write the narration text for a 30-40 second short-form video.
+Write the narration text for a 45-60 second short-form video (10-15 sentences).
 Format: just raw text that a TTS can read nicely. No timestamps, no visual directions.
 
 ====COMMENT====
@@ -408,7 +427,7 @@ Structure it exactly like this:
 3. **[Step 3 Name]** [Detailed explanation and tips]
 
 At the very end of this informational comment:
-If Format A: Write a polite closing encouraging them to like the video.
+If Format A: Write a polite closing.
 If Format B: Add a natural CTA like "영상에서 말한 그 꿀템! 네이버에 '{product_name}'를 검색해 보세요."
 If Format C: Add a direct CTA to check out "{product_name}".
 
@@ -449,6 +468,70 @@ MUST BE UNDER 200 CHARACTERS TOTAL.
     except Exception as e:
         yield f"오류 발생: {str(e)}"
 
+def generate_image_prompts_stream(script_text: str, api_key: str, model_name: str = "meta/llama-3.3-70b-instruct"):
+    """이미지 생성(Hailuo AI)을 위한 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
+    if not api_key:
+        yield "API 키가 설정되지 않았습니다."
+        return
+        
+    try:
+        from openai import OpenAI
+        client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key=api_key
+        )
+        prompt = f"""
+        You are an expert AI image prompt engineer for MiniMax Hailuo AI (Image Generation).
+        Below is a short-form video script.
+        I need you to break down this script into logical visual scenes (approx 3-5 scenes) to be used as a storyboard or thumbnail reference.
+        For each scene, provide a concise but highly detailed English prompt to generate a cinematic, realistic image using Hailuo AI.
+        
+        CRITICAL RULES FOR HAILUO IMAGE PROMPTS:
+        1. Aspect Ratio: Every prompt MUST begin with "Vertical 9:16 portrait framing," to specify a vertical image format. Do NOT use tags like --ar.
+        2. Modular Formula: Every prompt MUST strictly follow this sequence:
+           [9:16 Portrait Frame] + [Subject + Description] + [Action/Pose] + [Environment/Background] + [Lighting & Mood] + [Camera Shot/Style]
+        3. Subject Details: Be extremely precise about appearance and textures (e.g., "A 40-year-old Korean woman wearing a cozy white knit sweater").
+        4. Scene & Mood: Provide atmospheric cues for cinematic polish (e.g., "golden hour, cinematic lighting, photorealistic, highly detailed, sharp focus").
+        5. Intro Scene Rule: For the first scene (the initial explanation/narration), you MUST feature a "professional doctor in a white lab coat looking directly at the camera" to build viewer trust.
+        6. Conciseness: Keep it focused. Do not write paragraphs. Use sequential modular descriptors separated by commas.
+        
+        Script:
+        {script_text}
+        
+        Output Format (strictly follow this for EVERY scene):
+        [Scene N] <Korean summary of the scene>
+        Prompt: <English Prompt for Image Generation>
+        """
+        
+        kwargs = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": True,
+            "max_tokens": 4096,
+            "temperature": 0.8,
+            "top_p": 0.95
+        }
+        
+        if "nemotron-3-ultra-550b" in model_name.lower():
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}, "reasoning_budget": 4096}
+            kwargs["max_tokens"] = 16384
+            
+        completion = client.chat.completions.create(**kwargs)
+        
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+                
+            reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+            if reasoning:
+                yield reasoning
+                
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+                
+    except Exception as e:
+        yield f"\n\n이미지 프롬프트 생성 중 오류가 발생했습니다: {str(e)}"
+
 def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: str = "nvidia/nemotron-3-ultra-550b-a55b"):
     """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
     if not api_key:
@@ -463,25 +546,34 @@ def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: s
         )
         prompt = f"""
         You are an expert AI video prompt engineer for MiniMax Hailuo AI.
-        Below is a Korean short-form video script.
+        Below is a short-form video script.
         I need you to break down this script into logical visual scenes (approx 3-5 scenes).
-        For each scene, provide a concise but highly detailed English prompt to generate a cinematic, realistic video clip that matches the context.
+        For each scene, provide a concise but highly detailed English prompt to generate a cinematic, realistic video clip.
         
         CRITICAL RULES FOR HAILUO AI PROMPTS:
-        1. Sequence: Always write in the order of "Subject -> Place -> Action". (e.g., A 40-year-old woman in a bright living room stretching her back).
-        2. Movements & Camera: Specify directions precisely (e.g., "moving from left to right"). Always specify camera height/movement (e.g., "eye-level camera", "smooth tracking shot").
-        3. Negative Prompts: Explicitly exclude unwanted elements (e.g., "no distorted faces, no blurry motion, no text overlays").
-        4. Character Consistency: If the same character appears across scenes, repeat phrases like "same woman, consistent face, same character, same hairstyle".
-        5. Transitions: Describe transitions as physical actions, not magical effects (e.g., "lighting gradually shifts", "during the spin the background changes").
-        6. Continuous Shots: To prevent unwanted camera cuts, add "eye-level camera, same distance, centered composition, smooth tracking shot, continuous single take, no cuts".
-        7. Conciseness: Keep the prompt concise and focus only on the core visual elements. Do NOT use overly complex sentences.
+        0. ASPECT RATIO (MANDATORY — ALWAYS FIRST): Every single prompt MUST begin with "Vertical 9:16 portrait framing, smartphone short-form video format," — this is non-negotiable and applies to ALL scenes without exception.
+        1. Modular Formula: Every prompt MUST strictly follow this sequence:
+           [9:16 Portrait Frame] + [Camera Shot + Motion] + [Subject + Description] + [Action Constraint] + [Scene + Environment] + [Lighting & Mood]
+        2. Camera & Motion: Use only portrait-friendly shots (e.g., "Close-up shot, tilt-up", "Medium shot, eye-level", "Low angle looking up"). Avoid wide landscape shots that break vertical framing.
+        3. Subject Details: Be extremely precise about appearance and textures to avoid distortion (e.g., "A 40-year-old Korean woman wearing a cozy white knit sweater").
+        4. Action Constraints: Avoid vague descriptions. Define physical behavior accurately to prevent motion chaos (e.g., "gently massaging her lower back with a warm smile").
+        5. Scene & Mood: Provide atmospheric cues for cinematic polish (e.g., "golden hour, cinematic rim lighting, volumetric lighting, shallow depth of field, bokeh, Arri Alexa").
+        6. INTRO SCENE RULE (MANDATORY): For the first 1-2 scenes (the initial explanation/narration), you MUST feature a "professional doctor in a white lab coat explaining to the camera" to build viewer trust.
+        7. Negative Constraints: Exclude artifacts by adding anti-prompts at the end (e.g., "no plastic texture, no distorted faces, no text overlays, no horizontal landscape composition").
+        8. Conciseness: Keep it focused. Do not write paragraphs. Use sequential modular descriptors separated by commas.
 
         Script:
         {script_text}
         
-        Output Format:
-        [Scene 1] <Korean summary of the scene>
-        Prompt: <English Prompt for Hailuo AI>
+        Output Format (strictly follow this for EVERY scene):
+        [Scene N] <Korean summary of the scene>
+        소스 유형: [📦 스톡 영상] OR [🤖 Hailuo 생성]
+        판단 근거: <1줄 이유>
+        Prompt: <English Prompt for Hailuo AI — only if 🤖 Hailuo 생성. If 📦 스톡 영상, write a Pexels search keyword instead>
+        
+        SOURCE TYPE DECISION RULES:
+        - Use [📦 스톡 영상] when the scene shows: generic lifestyle footage, nature, city, product close-ups, abstract background, simple walking/moving shots that don't require a specific character or branded action.
+        - Use [🤖 Hailuo 생성] when the scene requires: a specific character (doctor, specific person), branded product demonstration, unique medical/health explanation gesture, or any scene where stock footage would look generic and unconvincing.
         
         [Scene 2] ...
         """
@@ -565,7 +657,8 @@ def generate_fish_audio_tts(text: str, output_path: str, reference_id: str, api_
     
     headers = {
         "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "model": "s2.1-pro-free"  # Fish Audio 공식 무료 API 적용
     }
     
     data = {
@@ -626,7 +719,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     
     shutil.copytree(src_folder, dst_folder)
     
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=10)
     
     combined_audio = PydubAudio.empty()
     phrase_timings = []
@@ -650,8 +743,12 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
                 import asyncio
                 asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
         except Exception as e:
-            print(f"오디오 생성 실패: {e}")
-            continue
+            print(f"오디오 생성 실패, 무료 TTS로 대체: {e}")
+            try:
+                import asyncio
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
+            except Exception as e2:
+                raise Exception(f"오디오 생성 완전 실패: {e}")
             
         trim_audio_silence(mp3_path)
         seg = PydubAudio.from_mp3(mp3_path)
@@ -714,24 +811,33 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
                     last_seg["target_timerange"]["duration"] = total_audio_dur_us - last_seg["target_timerange"]["start"]
 
     if "texts" in content["materials"] and len(content["materials"]["texts"]) > 0:
-        tmpl_text_mat = content["materials"]["texts"][0]
-        tmpl_text_seg = None
+        text_materials = content["materials"]["texts"]
+        # 템플릿의 1번 텍스트는 후킹(강조), 2번 텍스트는 기본 자막으로 파싱
+        tmpl_text_mat_hook = text_materials[0]
+        tmpl_text_mat_default = text_materials[1] if len(text_materials) > 1 else text_materials[0]
+        
+        tmpl_text_seg_hook = None
+        tmpl_text_seg_default = None
         text_track = None
         for track in content.get("tracks", []):
             if track["type"] == "text":
                 if len(track["segments"]) > 0:
-                    tmpl_text_seg = track["segments"][0]
                     text_track = track
+                    tmpl_text_seg_hook = track["segments"][0]
+                    tmpl_text_seg_default = track["segments"][1] if len(track["segments"]) > 1 else track["segments"][0]
                     break
                     
-        if text_track and tmpl_text_seg:
+        if text_track and tmpl_text_seg_hook:
             text_track["segments"] = []
             content["materials"]["texts"] = []
-            
             def _gen_id(): return str(uuid.uuid4()).upper()
             
-            for pt in phrase_timings:
-                new_mat = copy.deepcopy(tmpl_text_mat)
+            for idx, pt in enumerate(phrase_timings):
+                is_hook = (idx == 0)
+                base_mat = tmpl_text_mat_hook if is_hook else tmpl_text_mat_default
+                base_seg = tmpl_text_seg_hook if is_hook else tmpl_text_seg_default
+                
+                new_mat = copy.deepcopy(base_mat)
                 new_mat["id"] = _gen_id()
                 try:
                     c_obj = json.loads(new_mat["content"])
@@ -741,7 +847,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
                     pass
                 content["materials"]["texts"].append(new_mat)
                 
-                new_seg = copy.deepcopy(tmpl_text_seg)
+                new_seg = copy.deepcopy(base_seg)
                 new_seg["id"] = _gen_id()
                 new_seg["material_id"] = new_mat["id"]
                 new_seg["target_timerange"]["start"] = pt["start"]
@@ -829,8 +935,12 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 # Edge TTS
                 asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
         except Exception as e:
-            print(f"  [오디오 생성 실패 건너뜀] {e}")
-            continue
+            print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
+            try:
+                import asyncio
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
+            except Exception as e2:
+                raise Exception(f"오디오 생성 완전 실패: {e}")
 
         # 오디오 무음 정밀 트림
         trim_audio_silence(mp3_path)
@@ -879,12 +989,12 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 align=1
             )
             border = TextBorder(color=(0.0, 0.0, 0.0), width=45.0 if is_hook else 25.0)
-            clip_settings = ClipSettings(transform_x=0.0, transform_y=-0.35 if is_hook else -0.48)
+            clip_settings = ClipSettings(transform_x=0.0, transform_y=0.0)
 
             text_seg = TextSegment(
                 text=phrase,
                 timerange=phrase_timerange,
-                font=PRETENDARD_BLACK_FONT,
+                font=JALNAN_FONT,
                 style=style,
                 border=border,
                 clip_settings=clip_settings
@@ -894,12 +1004,13 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             phrase_start_us += phrase_duration_us
 
         sec_val = sentence_duration_us / SEC
-        print(f"  [문장 {s_idx}] 오디오 ({sec_val:.2f}s) + 비디오 소스 배치 완료: '{full_sentence}'")
+        phrases_str = " -> ".join(phrases)
+        print(f"  [문장 {s_idx}] 오디오 ({sec_val:.2f}s) 생성 완료 | 자막 싱크(10자): {phrases_str}")
 
         current_time_us += sentence_duration_us
 
     script_file.save()
-    print(f"\n[완료] [AI더빙 + 비디오 컷 + Pretendard 자막] 100% 자동 완성! 초안: '{project_name}'")
+    print(f"\n[완료] [AI더빙 + 비디오 컷 + 잘난체 자막] 100% 자동 완성! 초안: '{project_name}'")
     return project_name
 
 if __name__ == "__main__":

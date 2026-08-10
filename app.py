@@ -5,6 +5,7 @@ import streamlit as st
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     generate_hailuo_prompts_stream,
+    generate_image_prompts_stream,
     generate_strategic_script_stream
 )
 
@@ -34,19 +35,31 @@ if os.path.exists(API_KEY_FILE):
     with open(API_KEY_FILE, "r", encoding="utf-8-sig") as f:
         cached_api_key = f.read().strip()
 
-col_key, col_model = st.columns(2)
+PEXELS_API_KEY_FILE = "pexels_api_key.txt"
+cached_pexels_api_key = ""
+if os.path.exists(PEXELS_API_KEY_FILE):
+    with open(PEXELS_API_KEY_FILE, "r", encoding="utf-8-sig") as f:
+        cached_pexels_api_key = f.read().strip()
+
+col_key, col_pexels, col_model = st.columns([2, 2, 2])
 with col_key:
     nvidia_api_key = st.text_input("🔑 NVIDIA API Key (대본 & 프롬프트 생성용)", type="password", value=cached_api_key, placeholder="nvapi-...")
     if nvidia_api_key and nvidia_api_key != cached_api_key:
         with open(API_KEY_FILE, "w", encoding="utf-8") as f:
             f.write(nvidia_api_key)
+with col_pexels:
+    pexels_api_key = st.text_input("📷 Pexels API Key (세로 스톡 영상 다운로드)", type="password", value=cached_pexels_api_key, placeholder="없으면 Mixkit 자동 fallback")
+    if pexels_api_key and pexels_api_key != cached_pexels_api_key:
+        with open(PEXELS_API_KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(pexels_api_key)
 with col_model:
     model_choice = st.selectbox(
         "🧠 NVIDIA 모델 선택",
         options=[
-            "meta/llama-3.1-70b-instruct",
+            "nvidia/nemotron-3-ultra-550b-a55b",        # 🥇 숏폼 및 전략 기획 최고 성능 (기본값)
+            "meta/llama-3.3-70b-instruct",
             "nvidia/llama-3.1-nemotron-70b-instruct",
-            "nvidia/nemotron-3-ultra-550b-a55b"
+            "meta/llama-3.1-70b-instruct",
         ]
     )
 
@@ -100,13 +113,7 @@ selected_keyword = ""
 if df_keywords is not None and not df_keywords.empty:
     st.markdown("아래 표에서 키워드를 선택하면 **'세부 주제'**에 자동으로 입력됩니다.")
     
-    # 1. 네이버 모바일 검색 링크 추가 및 컬럼 순서 재배치 (키워드 바로 옆)
-    df_keywords['네이버 검색'] = "https://m.search.naver.com/search.naver?query=" + df_keywords['키워드']
-    cols = df_keywords.columns.tolist()
-    cols.insert(1, cols.pop(cols.index('네이버 검색')))
-    df_keywords = df_keywords[cols]
-    
-    # 2. '네이버 클립' 셀 강조 스타일링
+    # '네이버 클립' 셀 강조 스타일링
     def highlight_clip(val):
         if '네이버 클립' in str(val):
             return 'background-color: #00C73C; color: white; font-weight: bold;'
@@ -115,24 +122,30 @@ if df_keywords is not None and not df_keywords.empty:
     tab_cols = [c for c in df_keywords.columns if '탭' in c]
     styled_df = df_keywords.style.map(highlight_clip, subset=tab_cols)
     
-    event = st.dataframe(
-        styled_df, 
-        use_container_width=True, 
-        hide_index=True,
-        on_select="rerun",
-        selection_mode="single-row",
-        column_config={
-            "네이버 검색": st.column_config.LinkColumn(
-                "모바일 검색",
-                display_text="🔍 검색하기"
-            )
-        }
-    )
+    col_table, col_side = st.columns([4, 1])
     
+    with col_table:
+        event = st.dataframe(
+            styled_df, 
+            use_container_width=True, 
+            hide_index=True,
+            on_select="rerun",
+            selection_mode="single-row"
+        )
+        
+    with col_side:
+        st.markdown("### 🔍 모바일 검색")
+        st.caption("아래 링크를 우클릭해서 시크릿 창으로 엽니다.")
+        with st.container(height=400):
+            for _, row in df_keywords.iterrows():
+                kw = row['키워드']
+                url = f"https://m.search.naver.com/search.naver?query={kw}"
+                st.markdown(f"👉 **[{kw}]({url})**")
+            
+    # 호환성을 위해 선택된 키워드를 전역 변수처럼 처리
     if len(event.selection.rows) > 0:
         selected_idx = event.selection.rows[0]
         selected_keyword = df_keywords.iloc[selected_idx]['키워드']
-        st.success(f"✅ 선택된 키워드: **{selected_keyword}**")
 
 st.markdown("---")
 
@@ -166,17 +179,39 @@ with col_prod:
 with st.expander("⚙️ 고급 대본 기획 설정 (프롬프트 & 벤치마킹)", expanded=False):
     st.markdown("AI에게 역할을 부여하는 프롬프트와, 따라 하고 싶은 대박 숏폼 대본(벤치마킹)을 직접 입력하여 생성 퀄리티를 비약적으로 높여보세요.")
     
-    default_system_prompt = """당신은 10년 차 탑티어 영상 광고 기획자이자 카피라이터입니다. 당신의 목표는 제공된 [제품 정보]와 [벤치마킹 대본]을 결합하여, 시청자가 3초 만에 몰입하고 결국 구매 버튼을 누르게 만드는 폭발적인 숏폼 광고 대본을 작성하는 것입니다.
+    # 포맷별 자동 프롬프트
+    if "포맷 A" in video_format:
+        default_system_prompt = """당신은 100만 바이럴을 만드는 숏폼 건강 정보 크리에이터입니다.
+[포맷 A: 순수 정보형] — 제품명은 절대 언급하지 마세요. 오직 유익한 건강 꿀팁만 제공합니다.
 
-핵심 목표: 단순한 제품 설명이 아닌, 벤치마킹 대본의 '성공 방정식(흐름, 톤앤매너)'을 완벽하게 이식하여 완전히 새로운 제품의 후킹 대본을 창조해냅니다.
+핵심 규칙 (1M Viral & Twist Formula):
+1. 초반 3초 후킹: 뻔한 질문("뻐근하시죠?") 절대 금지. 감각적 비유("바위가 누르는 느낌")나 역설/배제("어설프게 아픈 분 시청 금지")를 반드시 사용하세요.
+2. 미드롤 CTA: 비법을 공개하기 직전에 "좋아요 먼저 누르고 따라하세요!"를 삽입하세요.
+3. 구체적 넘버링: "1단계", "2단계" 형식으로 따라하기 쉽게 분해하세요.
+4. 강력한 효과 시각화: "시원합니다" 대신 "혈류가 심장으로 솟구치고" 등 감각적으로 묘사하세요.
+5. 지정 댓글 유도: "좋아요 부탁드려요" 금지. "댓글에 '시원해요'라고 남겨주세요"처럼 구체적 키워드를 제시하세요."""
+    elif "포맷 B" in video_format:
+        default_system_prompt = """당신은 100만 바이럴을 만드는 숏폼 마케터이자 일반인 크리에이터입니다.
+[포맷 B: 간접 홍보형] — 영상의 80%는 순수 꿀팁, 마지막 20%에서 "제가 쓰는 기구는 댓글에 남길게요!"라고 자연스럽게 유도합니다. 영상 안에서 제품명은 절대 말하지 마세요.
 
-작성 규칙:
-1. 벤치마킹 분석: 벤치마킹 대본에서 시선을 끄는 방식, 감정을 자극하는 포인트, 구체적인 수치 활용법, 과장이나 비유법을 분석하여 새 대본에 동일한 리듬으로 적용하세요.
-2. 3초 후킹: 영상의 첫 3초는 무조건 '시선 강탈' 또는 '강한 공감/충격'을 주어야 합니다.
-3. 구체화 및 감정 자극: 소비자가 겪는 불편함(Pain Point)을 날카롭게 찌르고 감정을 자극하세요. 이후 우리 제품이 어떻게 그 문제를 구체적이고 확실하게 해결해 주는지 제시하세요.
-4. 행동 유도: 대본의 마지막은 무조건 명확한 행동 유도(프로필 링크 클릭, 댓글 확인 등)로 마무리하세요."""
-    
-    custom_system_prompt = st.text_area("🔧 시스템 프롬프트 (영상 광고 기획자 롤플레잉)", value=default_system_prompt, height=250)
+핵심 규칙 (1M Viral & Twist Formula):
+1. 초반 3초 후킹: 뻔한 질문 금지. 감각적 비유나 역설/배제("웬만한 마사지기 써봤는데 다 실망한 분들만 보세요")를 사용하세요.
+2. 미드롤 CTA: 꿀팁 공개 직전 "좋아요 먼저 누르고 따라하세요!" 삽입.
+3. 매몰비용 자극: "안 그래도 돈 쓴 것도 억울한데" 등으로 공감 극대화.
+4. 간접 제품 유도: 꿀팁 제공 후 "그냥 손으로 하긴 힘들어서 저는 기구 하나 쓰는데, 댓글에 올릴게요!"처럼 자연스럽게 연결.
+5. 지정 댓글 유도: "댓글에 '기구 궁금'이라고 남겨주세요!"처럼 제품 수요를 댓글로 모으세요."""
+    else:  # 포맷 C
+        default_system_prompt = """당신은 100만 바이럴을 만드는 제품 리뷰어이자 숏폼 마케터입니다.
+[포맷 C: 직접 홍보형] — 제품명을 당당하게 언급하며 대안재(비싼 안마의자, 비싼 도수치료 등)와 비교하여 압도적인 가성비를 어필합니다.
+
+핵심 규칙 (1M Viral & Twist Formula):
+1. 초반 3초 후킹: 역설/배제 기법 사용 (예: "어설프게 아픈 분들은 사지 마세요 — 진짜 심한 분들만 보세요").
+2. 대안재 비교: "거대하고 비싼 안마의자 대신", "도수치료비 쏟아붓다가" 등으로 기존 대체재의 단점을 먼저 부각시키세요.
+3. 미드롤 CTA: 제품 공개 직전 "좋아요 먼저 누르세요!" 삽입.
+4. 매몰비용 자극 + 가성비 앵커링: "올해 또 예쁜 쓰레기 사실 건가요?" → "월 만원대로 평생 뽕뽑는다"처럼 손실 회피와 가성비를 동시에 찌르세요.
+5. 지정 댓글 + 한정성 마감: "댓글에 '할인 링크'라고 남겨주세요!"처럼 구매 의향자를 댓글로 집결시키세요."""
+
+    custom_system_prompt = st.text_area("🔧 시스템 프롬프트 (포맷별 자동 변경)", value=default_system_prompt, height=250)
     benchmark_script = st.text_area("📈 벤치마킹 대본 (참고할 타사 대박 숏폼 대본 원문)", value="", placeholder="예: 이거 모르면 평생 후회합니다! 매일 아침 얼굴 붓기 1분만에 빼는 비법...", height=150)
 
 if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_width=True):
@@ -365,6 +400,21 @@ with col1:
                     st.error(f"오류 발생: {e}")
 
 with col2:
+    if st.button("🖼️ 이미지 프롬프트 먼저 추출 (Hailuo AI용)", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        elif not nvidia_api_key:
+            st.error("NVIDIA API Key를 입력해주세요.")
+        else:
+            with st.spinner(f"이미지 프롬프트 분석 중... ({model_choice})"):
+                st.markdown("##### 💡 추출 중인 이미지 프롬프트 (실시간)")
+                def img_stream_generator():
+                    for chunk in generate_image_prompts_stream(script_text, nvidia_api_key, model_choice):
+                        yield chunk
+                        
+                img_result = st.write_stream(img_stream_generator())
+                st.session_state["image_prompts"] = img_result
+                
     if st.button("🤖 Hailuo AI 장면 프롬프트 추출", use_container_width=True):
         if not script_text.strip():
             st.error("대본이 비어있습니다!")
@@ -379,6 +429,11 @@ with col2:
                         
                 hailuo_result = st.write_stream(stream_generator())
                 st.session_state["hailuo_prompts"] = hailuo_result
+
+if "image_prompts" in st.session_state and st.session_state["image_prompts"]:
+    st.markdown("---")
+    st.subheader("💡 추출된 이미지 프롬프트 전문 (Hailuo AI용)")
+    st.markdown(f'<div class="prompt-box">{st.session_state["image_prompts"]}</div>', unsafe_allow_html=True)
 
 if "hailuo_prompts" in st.session_state and st.session_state["hailuo_prompts"]:
     st.markdown("---")
