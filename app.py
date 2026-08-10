@@ -68,7 +68,6 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # 구글 시트 연동 (키워드 추천)
 # -------------------------------------------------------------------
-st.subheader("📊 타겟 키워드 분석 데이터 (Google Sheet 연동)")
 
 @st.cache_data(ttl=3600)
 def load_keyword_data():
@@ -107,6 +106,14 @@ def load_keyword_data():
         st.error(f"데이터를 불러오는 중 오류가 발생했습니다: {e}")
         return None
 
+col_sheet_title, col_sheet_btn = st.columns([8, 2])
+with col_sheet_title:
+    st.subheader("📊 타겟 키워드 분석 데이터 (Google Sheet 연동)")
+with col_sheet_btn:
+    if st.button("🔄 데이터 최신화", use_container_width=True):
+        load_keyword_data.clear()
+        st.rerun()
+
 df_keywords = load_keyword_data()
 
 selected_keyword = ""
@@ -135,10 +142,13 @@ if df_keywords is not None and not df_keywords.empty:
         
     with col_side:
         st.markdown("### 🔍 모바일 검색")
+        search_kw = st.text_input("🔍 검색어 필터", key="mobile_search_filter")
         st.caption("아래 링크를 우클릭해서 시크릿 창으로 엽니다.")
         with st.container(height=400):
             for _, row in df_keywords.iterrows():
                 kw = row['키워드']
+                if search_kw and search_kw.lower() not in str(kw).lower():
+                    continue
                 url = f"https://m.search.naver.com/search.naver?query={kw}"
                 st.markdown(f"👉 **[{kw}]({url})**")
             

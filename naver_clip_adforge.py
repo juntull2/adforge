@@ -416,6 +416,12 @@ You MUST output exactly THREE sections (Script, Comment, Description), separated
 ====SCRIPT====
 Write the narration text for a 45-60 second short-form video (10-15 sentences).
 Format: just raw text that a TTS can read nicely. No timestamps, no visual directions.
+CRITICAL FORMATTING RULE: You MUST break the text into very short lines (2~4 words per line) by hitting Enter frequently. This is for easy reading as vertical subtitles.
+Example format:
+허리 깊숙이 박힌
+얼음장 같은 냉기,
+겉만 데워선
+절대 안 빠집니다.
 
 ====COMMENT====
 [Comment CTA]
