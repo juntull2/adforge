@@ -2,6 +2,7 @@ import os
 import re
 import pandas as pd
 import streamlit as st
+import PyPDF2
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     generate_hailuo_prompts_stream,
@@ -223,6 +224,21 @@ with st.expander("⚙️ 고급 대본 기획 설정 (프롬프트 & 벤치마�
 
     custom_system_prompt = st.text_area("🔧 시스템 프롬프트 (포맷별 자동 변경)", value=default_system_prompt, height=250)
     benchmark_script = st.text_area("📈 벤치마킹 대본 (참고할 타사 대박 숏폼 대본 원문)", value="", placeholder="예: 이거 모르면 평생 후회합니다! 매일 아침 얼굴 붓기 1분만에 빼는 비법...", height=150)
+    
+    st.markdown("---")
+    st.markdown("##### 📄 전문성 더하기 (NotebookLM 스타일)")
+    uploaded_pdf = st.file_uploader("운동 관련 논문, 전문 칼럼 등 PDF 파일을 업로드하면 AI가 분석하여 전문성을 갖춘 대본을 작성합니다.", type=["pdf"])
+    reference_document = ""
+    if uploaded_pdf is not None:
+        try:
+            pdf_reader = PyPDF2.PdfReader(uploaded_pdf)
+            for page in pdf_reader.pages:
+                text = page.extract_text()
+                if text:
+                    reference_document += text + "\n"
+            st.success("✅ PDF 논문/자료 분석 완료! 전문 지식이 대본에 반영됩니다.")
+        except Exception as e:
+            st.error(f"PDF 분석 중 오류가 발생했습니다: {str(e)}")
 
 if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_width=True):
     if not nvidia_api_key:
@@ -246,7 +262,8 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
                     nvidia_api_key,
                     model_choice,
                     custom_system_prompt,
-                    benchmark_script
+                    benchmark_script,
+                    reference_document
                 ):
                     yield chunk
                     

@@ -354,7 +354,8 @@ def generate_strategic_script_stream(
     api_key: str,
     model_name: str = "nvidia/nemotron-3-ultra-550b-a55b",
     custom_system_prompt: str = "",
-    benchmark_script: str = ""
+    benchmark_script: str = "",
+    reference_document: str = ""
 ):
     """4050 여성을 타겟으로 하는 네이버 클립 대본 생성 (스트리밍)"""
     if not api_key:
@@ -385,6 +386,16 @@ Current Task:
         
         if benchmark_script.strip():
             system_prompt += f"\n[벤치마킹 할 타사 대박 숏폼 대본 원문]\n{benchmark_script.strip()}\n위 벤치마킹 대본의 후킹 방식, 톤앤매너, 구조를 모방하여 아래 가이드라인에 맞게 새 대본을 작성하세요.\n"
+
+        if reference_document.strip():
+            system_prompt += f"""
+[참고 전문 지식 (논문/칼럼 등)]
+{reference_document.strip()}
+
+**[특수 지침: NotebookLM 전문성 변환 모드]**
+위 참고 문헌에서 의학적, 운동학적 '팩트'와 '인사이트'를 추출하여 대본에 반영하세요.
+단, 대본의 타겟이 4050~60대 일반인이므로 **전문 용어를 그대로 나열하지 말고, 매우 쉽고 가볍게(무겁지 않은 친근한 톤앤매너로) 번역해서** 설명해야 합니다.
+"""
 
         system_prompt += f"""
 Format Guidelines & Rules:
