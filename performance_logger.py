@@ -14,6 +14,9 @@ def init_db():
             topic TEXT,
             hook TEXT,
             title TEXT,
+            hook_type TEXT,
+            visual_hook TEXT,
+            expert_present BOOLEAN,
             hashtags TEXT,
             duration INTEGER,
             cta TEXT,
@@ -31,6 +34,16 @@ def init_db():
         )
     """)
     conn.commit()
+    
+    # 안전한 스키마 업그레이드 (기존 DB 호환성)
+    try:
+        cursor.execute("ALTER TABLE clip_performance ADD COLUMN hook_type TEXT;")
+        cursor.execute("ALTER TABLE clip_performance ADD COLUMN visual_hook TEXT;")
+        cursor.execute("ALTER TABLE clip_performance ADD COLUMN expert_present BOOLEAN;")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # 컬럼이 이미 존재함
+        
     conn.close()
 
 def log_performance(data: dict):
@@ -41,8 +54,8 @@ def log_performance(data: dict):
     
     # 누락된 키가 있으면 None(NULL)으로 처리
     columns = [
-        "content_id", "topic", "hook", "title", "hashtags", "duration", 
-        "cta", "shopping_tag", "upload_datetime", "views", "completion_rate", 
+        "content_id", "topic", "hook", "title", "hook_type", "visual_hook", "expert_present", 
+        "hashtags", "duration", "cta", "shopping_tag", "upload_datetime", "views", "completion_rate", 
         "likes", "comments", "saves", "shares", "product_clicks", "orders"
     ]
     

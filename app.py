@@ -7,7 +7,8 @@ from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     generate_hailuo_prompts_stream,
     generate_image_prompts_stream,
-    generate_strategic_script_stream
+    generate_strategic_script_stream,
+    generate_cta_from_script_stream
 )
 
 # -------------------------------------------------------------------
@@ -57,10 +58,9 @@ with col_model:
     model_choice = st.selectbox(
         "🧠 NVIDIA 모델 선택",
         options=[
-            "nvidia/nemotron-3-ultra-550b-a55b",        # 🥇 숏폼 및 전략 기획 최고 성능 (기본값)
-            "meta/llama-3.3-70b-instruct",
-            "nvidia/llama-3.1-nemotron-70b-instruct",
-            "meta/llama-3.1-70b-instruct",
+            "mistralai/mistral-nemotron",               # 🥇 추천 - 한국어 글쓰기 최적 (기본값)
+            "meta/llama-3.1-70b-instruct",              # 안정적 범용 모델
+            "meta/llama-3.1-8b-instruct",               # 빠른 응답 (경량)
         ]
     )
 
@@ -187,6 +187,38 @@ with col_fmt:
 with col_prod:
     product_name = st.text_input("📦 연결할 제품명", value="다피다 허리찜질기")
 
+st.markdown("##### 🧪 콘텐츠 실험 변수 (A/B 테스트)")
+col_hook, col_visual, col_expert = st.columns([2, 2, 1])
+with col_hook:
+    hook_type = st.selectbox(
+        "🪝 Hook 유형 (Verbal)",
+        ["DESIRE (욕망형) - 이런 몸 만들고 싶다면?", 
+         "PROBLEM (문제형) - 이럴 때 여기부터 잡는다면?", 
+         "WARNING (금지형) - 이 운동 당장 멈추세요!", 
+         "CONTRARIAN (반전형) - 매일 걷는데 약해지는 이유?", 
+         "COMPARISON (비교형) - 왜 몸이 이렇게 다를까요?", 
+         "RESULT (결과형) - 1분으로 이런 움직임을!"]
+    )
+    # 괄호 앞의 영문자만 추출
+    hook_type_val = hook_type.split(" ")[0]
+
+with col_visual:
+    visual_hook = st.selectbox(
+        "👀 Visual Hook (시각적 자극)",
+        ["BODY (워너비 몸매/탄탄한 하체)", 
+         "MOVEMENT (유연한/완벽한 동작)", 
+         "BEFORE_AFTER (비포/애프터)", 
+         "PROBLEM_SITUATION (문제/통증 묘사)", 
+         "EXPERT (전문가 등장/진찰)", 
+         "EXERCISE_RESULT (운동 직후 땀/결과)"]
+    )
+    visual_hook_val = visual_hook.split(" ")[0]
+
+with col_expert:
+    st.write("👨‍⚕️ 전문가 검증")
+    expert_present = st.checkbox("전문의/트레이너 인용 문장 포함", value=True)
+
+
 with st.expander("⚙️ 고급 대본 기획 설정 (프롬프트 & 벤치마킹)", expanded=False):
     st.markdown("AI에게 역할을 부여하는 프롬프트와, 따라 하고 싶은 대박 숏폼 대본(벤치마킹)을 직접 입력하여 생성 퀄리티를 비약적으로 높여보세요.")
     
@@ -196,49 +228,49 @@ with st.expander("⚙️ 고급 대본 기획 설정 (프롬프트 & 벤치마�
 [포맷 A: 순수 정보형] — 제품명은 절대 언급하지 마세요. 오직 유익한 건강 꿀팁만 제공합니다.
 
 핵심 규칙 (1M Viral & Twist Formula):
-1. 초반 3초 후킹: 뻔한 질문("뻐근하시죠?") 절대 금지. 감각적 비유("바위가 누르는 느낌")나 역설/배제("어설프게 아픈 분 시청 금지")를 반드시 사용하세요.
-2. 미드롤 CTA: 비법을 공개하기 직전에 "좋아요 먼저 누르고 따라하세요!"를 삽입하세요.
-3. 구체적 넘버링: "1단계", "2단계" 형식으로 따라하기 쉽게 분해하세요.
-4. 강력한 효과 시각화: "시원합니다" 대신 "혈류가 심장으로 솟구치고" 등 감각적으로 묘사하세요.
-5. 지정 댓글 유도: "좋아요 부탁드려요" 금지. "댓글에 '시원해요'라고 남겨주세요"처럼 구체적 키워드를 제시하세요."""
+1. 미드롤 CTA: 비법을 공개하기 직전에 "좋아요 먼저 누르고 따라하세요!"를 삽입하세요.
+2. 구체적 넘버링: "1단계", "2단계" 형식으로 따라하기 쉽게 분해하세요.
+3. 강력한 효과 시각화: "시원합니다" 대신 "혈류가 심장으로 솟구치고" 등 감각적으로 묘사하세요.
+4. 지정 댓글 유도: "좋아요 부탁드려요" 금지. "댓글에 '시원해요'라고 남겨주세요"처럼 구체적 키워드를 제시하세요."""
     elif "포맷 B" in video_format:
         default_system_prompt = """당신은 100만 바이럴을 만드는 숏폼 마케터이자 일반인 크리에이터입니다.
 [포맷 B: 간접 홍보형] — 영상의 80%는 순수 꿀팁, 마지막 20%에서 "제가 쓰는 기구는 댓글에 남길게요!"라고 자연스럽게 유도합니다. 영상 안에서 제품명은 절대 말하지 마세요.
 
 핵심 규칙 (1M Viral & Twist Formula):
-1. 초반 3초 후킹: 뻔한 질문 금지. 감각적 비유나 역설/배제("웬만한 마사지기 써봤는데 다 실망한 분들만 보세요")를 사용하세요.
-2. 미드롤 CTA: 꿀팁 공개 직전 "좋아요 먼저 누르고 따라하세요!" 삽입.
-3. 매몰비용 자극: "안 그래도 돈 쓴 것도 억울한데" 등으로 공감 극대화.
-4. 간접 제품 유도: 꿀팁 제공 후 "그냥 손으로 하긴 힘들어서 저는 기구 하나 쓰는데, 댓글에 올릴게요!"처럼 자연스럽게 연결.
-5. 지정 댓글 유도: "댓글에 '기구 궁금'이라고 남겨주세요!"처럼 제품 수요를 댓글로 모으세요."""
+1. 미드롤 CTA: 꿀팁 공개 직전 "좋아요 먼저 누르고 따라하세요!" 삽입.
+2. 매몰비용 자극: "안 그래도 돈 쓴 것도 억울한데" 등으로 공감 극대화.
+3. 간접 제품 유도: 꿀팁 제공 후 "그냥 손으로 하긴 힘들어서 저는 기구 하나 쓰는데, 댓글에 올릴게요!"처럼 자연스럽게 연결.
+4. 지정 댓글 유도: "댓글에 '기구 궁금'라고 남겨주세요!"처럼 제품 수요를 댓글로 모으세요."""
     else:  # 포맷 C
         default_system_prompt = """당신은 100만 바이럴을 만드는 제품 리뷰어이자 숏폼 마케터입니다.
 [포맷 C: 직접 홍보형] — 제품명을 당당하게 언급하며 대안재(비싼 안마의자, 비싼 도수치료 등)와 비교하여 압도적인 가성비를 어필합니다.
 
 핵심 규칙 (1M Viral & Twist Formula):
-1. 초반 3초 후킹: 역설/배제 기법 사용 (예: "어설프게 아픈 분들은 사지 마세요 — 진짜 심한 분들만 보세요").
-2. 대안재 비교: "거대하고 비싼 안마의자 대신", "도수치료비 쏟아붓다가" 등으로 기존 대체재의 단점을 먼저 부각시키세요.
-3. 미드롤 CTA: 제품 공개 직전 "좋아요 먼저 누르세요!" 삽입.
-4. 매몰비용 자극 + 가성비 앵커링: "올해 또 예쁜 쓰레기 사실 건가요?" → "월 만원대로 평생 뽕뽑는다"처럼 손실 회피와 가성비를 동시에 찌르세요.
-5. 지정 댓글 + 한정성 마감: "댓글에 '할인 링크'라고 남겨주세요!"처럼 구매 의향자를 댓글로 집결시키세요."""
+1. 대안재 비교: "거대하고 비싼 안마의자 대신", "도수치료비 쏟아붓다가" 등으로 기존 대체재의 단점을 먼저 부각시키세요.
+2. 미드롤 CTA: 제품 공개 직전 "좋아요 먼저 누르세요!" 삽입.
+3. 매몰비용 자극 + 가성비 앵커링: "올해 또 예쁜 쓰레기 사실 건가요?" → "월 만원대로 평생 뽕뽑는다"처럼 손실 회피와 가성비를 동시에 찌르세요.
+4. 지정 댓글 + 한정성 마감: "댓글에 '할인 링크'라고 남겨주세요!"처럼 구매 의향자를 댓글로 집결시키세요."""
 
     custom_system_prompt = st.text_area("🔧 시스템 프롬프트 (포맷별 자동 변경)", value=default_system_prompt, height=250)
     benchmark_script = st.text_area("📈 벤치마킹 대본 (참고할 타사 대박 숏폼 대본 원문)", value="", placeholder="예: 이거 모르면 평생 후회합니다! 매일 아침 얼굴 붓기 1분만에 빼는 비법...", height=150)
     
     st.markdown("---")
     st.markdown("##### 📄 전문성 더하기 (NotebookLM 스타일)")
-    uploaded_pdf = st.file_uploader("운동 관련 논문, 전문 칼럼 등 PDF 파일을 업로드하면 AI가 분석하여 전문성을 갖춘 대본을 작성합니다.", type=["pdf"])
+    uploaded_file = st.file_uploader("운동 관련 논문, 전문 칼럼 등 PDF/TXT/MD 파일을 업로드하면 AI가 분석하여 전문성을 갖춘 대본을 작성합니다.", type=["pdf", "txt", "md"])
     reference_document = ""
-    if uploaded_pdf is not None:
+    if uploaded_file is not None:
         try:
-            pdf_reader = PyPDF2.PdfReader(uploaded_pdf)
-            for page in pdf_reader.pages:
-                text = page.extract_text()
-                if text:
-                    reference_document += text + "\n"
-            st.success("✅ PDF 논문/자료 분석 완료! 전문 지식이 대본에 반영됩니다.")
+            if uploaded_file.name.lower().endswith('.pdf'):
+                pdf_reader = PyPDF2.PdfReader(uploaded_file)
+                for page in pdf_reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        reference_document += text + "\n"
+            else:
+                reference_document = uploaded_file.getvalue().decode("utf-8")
+            st.success("✅ 전문 자료 분석 완료! 팩트와 인사이트가 대본에 반영됩니다.")
         except Exception as e:
-            st.error(f"PDF 분석 중 오류가 발생했습니다: {str(e)}")
+            st.error(f"파일 분석 중 오류가 발생했습니다: {str(e)}")
 
 if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_width=True):
     if not nvidia_api_key:
@@ -263,60 +295,90 @@ if st.button("✨ AI 맞춤형 숏폼 대본 생성 (실시간)", use_container_
                     model_choice,
                     custom_system_prompt,
                     benchmark_script,
-                    reference_document
+                    reference_document,
+                    hook_type_val,
+                    visual_hook_val,
+                    expert_present
                 ):
                     yield chunk
                     
             raw_output = st.write_stream(script_stream_generator())
             st.session_state["raw_script_output"] = raw_output
             
-            # Parsing the output robustly with regex
+            visual_part = ""
             script_part = raw_output
             comment_part = ""
+            dm_part = ""
             desc_part = ""
             
-            script_matches = list(re.finditer(r'={2,}\s*SCRIPT\s*={2,}', raw_output, re.IGNORECASE))
-            comment_matches = list(re.finditer(r'={2,}\s*COMMENT\s*={2,}', raw_output, re.IGNORECASE))
-            desc_matches = list(re.finditer(r'={2,}\s*DESCRIPTION\s*={2,}', raw_output, re.IGNORECASE))
+            pattern = r'={2,}\s*(VISUAL_HOOK|SCRIPT|COMMENT|DM[_\s]*MESSAGE|DESCRIPTION)\s*={2,}'
+            matches = list(re.finditer(pattern, raw_output, re.IGNORECASE))
             
-            # Find the indices of each delimiter
-            s_idx = script_matches[-1].end() if script_matches else 0
-            c_idx = comment_matches[-1].start() if comment_matches else -1
-            c_end = comment_matches[-1].end() if comment_matches else -1
-            d_idx = desc_matches[-1].start() if desc_matches else -1
-            d_end = desc_matches[-1].end() if desc_matches else -1
-            
-            if script_matches and comment_matches and desc_matches:
-                script_part = raw_output[s_idx:c_idx].strip()
-                comment_part = raw_output[c_end:d_idx].strip()
-                desc_part = raw_output[d_end:].strip()
-            elif script_matches and comment_matches:
-                script_part = raw_output[s_idx:c_idx].strip()
-                comment_part = raw_output[c_end:].strip()
-            elif comment_matches and desc_matches:
-                script_part = raw_output[:c_idx].strip()
-                comment_part = raw_output[c_end:d_idx].strip()
-                desc_part = raw_output[d_end:].strip()
-            else:
-                # Fallback if delimiters are missing
-                script_part = raw_output.strip()
+            if matches:
+                sections = {}
+                for i, match in enumerate(matches):
+                    key = match.group(1).upper().replace(" ", "_")
+                    if key.startswith("DM"):
+                        key = "DM_MESSAGE"
+                    elif key.startswith("VISUAL"):
+                        key = "VISUAL_HOOK"
+                    
+                    start_idx = match.end()
+                    end_idx = matches[i+1].start() if i + 1 < len(matches) else len(raw_output)
+                    sections[key] = raw_output[start_idx:end_idx].strip()
+                
+                visual_part = sections.get("VISUAL_HOOK", "")
+                script_part = sections.get("SCRIPT", "")
+                comment_part = sections.get("COMMENT", "")
+                dm_part = sections.get("DM_MESSAGE", "")
+                desc_part = sections.get("DESCRIPTION", "")
                 
             # 한 문장마다 강제 줄바꿈 처리 (마침표, 물음표, 느낌표 뒤)
             script_part = re.sub(r'([.?!])\s+', r'\1\n', script_part)
                 
             # If AI left conversational text like "Here is the script:", we can try to strip it,
             # but using ====SCRIPT==== delimiter usually prevents this.
+            st.session_state["parsed_visual"] = visual_part
             st.session_state["parsed_script"] = script_part
             st.session_state["parsed_comment"] = comment_part
+            st.session_state["parsed_dm"] = dm_part
             st.session_state["parsed_description"] = desc_part
+            
+            # Log performance metrics placeholder (with new hook params)
+            try:
+                from performance_logger import log_performance
+                log_performance({
+                    "content_id": "temp_" + pd.Timestamp.now().strftime("%Y%m%d%H%M%S"),
+                    "topic": topic_category,
+                    "hook_type": hook_type_val,
+                    "visual_hook": visual_hook_val,
+                    "expert_present": expert_present,
+                    "title": sub_topic,
+                    "duration": 45, # estimated
+                    "upload_datetime": pd.Timestamp.now().isoformat()
+                })
+            except Exception as e:
+                pass
+            
+            st.success("✨ 대본 기획이 완료되었습니다!")
 
-# Show parsed comment & description always
-col_out1, col_out2 = st.columns(2)
+st.markdown("---")
+st.subheader("📝 기획된 대본 결과")
+
+visual_output = st.session_state.get("parsed_visual", "")
+if visual_output:
+    st.info(f"**👀 추천 Visual Hook 영상 (첫 3초):** {visual_output}")
+
+col_out1, col_out2, col_out3 = st.columns(3)
 with col_out1:
-    st.markdown("##### 💬 유튜브/클립용 고정 댓글 (CTA)")
+    st.markdown("##### 💬 유튜브/클립용 고정 댓글")
     c_val = st.session_state.get("parsed_comment", "")
     st.text_area("댓글 복사", value=c_val, height=150, label_visibility="collapsed")
 with col_out2:
+    st.markdown("##### 💌 발송용 DM 메세지")
+    dm_val = st.session_state.get("parsed_dm", "")
+    st.text_area("DM 복사", value=dm_val, height=150, label_visibility="collapsed")
+with col_out3:
     st.markdown("##### 📝 영상 본문 설명 & 해시태그")
     d_val = st.session_state.get("parsed_description", "")
     st.text_area("설명 복사", value=d_val, height=150, label_visibility="collapsed")
@@ -326,10 +388,112 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # STEP 2: 대본 입력 및 캡컷/Hailuo 자동화
 # -------------------------------------------------------------------
+
+st.markdown("---")
 st.subheader("STEP 2: 캡컷 연동 & Hailuo 프롬프트 추출")
 
 default_script = st.session_state.get("parsed_script", "")
-script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨)", value=default_script, height=200)
+script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨 / 직접 붙여넣기 가능)", value=default_script, height=200)
+
+# 🔀 자막 줄바꿈 자동 정리
+def auto_format_subtitle(text: str, max_chars: int = 8) -> str:
+    """한국어 자막 텍스트를 6~8자 단위로 자동 줄바꿈"""
+    import re
+    
+    # 빈 줄 기준으로 단락 분리
+    paragraphs = re.split(r'\n{2,}', text.strip())
+    result_lines = []
+    
+    for para in paragraphs:
+        # 단락 내 줄바꿈을 공백으로 합쳐서 하나의 텍스트로 만들기
+        flat = re.sub(r'\n', ' ', para).strip()
+        flat = re.sub(r' {2,}', ' ', flat)  # 중복 공백 제거
+        
+        if not flat:
+            continue
+        
+        # 문장부호(. ! ?)로 먼저 분리
+        sentences = re.split(r'(?<=[.!?])\s*', flat)
+        
+        for sentence in sentences:
+            sentence = sentence.strip()
+            if not sentence:
+                continue
+            
+            # 이미 짧으면 그대로
+            if len(sentence) <= max_chars:
+                result_lines.append(sentence)
+                continue
+            
+            # 긴 문장: 공백 기준으로 토큰 분리 후 max_chars씩 묶기
+            tokens = sentence.split(' ')
+            current_line = ""
+            
+            for token in tokens:
+                test = (current_line + token).strip()
+                if len(test) <= max_chars:
+                    current_line = test + " "
+                else:
+                    if current_line.strip():
+                        result_lines.append(current_line.strip())
+                    # 토큰 자체가 max_chars보다 길면 글자수로 쪼개기
+                    if len(token) > max_chars:
+                        for i in range(0, len(token), max_chars):
+                            result_lines.append(token[i:i+max_chars])
+                        current_line = ""
+                    else:
+                        current_line = token + " "
+            
+            if current_line.strip():
+                result_lines.append(current_line.strip())
+        
+        result_lines.append("")  # 단락 사이 빈 줄
+    
+    return "\n".join(result_lines).strip()
+
+col_fmt1, col_fmt2 = st.columns([1, 3])
+with col_fmt1:
+    fmt_chars = st.number_input("줄당 최대 글자 수", min_value=4, max_value=20, value=8, step=1)
+with col_fmt2:
+    if st.button("🔀 자막 줄바꿈 자동 정리 (붙여넣은 대본 → 자막 포맷)", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            formatted = auto_format_subtitle(script_text, max_chars=fmt_chars)
+            st.session_state["parsed_script"] = formatted
+            st.rerun()
+
+# ✨ 대본 → CTA/DM/설명 자동 생성 (Step 1 없이도 독립 사용)
+if st.button("✨ 대본으로 고정댓글 + DM + 영상설명 자동 생성", use_container_width=True, type="primary"):
+    if not script_text.strip():
+        st.error("대본이 비어있습니다! 대본을 먼저 붙여넣어 주세요.")
+    elif not nvidia_api_key:
+        st.error("NVIDIA API Key를 입력해주세요.")
+    else:
+        with st.spinner(f"대본 분석 중... ({model_choice})"):
+            cta_raw = ""
+            def cta_stream_gen():
+                for chunk in generate_cta_from_script_stream(script_text, nvidia_api_key, model_choice):
+                    yield chunk
+            cta_raw = st.write_stream(cta_stream_gen())
+
+            # 파싱
+            import re as _re
+            _pattern = r'={2,}\s*(COMMENT|DM[_\s]*MESSAGE|DESCRIPTION)\s*={2,}'
+            _matches = list(_re.finditer(_pattern, cta_raw, _re.IGNORECASE))
+            if _matches:
+                _sections = {}
+                for _i, _m in enumerate(_matches):
+                    _key = _m.group(1).upper().replace(" ", "_")
+                    if _key.startswith("DM"): _key = "DM_MESSAGE"
+                    _start = _m.end()
+                    _end = _matches[_i+1].start() if _i + 1 < len(_matches) else len(cta_raw)
+                    _sections[_key] = cta_raw[_start:_end].strip()
+                st.session_state["parsed_comment"] = _sections.get("COMMENT", "")
+                st.session_state["parsed_dm"] = _sections.get("DM_MESSAGE", "")
+                st.session_state["parsed_description"] = _sections.get("DESCRIPTION", "")
+                st.success("✅ 생성 완료! 아래 STEP 1 결과 영역에서 복사하세요.")
+                st.rerun()
 
 col_v1, col_v2 = st.columns(2)
 

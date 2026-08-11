@@ -352,10 +352,13 @@ def generate_strategic_script_stream(
     video_format: str,
     product_name: str,
     api_key: str,
-    model_name: str = "nvidia/nemotron-3-ultra-550b-a55b",
+    model_name: str = "mistralai/mistral-nemotron",
     custom_system_prompt: str = "",
     benchmark_script: str = "",
-    reference_document: str = ""
+    reference_document: str = "",
+    hook_type: str = "DESIRE",
+    visual_hook: str = "BODY",
+    expert_present: bool = True
 ):
     """4050 여성을 타겟으로 하는 네이버 클립 대본 생성 (스트리밍)"""
     if not api_key:
@@ -400,14 +403,17 @@ Current Task:
         system_prompt += f"""
 Format Guidelines & Rules:
 1. Storyline (PASTOR Framework with Viral Twists): The script MUST follow the "PASTOR" structure, enhanced with viral marketing psychology.
-   - P (Problem & Hook): Hook them in the first 3 seconds. DO NOT use generic questions like "뻐근하시죠?". Use one of these Twists:
-     * Sensory Metaphor (e.g., "하체 전체를 큰 바위 덩어리가 누르고 있는 느낌, 저만 그런가요?")
-     * Reverse Psychology / Exclusion (e.g., "60kg 이하는 절대 쓰지 마세요", "어설프게 아픈 분들은 사지 마세요")
-     * Specific Persona (e.g., "육퇴 후 지친 육아맘", "하루 종일 서서 일하는 직장인")
-   - A (Amplify): Explain the CAUSE of the problem in 1-2 sentences to build trust. Do NOT repeat or restate the pain point from P again.
-   - S (Solution & Mid-roll CTA): Just before revealing the solution, insert a Mid-roll CTA (e.g., "비법 알아보기 전, 좋아요 먼저 누르고 따라하세요!"). Then introduce the easy solution name.
-   - T (Transformation): Explain step-by-step actions (use "1단계", "2단계"). Describe the physical change with Sensational Wording (e.g., "시원하다" -> "혈류가 심장으로 솟구친다", "악악 소리 날 정도로 조져주는"). Each step should build on the previous one naturally.
-   - O (Offer & Psychology): Apply Sunk Cost psychology (e.g., "올해 또 예쁜 쓰레기 사서 중복 투자하실 건가요?"). End with a specific comment CTA keyword (e.g., "댓글에 '하체 가뿐'이라고 남겨주세요"). NEVER end with just "도움이 되셨다면 좋아요 부탁드려요".
+   - P (Problem & Hook) [{hook_type} 타입 적용]: 첫 3초의 시작은 반드시 '{hook_type}' 전략을 따르세요.
+     * DESIRE (욕망형): 시청자가 원하는 결과/몸 상태를 보여주며 시작 ("이런 탄탄한 하체 만들고 싶다면?")
+     * PROBLEM (문제형): 구체적인 통증이나 문제 상황 묘사 ("계단 내려갈 때 무릎부터 잡는다면?")
+     * WARNING (금지형): 강한 경고 ("50대부터 이 운동은 함부로 하지 마세요.")
+     * CONTRARIAN (반전형): 상식 뒤집기 ("매일 걷는데도 하체가 약해지는 이유?")
+     * COMPARISON (비교형): 비교 대조 ("같은 나이인데 왜 몸이 이렇게 다를까요?")
+     * RESULT (결과형): 즉각적 결과 제시 ("하루 1분으로 이런 움직임을 만들어보세요.")
+   - A (Amplify) [{'전문가 인용 포함' if expert_present else '전문가 인용 제외'}]: 원인을 짧게 설명하여 신뢰도를 높이세요. {'반드시 의사나 트레이너 등 전문가의 관점을 1~2문장으로 인용하여 신뢰감을 더하세요.' if expert_present else '전문가의 등장 없이 빠르고 가볍게 핵심 원인만 1문장으로 전달하고 바로 해결책으로 넘어가세요.'}
+   - S (Solution & Mid-roll CTA): 비법 공개 전 "좋아요 먼저 누르고 따라하세요!" 등 미드롤 CTA 삽입 후 쉬운 해결책 제시.
+   - T (Transformation): 단계별(1단계, 2단계)로 매우 짧게 행동 지시. 감각적 단어 사용("시원하다" 대신 "막힌 혈류가 뚫리는").
+   - O (Offer & Psychology): Sunk Cost 심리 자극. 마지막은 특정 키워드 댓글 유도 ("댓글에 '하체 가뿐'이라고 남겨주세요"). "도움이 되셨다면 좋아요" 금지.
 2. Tone & Length:
    - Write in an Organic Native Tone. Sound like a real person's review, not a polished TV ad.
    - Length: The script MUST be 10-15 sentences (approx 45-60 seconds long). Keep each sentence short for fast-paced TTS reading.
@@ -422,7 +428,12 @@ Format Guidelines & Rules:
    - Format C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, comparing it to bad alternatives (e.g., "거대하고 비싼 안마의자 대신").
 
 OUTPUT STRUCTURE:
-You MUST output exactly THREE sections (Script, Comment, Description), separated by exactly these delimiters: "====SCRIPT====", "====COMMENT====", and "====DESCRIPTION====". Do not omit any section!
+You MUST output exactly FIVE sections (Visual Hook, Script, Comment, DM Message, Description), separated by exactly these delimiters: "====VISUAL_HOOK====", "====SCRIPT====", "====COMMENT====", "====DM_MESSAGE====", and "====DESCRIPTION====".
+
+====VISUAL_HOOK====
+Write a 1-sentence direction for the video editor or AI video generator for the FIRST 3 SECONDS of the video.
+This visual must match the selected Visual Hook type: [{visual_hook}]
+Types: BODY(탄탄한 하체/몸매 노출), MOVEMENT(안정적 한발서기 등 움직임), BEFORE_AFTER(자세 교정 전후), PROBLEM_SITUATION(허리 부여잡는 모습), EXPERT(전문가 진찰 모습), EXERCISE_RESULT(운동 후 땀흘리는 모습)
 
 ====SCRIPT====
 Write the narration text for a 45-60 second short-form video (10-15 sentences).
@@ -435,25 +446,30 @@ Example format:
 절대 안 빠집니다.
 
 ====COMMENT====
-[Comment CTA]
-Write a rich, highly detailed pinned comment that supplements the video content (like a mini-blog post).
-Structure it exactly like this:
-**[Catchy Title related to the topic]**
-1. **[Step 1 Name]** [Detailed explanation and tips]
-2. **[Step 2 Name]** [Detailed explanation and tips]
-3. **[Step 3 Name]** [Detailed explanation and tips]
+[Comment CTA for DM Automation]
+Write a pinned comment designed for DM (Direct Message) automation.
+Encourage viewers to leave a specific keyword in the comments to receive a DM with the secret tips, full video, or product link.
+Structure it briefly and engagingly.
+- Example: "영상 속 000 운동법 풀영상이 궁금하시다면 댓글에 '비법'이라고 남겨주세요! DM으로 바로 보내드릴게요💌"
+- If Format B or C, the DM promise should be about the product link.
+CRITICAL: The entire comment MUST BE UNDER 300 CHARACTERS.
 
-At the very end of this informational comment:
-If Format A: Write a polite closing.
-If Format B: Add a natural CTA like "영상에서 말한 그 꿀템! 네이버에 '{product_name}'를 검색해 보세요."
-If Format C: Add a direct CTA to check out "{product_name}".
+====DM_MESSAGE====
+[Direct Message Content]
+Write the actual message to be sent via DM to users who commented the keyword.
+- FIRST LINE (후킹 오프닝): MUST be 15 characters or less. Make it feel personal, warm, and surprising — NOT generic like "댓글 달아주셔서 감사합니다". Instead use something that feels like a friend reaching out (e.g., "드디어 기다리셨죠!💌", "오셨군요! 기다렸어요✨", "여기 왔어요! 반가워요😊", "도착했어요! 꼭 보세요🌿").
+- REST OF MESSAGE: Friendly, conversational Korean. Include a placeholder for the link: [LINK].
+CRITICAL: The entire DM message MUST BE UNDER 300 CHARACTERS.
 
 ====DESCRIPTION====
-[Video Description & Hashtags]
-Write a catchy video description optimized for Naver SEO. 
-- The title MUST start with a bracketed keyword: `[Main Keyword] Catchy Phrase` (e.g., `[허리 삐끗했을때] 3초 통증 완화법`).
-- Add 3-5 relevant hashtags.
-MUST BE UNDER 200 CHARACTERS TOTAL.
+[Video Title, Description & Hashtags]
+Write the Title, Description, and Hashtags optimized for Naver SEO.
+- TITLE: MUST BE UNDER 24 CHARACTERS. Make it highly clickable.
+- DESCRIPTION & HASHTAGS: Write a brief description followed by 3-5 hashtags.
+CRITICAL: The Description and Hashtags combined MUST BE UNDER 200 CHARACTERS. Do not exceed this limit.
+Format exactly like this:
+TITLE: [Your Title Here]
+BODY: [Your Description and Hashtags Here]
 """
 
         kwargs = {
@@ -465,10 +481,6 @@ MUST BE UNDER 200 CHARACTERS TOTAL.
             "top_p": 0.95
         }
         
-        if "nemotron-3-ultra-550b" in model_name.lower():
-            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}, "reasoning_budget": 4096}
-            kwargs["max_tokens"] = 16384
-            
         completion = client.chat.completions.create(**kwargs)
         
         for chunk in completion:
@@ -485,7 +497,81 @@ MUST BE UNDER 200 CHARACTERS TOTAL.
     except Exception as e:
         yield f"오류 발생: {str(e)}"
 
-def generate_image_prompts_stream(script_text: str, api_key: str, model_name: str = "meta/llama-3.3-70b-instruct"):
+def generate_cta_from_script_stream(script_text: str, api_key: str, model_name: str = "mistralai/mistral-nemotron"):
+    """기존 대본으로부터 고정댓글(CTA) + DM 메세지 + 영상 설명 & 해시태그 생성 (스트리밍)"""
+    if not api_key:
+        yield "API 키가 설정되지 않았습니다."
+        return
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(
+            base_url="https://integrate.api.nvidia.com/v1",
+            api_key=api_key
+        )
+
+        system_prompt = f"""You are a Korean short-form content marketing expert specializing in Naver Clip.
+Based on the provided video script, generate THREE sections in Korean.
+
+[영상 대본]
+{script_text.strip()}
+
+OUTPUT STRUCTURE:
+You MUST output exactly THREE sections separated by these exact delimiters: "====COMMENT====", "====DM_MESSAGE====", and "====DESCRIPTION====".
+
+====COMMENT====
+[Comment CTA for DM Automation]
+영상 내용을 보고 시청자가 DM 자동화에 참여하도록 유도하는 고정 댓글을 한국어로 작성하세요.
+대본의 핵심 운동/행동을 키워드로 삼아 댓글을 유도하세요.
+예시: "이 운동법 전체 영상이 궁금하시면 댓글에 '복근 탄력'이라고 남겨주세요! DM으로 바로 보내드릴게요💌"
+CRITICAL: 전체 댓글 300자 이내.
+
+====DM_MESSAGE====
+[Direct Message Content]
+댓글 키워드를 남긴 사람에게 실제로 보낼 DM 메세지를 한국어로 작성하세요.
+- 첫 줄 (후킹 오프닝): 반드시 15자 이내. 식상한 "댓글 달아주셔서 감사합니다" 절대 금지. 친구가 먼저 연락한 것처럼 따뜻하고 놀라운 느낌으로 시작하세요.
+  예시: "드디어 기다리셨죠!💌", "오셨군요! 기다렸어요✨", "여기 왔어요! 반가워요😊", "도착했어요! 꼭 보세요🌿", "발견하셨군요!🎉"
+  대본 주제와 자연스럽게 어울리는 표현으로 창의적으로 작성하세요.
+- 나머지: 친근하고 따뜻한 톤으로, 링크 자리에는 [LINK] 표시.
+CRITICAL: 전체 DM 메세지 300자 이내.
+
+====DESCRIPTION====
+[Video Title, Description & Hashtags]
+영상 제목, 설명, 해시태그를 네이버 SEO에 최적화해서 한국어로 작성하세요.
+- TITLE: 24자 이내. 클릭을 유도하는 제목.
+- DESCRIPTION & HASHTAGS: 간단한 설명 + 해시태그 3~5개.
+CRITICAL: 설명과 해시태그 합산 200자 이내.
+Format:
+TITLE: [제목]
+BODY: [설명 + 해시태그]
+"""
+
+        kwargs = {
+            "model": model_name,
+            "messages": [{"role": "user", "content": system_prompt}],
+            "stream": True,
+            "max_tokens": 1024,
+            "temperature": 0.7,
+            "top_p": 0.95
+        }
+
+        completion = client.chat.completions.create(**kwargs)
+
+        for chunk in completion:
+            if not chunk.choices:
+                continue
+
+            reasoning = getattr(chunk.choices[0].delta, "reasoning_content", None)
+            if reasoning:
+                yield reasoning
+
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+    except Exception as e:
+        yield f"\n\nCTA 생성 중 오류가 발생했습니다: {str(e)}"
+
+def generate_image_prompts_stream(script_text: str, api_key: str, model_name: str = "mistralai/mistral-nemotron"):
     """이미지 생성(Hailuo AI)을 위한 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
     if not api_key:
         yield "API 키가 설정되지 않았습니다."
@@ -529,10 +615,6 @@ def generate_image_prompts_stream(script_text: str, api_key: str, model_name: st
             "top_p": 0.95
         }
         
-        if "nemotron-3-ultra-550b" in model_name.lower():
-            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}, "reasoning_budget": 4096}
-            kwargs["max_tokens"] = 16384
-            
         completion = client.chat.completions.create(**kwargs)
         
         for chunk in completion:
@@ -549,8 +631,8 @@ def generate_image_prompts_stream(script_text: str, api_key: str, model_name: st
     except Exception as e:
         yield f"\n\n이미지 프롬프트 생성 중 오류가 발생했습니다: {str(e)}"
 
-def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: str = "nvidia/nemotron-3-ultra-550b-a55b"):
-    """Hailuo AI (MiniMax) 영상 생성용 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
+def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: str = "mistralai/mistral-nemotron"):
+    """Hailuo 텍스트-투-비디오 프롬프트 생성용 영문 프롬프트 추출기 (NVIDIA API 스트리밍)"""
     if not api_key:
         yield "API 키가 설정되지 않았습니다."
         return
@@ -572,10 +654,10 @@ def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: s
         1. Modular Formula: Every prompt MUST strictly follow this sequence:
            [9:16 Portrait Frame] + [Camera Shot + Motion] + [Subject + Description] + [Action Constraint] + [Scene + Environment] + [Lighting & Mood]
         2. Camera & Motion: Use only portrait-friendly shots (e.g., "Close-up shot, tilt-up", "Medium shot, eye-level", "Low angle looking up"). Avoid wide landscape shots that break vertical framing.
-        3. Subject Details: Be extremely precise about appearance and textures to avoid distortion (e.g., "A 40-year-old Korean woman wearing a cozy white knit sweater").
+        3. Subject Details: Be extremely precise about appearance and textures to avoid distortion. The primary character MUST be a "young Korean female trainer wearing leggings and a tight sports top" (e.g., "A young attractive Korean female fitness trainer wearing black leggings and a white sports bra, ponytail hair").
         4. Action Constraints: Avoid vague descriptions. Define physical behavior accurately to prevent motion chaos (e.g., "gently massaging her lower back with a warm smile").
         5. Scene & Mood: Provide atmospheric cues for cinematic polish (e.g., "golden hour, cinematic rim lighting, volumetric lighting, shallow depth of field, bokeh, Arri Alexa").
-        6. INTRO SCENE RULE (MANDATORY): For the first 1-2 scenes (the initial explanation/narration), you MUST feature a "professional doctor in a white lab coat explaining to the camera" to build viewer trust.
+        6. INTRO SCENE RULE (MANDATORY): For the first 1-2 scenes (the initial explanation/narration), you MUST feature this "young Korean female trainer explaining to the camera" to immediately grab attention and build visual interest.
         7. Negative Constraints: Exclude artifacts by adding anti-prompts at the end (e.g., "no plastic texture, no distorted faces, no text overlays, no horizontal landscape composition").
         8. Conciseness: Keep it focused. Do not write paragraphs. Use sequential modular descriptors separated by commas.
 
@@ -604,10 +686,6 @@ def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: s
             "top_p": 0.95
         }
         
-        if "nemotron-3-ultra-550b" in model_name.lower():
-            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": True}, "reasoning_budget": 4096}
-            kwargs["max_tokens"] = 16384
-            
         completion = client.chat.completions.create(**kwargs)
         
         for chunk in completion:
