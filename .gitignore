@@ -18,3 +18,7 @@ nv_api_key.txt
 el_api_key.txt
 fish_api_key.txt
 pexels_api_key.txt
+pixabay_api_key.txt
+*.db
+stock_videos/
+previews/
