@@ -1,0 +1,16 @@
+2026-08-12 22:14:59 [INFO] [adforge] - Generating script for 휴대용 선풍기...
+2026-08-12 22:16:58 [INFO] [adforge] - Generating script for 휴대용 선풍기...
+2026-08-12 22:17:19 [INFO] [adforge] - Selected strategies: ['SPECIFIC_EMPATHY', 'SIMPLE_LIST', 'EXPERIENCE_STORY']
+2026-08-12 22:17:57 [INFO] [adforge] - Selected hook: 출근길 지하철에서 땀이 줄줄 흘리며 아침부터 기분이 상하는 30-50대 직장인이라면?
+2026-08-12 22:17:57 [INFO] [adforge] - Generating script body and CTA (Attempt 1)...
+2026-08-12 22:21:22 [INFO] [adforge] - Script evaluated: Score 89. Approved? True
+2026-08-12 22:25:55 [INFO] [adforge] - [scene_01] Asset search attempt 1/3
+2026-08-12 22:26:33 [INFO] [adforge] - [scene_01] Generated queries: ['office worker subway commute', 'commuter train hot summer', 'person sweating public transport', 'young professional subway discomfort', 'hot subway commute smartphone']
+2026-08-12 22:26:33 [WARNING] [adforge] - [scene_01] All retrieved candidates failed the quality gate.
+2026-08-12 22:26:33 [INFO] [adforge] - [scene_01] Asset search attempt 2/3
+2026-08-12 22:26:37 [INFO] [adforge] - [scene_01] Generated queries: ['office worker subway commute', 'commuter train hot weather', 'person sweating public transport', 'young professional subway discomfort', 'hot summer subway commute']
+2026-08-12 22:26:37 [WARNING] [adforge] - [scene_01] All retrieved candidates failed the quality gate.
+2026-08-12 22:26:37 [INFO] [adforge] - [scene_01] Asset search attempt 3/3
+2026-08-12 22:26:51 [INFO] [adforge] - [scene_01] Generated queries: ['office worker subway commute', 'commuter train hot summer', 'person sweating public transport', 'young professional subway heat', 'hot subway commute discomfort']
+2026-08-12 22:26:51 [WARNING] [adforge] - [scene_01] All retrieved candidates failed the quality gate.
+2026-08-12 22:26:51 [ERROR] [adforge] - [scene_01] Exhausted 3 attempts. No suitable asset found.

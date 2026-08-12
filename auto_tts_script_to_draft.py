@@ -25,7 +25,7 @@ def create_capcut_with_tts(script_text: str, project_name: str = "허리_복대_
     2. 생성된 음성의 실제 길이를 측정
     3. 자막과 음성을 1:1로 완벽하게 싱크 맞춰 CapCut 초안 프로젝트로 생성
     """
-    draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
+    draft_folder_path = "C:/Users/임준모/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
     draft_folder = cc.DraftFolder(draft_folder_path)
 
     # 1. 새 CapCut 초안 프로젝트 생성 (1080x1920 세로 숏폼 규격, 30fps)

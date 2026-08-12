@@ -1,7 +1,7 @@
 import pycapcut as cc
 
 # 1. 사용자 시스템의 실제 CapCut 초안 폴더 경로
-draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
+draft_folder_path = "C:/Users/임준모/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
 draft_folder = cc.DraftFolder(draft_folder_path)
 
 # 2. 기존 템플릿 초안을 복사하여 새 초안 만들기

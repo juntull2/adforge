@@ -10,7 +10,7 @@ def create_capcut_from_script(script_text: str, project_name: str = "대본_자�
     :param duration_per_line: 자막 1줄당 표시할 시간(초)
     """
     # 1. CapCut 초안 폴더 경로
-    draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
+    draft_folder_path = "C:/Users/임준모/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
     draft_folder = cc.DraftFolder(draft_folder_path)
 
     # 2. 새 초안 프로젝트 생성 (FHD 1080x1920 세로 숏폼 기준, 30fps)

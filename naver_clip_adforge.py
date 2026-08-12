@@ -1088,7 +1088,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
     # 캡컷 DraftFolder 접근은 순차적으로 (Lock으로 보호)
     with capcut_draft_lock:
-        draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
+        draft_folder_path = "C:/Users/임준모/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
         # 폴더가 없으면 직접 생성
         os.makedirs(draft_folder_path, exist_ok=True)
         draft_folder = cc.DraftFolder(draft_folder_path)

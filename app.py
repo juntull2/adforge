@@ -28,6 +28,49 @@ st.markdown('''
 st.markdown('<div class="main-header">🚀 AdForge :: 4050 숏폼 기획 & 영상 자동화</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-header">대본 기획부터 캡컷 프로젝트 생성, Hailuo AI 프롬프트까지 원스톱!</div>', unsafe_allow_html=True)
 
+ui_mode = st.radio("⚙️ 시스템 모드 선택", ["Legacy Mode (기존 방식)", "AdForge v2 Mode (신규 아키텍처)"], horizontal=True)
+
+if ui_mode == "AdForge v2 Mode (신규 아키텍처)":
+    st.subheader("AdForge v2 - Enhanced Quality Pipeline")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        v2_product_name = st.text_input("📦 연결할 제품명", value="다피다 허리찜질기")
+        v2_product_cat = st.text_input("📦 제품 카테고리", value="건강/의료기기")
+        v2_product_desc = st.text_area("📝 제품 상세 설명 (효능, 특징 등)", value="허리 깊숙이 박힌 냉기를 빼주고, 척추 기립근 양옆을 45도로 지속 온열해주는 찜질기. 아침 기상 통증 완화에 탁월함.")
+    with col2:
+        v2_age = st.text_input("👥 타겟 연령층", value="4050")
+        v2_gender = st.selectbox("👥 타겟 성별", ["all", "male", "female"])
+        v2_problem = st.text_input("🚨 타겟의 핵심 문제/고충", value="아침에 일어날 때 허리가 뻐근하고 아파서 일상생활이 불편함")
+        
+    debug_mode = st.toggle("🐛 Debug Mode (중간 생성물 확인)")
+    
+    if st.button("🚀 실행: AdForge v2 파이프라인 가동", use_container_width=True):
+        from core.schemas import ProductInfo, AudienceProfile
+        from pipelines.full_pipeline import FullPipeline
+        
+        prod = ProductInfo(name=v2_product_name, category=v2_product_cat, description=v2_product_desc)
+        aud = AudienceProfile(age_group=v2_age, gender=v2_gender, core_problem=v2_problem)
+        
+        with st.spinner("V2 파이프라인 실행 중... (수 분이 소요될 수 있습니다)"):
+            pipeline = FullPipeline()
+            report = pipeline.run_generation(prod, aud)
+            
+            if report:
+                st.success("✅ V2 파이프라인 생성 완료!")
+                st.markdown("### 📊 최적화 리포트 (Naver Clip SEO)")
+                st.write(f"**추천 제목:** {report.title}")
+                st.write(f"**추천 해시태그:** {' '.join(['#'+t for t in report.hashtags])}")
+                st.write(f"**최적화 점수:** {report.clip_optimization_score}/100")
+                
+                if debug_mode:
+                    st.markdown("### 🐛 Debug: 상세 리포트 JSON")
+                    st.json(report.dict())
+            else:
+                st.error("❌ 파이프라인 실행 중 오류가 발생했습니다. 로그를 확인하세요.")
+                
+    st.stop()
+
 # -------------------------------------------------------------------
 # 전역 설정 및 API 키 캐싱
 # -------------------------------------------------------------------
