@@ -78,6 +78,15 @@ class HookStrategyLibrary:
             "required_evidence": "실제 제품의 Before -> After 특징",
             "example_patterns": ["저도 처음엔 반신반의했는데, 딱 3일 써보고 완전히 생각이 바뀌었습니다.", "솔직히 돈 낭비일 줄 알았거든요? 근데 제 피부가 증명하네요."],
             "risk_flags": ["허구의 인위적인 감동 스토리 금지"]
+        },
+        "MICRO_COMMITMENT": {
+            "name": "마이크로 커밋먼트 (작은 실행 단위)",
+            "psychological_mechanism": "'딱 1분', '하루 5번'처럼 아주 작은 실행 단위를 제시하여 시작 저항을 제거",
+            "best_for": "운동, 스트레칭, 건강 습관, 자기계발",
+            "avoid_when": "제품에 반복 사용 개념이 없을 때",
+            "required_evidence": "실제로 해당 시간/횟수 안에 효과를 체감할 수 있는 근거",
+            "example_patterns": ["딱 5번만 해보세요. 허리가 확 달라집니다.", "1분이면 됩니다. 아침에 일어나자마자 이것만 하세요."],
+            "risk_flags": ["근거 없는 숫자 임의 생성 금지"]
         }
     }
 
@@ -87,10 +96,18 @@ class HookEngine:
         self.client = OpenAI(api_key=key, base_url=base_url)
         self.model = model
 
-    def select_strategies(self, product: ProductInfo, audience: AudienceProfile) -> List[str]:
-        """Select 2-3 most appropriate hook strategies based on product and audience."""
+    def select_strategies(self, product: ProductInfo, audience: AudienceProfile, benchmark_patterns: List[str] = None) -> List[str]:
+        """Select 2-3 most appropriate hook strategies based on product, audience, and benchmark patterns."""
         strategies_info = json.dumps(HookStrategyLibrary.STRATEGIES, ensure_ascii=False, indent=2)
         
+        benchmark_hint = ""
+        if benchmark_patterns:
+            benchmark_hint = f"""
+Benchmark Intelligence (observed patterns from successful videos in this domain):
+{', '.join(benchmark_patterns)}
+
+Consider these observed patterns when selecting strategies. These are structural patterns, not content to copy."""
+
         prompt = f"""You are a Hook Strategy Expert for Naver Clip short-form ads.
 Given the product and audience, select the 2-3 BEST hook strategies from the library.
 Do NOT write the hooks yet. Just pick the strategy IDs and explain why.
@@ -98,6 +115,7 @@ Do NOT write the hooks yet. Just pick the strategy IDs and explain why.
 Product: {product.name} ({product.category})
 Description: {product.description}
 Audience: {audience.age_group} ({audience.gender}), Core Problem: {audience.core_problem}
+{benchmark_hint}
 
 Strategies Library:
 {strategies_info}
@@ -117,18 +135,25 @@ Return ONLY valid JSON matching this schema:
         try:
             result = json.loads(response.choices[0].message.content)
             strategies = result.get("selected_strategies", [])
-            # Fallback if empty or invalid
             valid_strategies = [s for s in strategies if s in HookStrategyLibrary.STRATEGIES]
             if not valid_strategies:
-                return ["SPECIFIC_EMPATHY", "CURIOSITY_GAP"]
+                return ["SPECIFIC_EMPATHY", "MICRO_COMMITMENT"]
             return valid_strategies[:3]
         except Exception as e:
             logger.error(f"Failed to select strategies: {e}")
-            return ["SPECIFIC_EMPATHY", "CURIOSITY_GAP"]
+            return ["SPECIFIC_EMPATHY", "MICRO_COMMITMENT"]
 
-    def generate_hook_candidates(self, product: ProductInfo, audience: AudienceProfile, strategies: List[str]) -> List[HookCandidate]:
-        """Generate 1 hook candidate per strategy."""
+    def generate_hook_candidates(self, product: ProductInfo, audience: AudienceProfile, strategies: List[str], benchmark_patterns: List[str] = None) -> List[HookCandidate]:
+        """Generate 1 hook candidate per strategy, informed by benchmark patterns."""
         candidates = []
+        
+        benchmark_hint = ""
+        if benchmark_patterns:
+            benchmark_hint = f"""
+Benchmark Intelligence (observed structural patterns from successful videos in this domain):
+{', '.join(benchmark_patterns)}
+Use these as structural inspiration. Do NOT copy any specific content. Create original content."""
+
         for strategy_id in strategies:
             strat_info = HookStrategyLibrary.STRATEGIES[strategy_id]
             prompt = f"""You are a Naver Clip short-form ad copywriter.
@@ -136,6 +161,7 @@ Write exactly ONE hook sentence (the first 3 seconds of the video) using the fol
 
 Product: {product.name} ({product.category})
 Audience: {audience.age_group} ({audience.gender}), Core Problem: {audience.core_problem}
+{benchmark_hint}
 
 Strategy: {strat_info['name']}
 Mechanism: {strat_info['psychological_mechanism']}
@@ -145,7 +171,7 @@ Example style: {strat_info['example_patterns'][0]}
 Requirements:
 - Keep it under 2 sentences, punchy and highly engaging.
 - Use natural spoken Korean (~해요, ~습니다).
-- Do NOT invent fake reviews or fake data.
+- Do NOT invent fake reviews, fake numbers, or fake data.
 - Return ONLY valid JSON:
 {{
   "hook": "The actual hook sentence",

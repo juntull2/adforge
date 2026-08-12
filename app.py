@@ -43,18 +43,38 @@ if ui_mode == "AdForge v2 Mode (신규 아키텍처)":
         v2_gender = st.selectbox("👥 타겟 성별", ["all", "male", "female"])
         v2_problem = st.text_input("🚨 타겟의 핵심 문제/고충", value="아침에 일어날 때 허리가 뻐근하고 아파서 일상생활이 불편함")
         
-    debug_mode = st.toggle("🐛 Debug Mode (중간 생성물 확인)")
+        
+    st.markdown("---")
+    st.markdown("### 🧬 Benchmark Intelligence")
+    from intelligence.benchmark_intelligence import BenchmarkRetriever
+    retriever = BenchmarkRetriever()
+    dna_summary = retriever.get_dna_summary()
+    
+    col_dna1, col_dna2 = st.columns(2)
+    with col_dna1:
+        st.info(f"**Brand Profile:** 몸편한하루 (건강/생활)")
+        st.success(f"**학습된 벤치마크 영상 수:** {dna_summary.get('source_count', 0)}개")
+    with col_dna2:
+        st.write("**Top Hook Patterns:**")
+        for p in dna_summary.get("top_hooks", []):
+            st.caption(f"- {p}")
+        st.write("**Top Visual Patterns:**")
+        for p in dna_summary.get("top_visuals", []):
+            st.caption(f"- {p}")
+            
+    debug_mode = st.toggle("🐛 Debug Mode (중간 생성물 상세 추적)")
     
     if st.button("🚀 실행: AdForge v2 파이프라인 가동", use_container_width=True):
-        from core.schemas import ProductInfo, AudienceProfile
+        from core.schemas import ProductInfo, AudienceProfile, BrandProfile
         from pipelines.full_pipeline import FullPipeline
         
         prod = ProductInfo(name=v2_product_name, category=v2_product_cat, description=v2_product_desc)
         aud = AudienceProfile(age_group=v2_age, gender=v2_gender, core_problem=v2_problem)
+        brand = BrandProfile() # Currently only BodyComfort is supported
         
         with st.spinner("V2 파이프라인 실행 중... (수 분이 소요될 수 있습니다)"):
             pipeline = FullPipeline()
-            report = pipeline.run_generation(prod, aud)
+            report = pipeline.run_generation(prod, aud, brand)
             
             if report:
                 st.success("✅ V2 파이프라인 생성 완료!")

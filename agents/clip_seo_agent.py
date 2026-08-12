@@ -49,7 +49,8 @@ Return ONLY valid JSON matching this schema:
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"},
-                temperature=0.7
+                temperature=0.7,
+                timeout=15
             )
             result = json.loads(response.choices[0].message.content)
             
