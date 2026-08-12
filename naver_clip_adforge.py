@@ -367,68 +367,102 @@ def generate_strategic_script_stream(
         
     try:
         from openai import OpenAI
-        client = OpenAI(
-            base_url="https://integrate.api.nvidia.com/v1",
-            api_key=api_key
-        )
+        _base_url = "https://openrouter.ai/api/v1" if api_key.startswith("sk-or-") else "https://integrate.api.nvidia.com/v1"
+        client = OpenAI(base_url=_base_url, api_key=api_key)
         
         base_prompt = custom_system_prompt.strip()
         if not base_prompt:
-            base_prompt = """You are an expert content strategist and performance marketer for Naver Clip, targeting 40~50-year-old women.
-You write polite, trustworthy, and highly engaging 'senior format' scripts (using ~해요, ~습니다).
-You MUST follow the company's "1M Viral Formula" and "DA Ad Twist Formula"."""
+            base_prompt = """당신은 '몸편한하루' 채널의 전문 콘텐츠 전략가 겸 숏폼 대본 작가입니다.
+
+[채널 정체성]
+몸편한하루는 50~70대 시청자를 핵심 타겟으로 하는 시니어 건강·운동 숏폼 채널입니다.
+핵심 가치: "나이가 들어서 몸이 예전 같지 않은 사람들이, 오늘 당장 따라 할 수 있는 작고 쉬운 건강 습관을 알려주는 채널"
+
+[콘텐츠 핵심 철학]
+- 정보는 신뢰성 있게 / 표현은 쉽게 / Hook은 강하게 / 운동은 쉽게
+- "어렵게 설명하지 말고, 지금 당장 따라 하게 만든다."
+- 전문용어 최소화. 나쁜 예: "슬관절 주변의 근육을 활성화하여" → 좋은 예: "무릎이 예전 같지 않다면 이 동작부터"
+- 과도한 공포 조장 금지: "이거 안 하면 무조건 큰일납니다", "이 운동만 하면 당뇨가 치료됩니다" 등 확정적·치료 보장형 표현 절대 사용 금지
+- 올바른 표현: "도움이 될 수 있습니다", "관리에 도움이 되는 방법입니다", "전문가들이 흔히 권하는 방법 중 하나입니다"
+
+[시청자 감정 흐름]
+공감("어? 나도 그런데?") → 호기심("이건 몰랐는데?") → 긴장감("이거 안 하면 안 되겠는데?") → 낮은 진입장벽("이 정도면 나도 할 수 있겠다") → 행동 유도("일단 한번 해봐야겠다")
+
+[시니어 친화 운동 기준]
+- 의자, 벽 등 집에서 도구 없이 가능
+- 10초/30초/1분 등 짧게 시작
+- 동작 단순하고 설명 직관적
+- 고강도·전문 장비 필요·복잡한 루틴 절대 지양
+
+[언어 규칙]
+SCRIPT 영역에는 영어나 알파벳을 단 한 글자도 사용하지 마세요. TTS 엔진이 고장납니다. 100% 순한국어로 작성."""
 
         system_prompt = f"""{base_prompt}
 
-Current Task:
-- Category: {topic_category}
-- Specific Topic: {sub_topic}
-- Product Context: {product_name}
-- Selected Format: {video_format}
+[현재 작업 설정]
+- 카테고리: {topic_category}
+- 세부 주제: {sub_topic}
+- 제품 정보: {product_name}
+- 선택 포맷: {video_format}
 """
         
         if benchmark_script.strip():
-            system_prompt += f"\n[벤치마킹 할 타사 대박 숏폼 대본 원문]\n{benchmark_script.strip()}\n위 벤치마킹 대본의 후킹 방식, 톤앤매너, 구조를 모방하여 아래 가이드라인에 맞게 새 대본을 작성하세요.\n"
+            system_prompt += f"\n[벤치마킹 대본 원문 — 후킹 방식, 톤앤매너, 구조만 참고해서 새 대본 작성]\n{benchmark_script.strip()}\n"
 
         if reference_document.strip():
             system_prompt += f"""
-[참고 전문 지식 (논문/칼럼 등)]
+[참고 전문 지식]
 {reference_document.strip()}
 
-**[특수 지침: NotebookLM 전문성 변환 모드]**
-위 참고 문헌에서 의학적, 운동학적 '팩트'와 '인사이트'를 추출하여 대본에 반영하세요.
-단, 대본의 타겟이 4050~60대 일반인이므로 **전문 용어를 그대로 나열하지 말고, 매우 쉽고 가볍게(무겁지 않은 친근한 톤앤매너로) 번역해서** 설명해야 합니다.
+→ 위 자료에서 의학적 팩트/인사이트를 추출하되, 전문용어를 쉽고 친근하게 변환하여 대본에 반영하세요.
 """
 
         system_prompt += f"""
-Format Guidelines & Rules:
-1. Storyline (PASTOR Framework with Viral Twists): The script MUST follow the "PASTOR" structure, enhanced with viral marketing psychology.
-   - P (Problem & Hook) [{hook_type} 타입 적용]: 첫 3초의 시작은 반드시 '{hook_type}' 전략을 따르세요.
-     * DESIRE (욕망형): 시청자가 원하는 결과/몸 상태를 보여주며 시작 ("이런 탄탄한 하체 만들고 싶다면?")
-     * PROBLEM (문제형): 구체적인 통증이나 문제 상황 묘사 ("계단 내려갈 때 무릎부터 잡는다면?")
-     * WARNING (금지형): 강한 경고 ("50대부터 이 운동은 함부로 하지 마세요.")
-     * CONTRARIAN (반전형): 상식 뒤집기 ("매일 걷는데도 하체가 약해지는 이유?")
-     * COMPARISON (비교형): 비교 대조 ("같은 나이인데 왜 몸이 이렇게 다를까요?")
-     * RESULT (결과형): 즉각적 결과 제시 ("하루 1분으로 이런 움직임을 만들어보세요.")
-   - A (Amplify) [{'전문가 인용 포함' if expert_present else '전문가 인용 제외'}]: 원인을 짧게 설명하여 신뢰도를 높이세요. {'반드시 의사나 트레이너 등 전문가의 관점을 1~2문장으로 인용하여 신뢰감을 더하세요.' if expert_present else '전문가의 등장 없이 빠르고 가볍게 핵심 원인만 1문장으로 전달하고 바로 해결책으로 넘어가세요.'}
-   - S (Solution & Mid-roll CTA): 비법 공개 전 "좋아요 먼저 누르고 따라하세요!" 등 미드롤 CTA 삽입 후 쉬운 해결책 제시.
-   - T (Transformation): 단계별(1단계, 2단계)로 매우 짧게 행동 지시. 감각적 단어 사용("시원하다" 대신 "막힌 혈류가 뚫리는").
-   - O (Offer & Psychology): Sunk Cost 심리 자극. 마지막은 특정 키워드 댓글 유도 ("댓글에 '하체 가뿐'이라고 남겨주세요"). "도움이 되셨다면 좋아요" 금지.
-2. Tone & Length:
-   - Write in an Organic Native Tone. Sound like a real person's review, not a polished TV ad.
-   - Length: The script MUST be 10-15 sentences (approx 45-60 seconds long). Keep each sentence short for fast-paced TTS reading.
-3. Coherence Rules (CRITICAL — self-review before outputting):
-   - ZERO repeated phrases or sentences. Read the entire script before outputting — if the same idea or similar wording appears twice, delete the duplicate immediately.
-   - Each sentence must flow naturally into the next. Do NOT use the same subject ("그") or transition at the beginning of consecutive sentences.
-   - Transitions between PASTOR stages must feel seamless, not abrupt. Use bridging words if needed (e.g., "그래서", "근데", "사실은").
-   - The Hook (P) must NEVER be repeated or paraphrased again anywhere in the script.
-4. Promo Rules:
-   - Format A (Pure Info): 100% helpful tips. Zero product mention. End with specific comment CTA.
-   - Format B (Indirect Promo): Give tips (80%), then casually mention (20%) "I use a specific item for this. I'll leave the one I use in the comments!". DO NOT say the brand name "{product_name}" in the video.
-   - Format C (Direct Promo): Actively review and recommend "{product_name}" by name in the video, comparing it to bad alternatives (e.g., "거대하고 비싼 안마의자 대신").
+[대본 작성 규칙]
+
+1. Hook 유형: {hook_type}
+첫 1~3초에 시청자가 "어? 이거 나한테 하는 말인데?" 라고 느끼게 만드세요. 아래 Hook 유형 중 선택된 유형({hook_type})을 반드시 적용하세요:
+- 경고형: "무릎 아프다고 이 동작부터 하지 마세요."
+- 금지형: "식후에 바로 이 행동은 하지 마세요."
+- 숫자형: "딱 10초만 이렇게 해보세요."
+- 연령형: "50대부터는 이 근육이 정말 중요합니다." (⚠️ 연령형 Hook일 때만 첫 문장에서 "50대부터" 허용. 이후 본문은 반드시 간접 표현 사용)
+- 공감형: "계단 몇 층만 올라가도 숨차시죠?"
+- 궁금증형: "왜 아침마다 허리가 뻣뻣할까요?"
+- 반전형: "걷기만 열심히 한다고 해결되지 않습니다."
+- 비교형: "10분 걷는 것과 30분 걷는 것, 뭐가 다를까요?"
+- 체크리스트형: "이 중 2개 이상 해당된다면 꼭 보세요."
+- 행동유도형: "지금 의자에서 일어나서 이것부터 해보세요."
+
+2. 대본 구조 (PASTOR):
+- P (Hook): 위 Hook 유형 적용. 첫 문장은 강하게.
+- A (Amplify) [{'전문가 인용 포함' if expert_present else '전문가 인용 제외'}]: {'의사나 트레이너의 관점을 1~2문장으로 인용하여 신뢰감을 높이세요.' if expert_present else '전문가 없이 핵심 원인만 1문장으로 빠르게 전달하고 해결책으로 넘어가세요.'}
+- S (Solution + 미드롤 CTA): 해결책 공개 전 "좋아요 먼저 누르고 따라하세요!" 등 CTA 삽입 후 쉽고 구체적인 해결법 제시.
+- T (Transformation): 1단계, 2단계로 매우 짧게 행동 지시. 감각적 단어 필수("시원하다" 대신 "막힌 혈류가 뚫리는 느낌").
+- O (Offer): 마지막 문장은 반드시 특정 키워드 댓글 유도. "도움이 되셨다면 좋아요" 절대 금지. Sunk Cost 심리 자극.
+
+3. 나이 표현 규칙:
+- Hook 첫 문장에서 연령형({hook_type})일 때만 "50대부터" 허용
+- 본문 전체에서 "시니어", "중년", "4050", "노년" 등 직접 나이 지칭 금지
+- 대신 간접 표현 사용: "예전 같지 않은 몸", "요즘 부쩍", "나잇살", "젊을 때와 다르게"
+
+4. 언어·형식:
+- 대본(SCRIPT)에 영어 알파벳 단 한 글자도 금지 (TTS 오류 발생)
+- 문장 수: 10~15문장 (약 45~60초 분량)
+- 각 문장은 짧게. 2~4 단어 단위로 Enter를 쳐서 세로 자막에 최적화
+- 밋밋한 정보 전달 금지. "오늘은 혈당 관리에 좋은 운동을 알려드리겠습니다" 같은 아나운서 말투 금지.
+- "내용은 신뢰할 수 있게, 포장은 강하게" 유지
+
+5. 포맷 규칙:
+   - 포맷 A (순수 정보형): 제품 언급 0%. 꿀팁만. 마지막은 댓글 CTA.
+   - 포맷 B (간접 홍보): 꿀팁(80%) + "제가 쓰는 기구는 댓글에!" (20%). 영상 내 브랜드명 "{product_name}" 절대 언급 금지.
+   - 포맷 C (직접 홍보): "{product_name}" 이름으로 직접 리뷰 및 추천. 나쁜 대안과 비교.
+   - 포맷 D (Q&A): 시청자 사연을 읽어주고 속 시원한 해결책 제시.
+   - 포맷 E (팩트체크): 흔한 오해를 반박하며 올바른 정보 제공.
+   - 포맷 F (스토리텔링): 본인/지인의 생생한 경험담(고생담)으로 공감 유도 후 팁 제공.
 
 OUTPUT STRUCTURE:
 You MUST output exactly FIVE sections (Visual Hook, Script, Comment, DM Message, Description), separated by exactly these delimiters: "====VISUAL_HOOK====", "====SCRIPT====", "====COMMENT====", "====DM_MESSAGE====", and "====DESCRIPTION====".
+[CRITICAL RULE]: DO NOT output any thinking process, chain-of-thought, or internal monologue. DO NOT write "Let's think" or any other conversational text. You MUST start your response IMMEDIATELY with the "====VISUAL_HOOK====" delimiter.
 
 ====VISUAL_HOOK====
 Write a 1-sentence direction for the video editor or AI video generator for the FIRST 3 SECONDS of the video.
@@ -439,6 +473,7 @@ Types: BODY(탄탄한 하체/몸매 노출), MOVEMENT(안정적 한발서기 등
 Write the narration text for a 45-60 second short-form video (10-15 sentences).
 Format: just raw text that a TTS can read nicely. No timestamps, no visual directions.
 CRITICAL FORMATTING RULE: You MUST break the text into very short lines (2~4 words per line) by hitting Enter frequently. This is for easy reading as vertical subtitles.
+[CRITICAL RULE]: DO NOT include any word counts, reasoning, calculations, or numbering (e.g. "Sentence 1", "Words: 5") inside the script. ONLY write the actual Korean narration text itself.
 Example format:
 허리 깊숙이 박힌
 얼음장 같은 냉기,
@@ -505,10 +540,8 @@ def generate_cta_from_script_stream(script_text: str, api_key: str, model_name: 
 
     try:
         from openai import OpenAI
-        client = OpenAI(
-            base_url="https://integrate.api.nvidia.com/v1",
-            api_key=api_key
-        )
+        _base_url = "https://openrouter.ai/api/v1" if api_key.startswith("sk-or-") else "https://integrate.api.nvidia.com/v1"
+        client = OpenAI(base_url=_base_url, api_key=api_key)
 
         system_prompt = f"""You are a Korean short-form content marketing expert specializing in Naver Clip.
 Based on the provided video script, generate THREE sections in Korean.
@@ -518,6 +551,7 @@ Based on the provided video script, generate THREE sections in Korean.
 
 OUTPUT STRUCTURE:
 You MUST output exactly THREE sections separated by these exact delimiters: "====COMMENT====", "====DM_MESSAGE====", and "====DESCRIPTION====".
+[CRITICAL RULE]: DO NOT output any thinking process, chain-of-thought, or internal monologue. DO NOT write "Let's think" or any other conversational text. You MUST start your response IMMEDIATELY with the "====COMMENT====" delimiter.
 
 ====COMMENT====
 [Comment CTA for DM Automation]
@@ -579,10 +613,8 @@ def generate_image_prompts_stream(script_text: str, api_key: str, model_name: st
         
     try:
         from openai import OpenAI
-        client = OpenAI(
-            base_url="https://integrate.api.nvidia.com/v1",
-            api_key=api_key
-        )
+        _base_url = "https://openrouter.ai/api/v1" if api_key.startswith("sk-or-") else "https://integrate.api.nvidia.com/v1"
+        client = OpenAI(base_url=_base_url, api_key=api_key)
         prompt = f"""
         You are an expert AI image prompt engineer for MiniMax Hailuo AI (Image Generation).
         Below is a short-form video script.
@@ -639,10 +671,8 @@ def generate_hailuo_prompts_stream(script_text: str, api_key: str, model_name: s
         
     try:
         from openai import OpenAI
-        client = OpenAI(
-            base_url="https://integrate.api.nvidia.com/v1",
-            api_key=api_key
-        )
+        _base_url = "https://openrouter.ai/api/v1" if api_key.startswith("sk-or-") else "https://integrate.api.nvidia.com/v1"
+        client = OpenAI(base_url=_base_url, api_key=api_key)
         prompt = f"""
         You are an expert AI video prompt engineer for MiniMax Hailuo AI.
         Below is a short-form video script.
@@ -970,7 +1000,16 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     project_name = f"AutoProject_{int(time.time())}"
     
     # 캡컷 프로젝트용 스톡 비디오 (임시 더미용)
-    stock_videos = get_or_download_stock_videos(["abstract background"])
+    # 채널 방향성 문서 11항: 시니어 타겟과 어울리는 영상 키워드 우선 사용
+    SENIOR_VIDEO_CONTEXTS = [
+        "senior exercise", "elderly gentle exercise", "older adult workout",
+        "senior fitness", "elderly stretching", "senior healthy lifestyle",
+        "older woman exercise home", "gentle senior movement"
+    ]
+    import random
+    senior_ctx = random.choice(SENIOR_VIDEO_CONTEXTS)
+    stock_search_keywords = [senior_ctx, "abstract background"]
+    stock_videos = get_or_download_stock_videos(stock_search_keywords)
 
     draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
     draft_folder = cc.DraftFolder(draft_folder_path)
@@ -1002,6 +1041,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     print(f"========================================================")
 
     current_time_us = 0
+    video_usage_tracker = {v_file: 0 for v_file in stock_videos}
 
     for s_idx, struct in enumerate(sentence_structures, 1):
         full_sentence = struct["full_sentence"]
@@ -1053,11 +1093,22 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             try:
                 v_mat = VideoMaterial(v_file)
                 clip_dur = min(v_mat.duration, sentence_duration_us)
-                src_timerange = Timerange(0, clip_dur)
+                
+                start_offset = video_usage_tracker.get(v_file, 0)
+                if start_offset + clip_dur > v_mat.duration:
+                    start_offset = 0
+                    clip_dur = min(v_mat.duration, sentence_duration_us)
+                    
+                src_timerange = Timerange(start_offset, clip_dur)
                 tgt_timerange = Timerange(current_time_us, clip_dur)
                 
-                v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange)
+                # 9:16 (1080x1920) 캔버스에 맞게 자동 스케일링(크롭)
+                scale_factor = max(1080.0 / v_mat.width, 1920.0 / v_mat.height) if getattr(v_mat, 'width', 0) and getattr(v_mat, 'height', 0) else 1.0
+                clip_settings = ClipSettings(scale_x=scale_factor, scale_y=scale_factor)
+                
+                v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange, clip_settings=clip_settings)
                 script_file.add_segment(v_seg, track_name="메인_비디오_트랙")
+                video_usage_tracker[v_file] = start_offset + clip_dur
             except Exception as ve:
                 print(f"  (비디오 소스 연동 알림: {ve})")
 

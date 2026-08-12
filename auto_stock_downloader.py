@@ -3,6 +3,21 @@ import re
 import requests
 import urllib.request
 
+def translate_ko_to_en(text: str) -> str:
+    import re
+    if not re.search('[가-힣]', text):
+        return text
+    try:
+        import urllib.request, urllib.parse, json
+        url = f'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=en&dt=t&q={urllib.parse.quote(text)}'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            response = json.loads(r.read().decode('utf-8'))
+            return response[0][0][0]
+    except Exception as e:
+        print(f"Translation failed: {e}")
+        return text
+
 def fetch_pexels_portrait_videos(query: str, api_key: str, count: int = 5, output_dir: str = "stock_videos"):
     """
     Pexels API를 이용해 세로(portrait/9:16) 무료 스톡 영상을 검색하고 다운로드합니다.
@@ -70,7 +85,10 @@ def fetch_and_download_mixkit_stock_videos(query: str = "back pain", count: int 
     세로 키워드 우선 탐색 후 일반 720p fallback
     """
     os.makedirs(output_dir, exist_ok=True)
-    url = f"https://mixkit.co/free-stock-video/{query.replace(' ', '-')}/"
+    english_query = translate_ko_to_en(query)
+    import urllib.parse
+    encoded_query = urllib.parse.quote(english_query.replace(' ', '-'))
+    url = f"https://mixkit.co/free-stock-video/{encoded_query}/"
     req = urllib.request.Request(url, headers={
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     })
@@ -90,6 +108,10 @@ def fetch_and_download_mixkit_stock_videos(query: str = "back pain", count: int 
             unique_urls = [u for u in video_urls if not (u in seen or seen.add(u))]
             target_urls = unique_urls[:count]
             print(f"Found {len(target_urls)} HD stock video files.")
+
+            if len(target_urls) == 0 and query.lower() not in ["fitness", "workout", "background"]:
+                print("No specific results found in Mixkit. Falling back to generic 'fitness' videos.")
+                return fetch_and_download_mixkit_stock_videos("fitness", count, output_dir)
 
             downloaded_files = []
             for idx, video_url in enumerate(target_urls, 1):
