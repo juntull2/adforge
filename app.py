@@ -43,17 +43,28 @@ if os.path.exists(PEXELS_API_KEY_FILE):
     with open(PEXELS_API_KEY_FILE, "r", encoding="utf-8-sig") as f:
         cached_pexels_api_key = f.read().strip()
 
-col_key, col_pexels, col_model = st.columns([2, 2, 2])
+PIXABAY_API_KEY_FILE = "pixabay_api_key.txt"
+cached_pixabay_api_key = ""
+if os.path.exists(PIXABAY_API_KEY_FILE):
+    with open(PIXABAY_API_KEY_FILE, "r", encoding="utf-8-sig") as f:
+        cached_pixabay_api_key = f.read().strip()
+
+col_key, col_pexels, col_pixabay, col_model = st.columns([1.5, 1.5, 1.5, 1.5])
 with col_key:
-    nvidia_api_key = st.text_input("🔑 NVIDIA / OpenRouter API Key (자동 인식)", type="password", value=cached_api_key, placeholder="nvapi-...")
+    nvidia_api_key = st.text_input("🔑 LLM API Key", type="password", value=cached_api_key, placeholder="nvapi- / sk-or-")
     if nvidia_api_key and nvidia_api_key != cached_api_key:
         with open(API_KEY_FILE, "w", encoding="utf-8") as f:
             f.write(nvidia_api_key)
 with col_pexels:
-    pexels_api_key = st.text_input("📷 Pexels API Key (세로 스톡 영상 다운로드)", type="password", value=cached_pexels_api_key, placeholder="없으면 Mixkit 자동 fallback")
+    pexels_api_key = st.text_input("📷 Pexels API", type="password", value=cached_pexels_api_key, placeholder="Pexels (선택)")
     if pexels_api_key and pexels_api_key != cached_pexels_api_key:
         with open(PEXELS_API_KEY_FILE, "w", encoding="utf-8") as f:
             f.write(pexels_api_key)
+with col_pixabay:
+    pixabay_api_key = st.text_input("📷 Pixabay API", type="password", value=cached_pixabay_api_key, placeholder="Pixabay (선택)")
+    if pixabay_api_key and pixabay_api_key != cached_pixabay_api_key:
+        with open(PIXABAY_API_KEY_FILE, "w", encoding="utf-8") as f:
+            f.write(pixabay_api_key)
 with col_model:
     is_openrouter = nvidia_api_key.startswith("sk-or-")
     if is_openrouter:
@@ -290,21 +301,52 @@ if mode == "🚀 대량 기획 및 제작 (10편)":
             
             from concurrent.futures import ThreadPoolExecutor, as_completed
             from naver_clip_adforge import generate_strategic_script_stream
-            
+            import random
+
+            # 채널 방향성 문서 17항: 반드시 Hook/각도/감정을 분산해야 함
+            # 10개 모두 다른 Hook을 쓰도록 사전에 1:1 배정 (random.choice는 겹침 위험)
+            ALL_HOOK_TYPES = ["경고형", "금지형", "숫자형", "연령형", "공감형", "궁금증형", "반전형", "비교형", "체크리스트형", "행동유도형"]
+            ALL_VISUAL_HOOKS = ["BODY", "MOVEMENT", "BEFORE_AFTER", "PROBLEM_SITUATION", "EXPERT", "EXERCISE_RESULT",
+                                "BODY", "MOVEMENT", "BEFORE_AFTER", "PROBLEM_SITUATION"]  # 6개 유형 순환
+            ALL_FORMATS = ["포맷 A (순수 정보형): 제품 언급 0%. 꿀팁만. 마지막은 댓글 CTA.",
+                           "포맷 D (Q&A): 시청자 사연을 읽어주고 속 시원한 해결책 제시.",
+                           "포맷 E (팩트체크): 흔한 오해를 반박하며 올바른 정보 제공.",
+                           "포맷 F (스토리텔링): 본인/지인의 생생한 경험담(고생담)으로 공감 유도 후 팁 제공.",
+                           "포맷 A (순수 정보형): 제품 언급 0%. 꿀팁만. 마지막은 댓글 CTA.",
+                           "포맷 D (Q&A): 시청자 사연을 읽어주고 속 시원한 해결책 제시.",
+                           "포맷 E (팩트체크): 흔한 오해를 반박하며 올바른 정보 제공.",
+                           "포맷 F (스토리텔링): 본인/지인의 생생한 경험담(고생담)으로 공감 유도 후 팁 제공.",
+                           "포맷 A (순수 정보형): 제품 언급 0%. 꿀팁만. 마지막은 댓글 CTA.",
+                           "포맷 D (Q&A): 시청자 사연을 읽어주고 속 시원한 해결책 제시."]
+
+            # shuffle하여 순서 무작위화 후 zip으로 1:1 배정
+            random.shuffle(ALL_HOOK_TYPES)
+            random.shuffle(ALL_VISUAL_HOOKS)
+            random.shuffle(ALL_FORMATS)
+
+            keywords = st.session_state["bulk_keywords"]
+            assignments = {
+                kw: {
+                    "hook": ALL_HOOK_TYPES[i % len(ALL_HOOK_TYPES)],
+                    "visual": ALL_VISUAL_HOOKS[i % len(ALL_VISUAL_HOOKS)],
+                    "fmt": ALL_FORMATS[i % len(ALL_FORMATS)],
+                    "expert": (i % 2 == 0)  # 홀/짝 번갈아
+                }
+                for i, kw in enumerate(keywords)
+            }
+
             def _gen_script(kw):
-                import random
                 raw_out = ""
-                hook_types = ["DESIRE", "PROBLEM", "WARNING", "CONTRARIAN", "COMPARISON", "RESULT", "QUESTION", "EMPATHY"]
-                visual_hooks = ["BODY", "MOVEMENT", "BEFORE_AFTER", "PROBLEM_SITUATION", "EXPERT", "EXERCISE_RESULT"]
-                h_type = random.choice(hook_types)
-                v_hook = random.choice(visual_hooks)
-                exp = random.choice([True, False])
+                assign = assignments[kw]
                 
                 for chunk in generate_strategic_script_stream(
-                    topic_category, kw, video_format, product_name, nvidia_api_key, model_choice,
-                    hook_type=h_type, visual_hook=v_hook, expert_present=exp
+                    topic_category, kw, assign["fmt"], product_name, nvidia_api_key, model_choice,
+                    hook_type=assign["hook"], visual_hook=assign["visual"], expert_present=assign["expert"]
                 ):
                     raw_out += chunk
+                if "EngineCore" in raw_out or "오류 발생" in raw_out:
+                    raise Exception("AI 모델(API) 응답 오류가 발생했습니다. (EngineCore 또는 시간 초과)")
+                
                 pattern = r'={2,}\s*(VISUAL_HOOK|SCRIPT|COMMENT|DM[_\s]*MESSAGE|DESCRIPTION)\s*={2,}'
                 matches = list(re.finditer(pattern, raw_out, re.IGNORECASE))
                 script_part = ""
@@ -319,10 +361,10 @@ if mode == "🚀 대량 기획 및 제작 (10편)":
                 if not script_part:
                     script_part = raw_out
                 script_part = re.sub(r'([.?!])\s+', r'\1\n', script_part)
-                return {"keyword": kw, "script": script_part}
+                return {"keyword": kw, "script": script_part, "hook": assign["hook"], "format": assign["fmt"][:5]}
 
-            with ThreadPoolExecutor(max_workers=5) as executor:
-                futures = {executor.submit(_gen_script, kw): kw for kw in st.session_state["bulk_keywords"]}
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                futures = {executor.submit(_gen_script, kw): kw for kw in keywords}
                 completed = 0
                 for future in as_completed(futures):
                     try:
@@ -340,7 +382,10 @@ if mode == "🚀 대량 기획 및 제작 (10편)":
         st.write("📝 **생성된 대본 10편 (미리보기 및 직접 수정 가능):**")
         st.info("비디오 생성 전 대본을 자유롭게 수정할 수 있습니다. 수정 후 바로 아래 생성 버튼을 누르면 수정된 대본이 반영됩니다.")
         for i, s in enumerate(st.session_state["bulk_scripts"]):
-            with st.expander(f"{i+1}. {s['keyword']}", expanded=False):
+            hook_label = s.get("hook", "")
+            fmt_label = s.get("format", "")
+            expander_title = f"{i+1}. {s['keyword']}   [{hook_label}] [{fmt_label}]"
+            with st.expander(expander_title, expanded=False):
                 st.text_area("대본 수정", value=s["script"], height=200, key=f"bulk_script_text_{i}", label_visibility="collapsed")
                 
         if st.button("3️⃣ 캡컷 프로젝트 10편 일괄 생성 (스톡 영상 자동 삽입)", use_container_width=True, type="primary"):
@@ -368,12 +413,13 @@ if mode == "🚀 대량 기획 및 제작 (10편)":
                     script_text=script,
                     keyword=kw,
                     pexels_api_key=pexels_api_key,
+                    pixabay_api_key=pixabay_api_key,
                     voice=selected_voice,
                     el_api_key=el_api_key
                 )
                 return kw
 
-            with ThreadPoolExecutor(max_workers=5) as executor:
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 futures = {executor.submit(_build_capcut, i, s): s for i, s in enumerate(st.session_state["bulk_scripts"])}
                 completed = 0
                 for future in as_completed(futures):
@@ -805,6 +851,7 @@ with col1:
                             script_text=script_text,
                             keyword=sub_topic,
                             pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
                             voice=actual_voice_choice,
                             el_api_key=el_api_key
                         )

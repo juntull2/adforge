@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import urllib.request
+import shutil
 
 def translate_ko_to_en(text: str) -> str:
     import re
@@ -68,9 +69,14 @@ def fetch_pexels_portrait_videos(query: str, api_key: str, count: int = 5, outpu
             file_path = os.path.join(output_dir, file_name)
 
             print(f"  [{idx}] 다운로드 중... -> {file_path}")
-            urllib.request.urlretrieve(file_url, file_path)
-            downloaded.append(file_path)
-
+            try:
+                with requests.get(file_url, stream=True, timeout=30, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}) as r:
+                    r.raise_for_status()
+                    with open(file_path, 'wb') as f:
+                        shutil.copyfileobj(r.raw, f)
+                downloaded.append(file_path)
+            except Exception as e:
+                print(f"  [{idx}] 다운로드 실패: {e}")
         print(f"[완료] Pexels 세로 영상 {len(downloaded)}개 저장 완료.\n")
         return downloaded
 
@@ -118,14 +124,69 @@ def fetch_and_download_mixkit_stock_videos(query: str = "back pain", count: int 
                 file_name = f"{query.replace(' ', '_')}_{idx}.mp4"
                 file_path = os.path.join(output_dir, file_name)
                 print(f"  [{idx}/{len(target_urls)}] 다운로드 중... -> {file_path}")
-                urllib.request.urlretrieve(video_url, file_path)
-                downloaded_files.append(file_path)
+                try:
+                    with requests.get(video_url, stream=True, timeout=30, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}) as r:
+                        r.raise_for_status()
+                        with open(file_path, 'wb') as f:
+                            shutil.copyfileobj(r.raw, f)
+                    downloaded_files.append(file_path)
+                except Exception as e:
+                    print(f"  [{idx}/{len(target_urls)}] 다운로드 실패: {e}")
 
             print(f"[완료] '{output_dir}' 폴더에 {len(downloaded_files)}개의 비디오 소스가 자동 저장되었습니다.\n")
             return downloaded_files
 
     except Exception as e:
         print(f"다운로드 에러: {e}")
+        return []
+
+def fetch_pixabay_portrait_videos(query: str, api_key: str, count: int = 5, output_dir: str = "stock_videos"):
+    """
+    Pixabay API를 이용해 무료 스톡 영상을 검색하고 다운로드합니다.
+    """
+    if not api_key:
+        return []
+        
+    os.makedirs(output_dir, exist_ok=True)
+    english_query = translate_ko_to_en(query)
+    import urllib.parse
+    
+    print(f"[Pixabay] '{english_query}' 스톡 영상 검색 중...")
+    
+    try:
+        url = f"https://pixabay.com/api/videos/?key={api_key}&q={urllib.parse.quote(english_query)}&video_type=film&per_page={max(count * 2, 10)}"
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        hits = data.get("hits", [])
+        
+        downloaded = []
+        for idx, hit in enumerate(hits[:count], 1):
+            videos = hit.get("videos", {})
+            # 가장 화질이 좋은 세로(portrait)나 모바일 사이즈, 혹은 medium 찾기
+            best_video = videos.get("large") or videos.get("medium") or videos.get("small")
+            
+            if not best_video or not best_video.get("url"):
+                continue
+                
+            file_url = best_video["url"]
+            file_name = f"pixabay_{query.replace(' ', '_')}_{idx}.mp4"
+            file_path = os.path.join(output_dir, file_name)
+            
+            print(f"  [{idx}] 다운로드 중... -> {file_path}")
+            try:
+                with requests.get(file_url, stream=True, timeout=30, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}) as r:
+                    r.raise_for_status()
+                    with open(file_path, 'wb') as f:
+                        shutil.copyfileobj(r.raw, f)
+                downloaded.append(file_path)
+            except Exception as e:
+                print(f"  [{idx}] 다운로드 실패: {e}")
+            
+        print(f"[완료] Pixabay 영상 {len(downloaded)}개 저장 완료.\n")
+        return downloaded
+    except Exception as e:
+        print(f"[Pixabay 오류] {e}")
         return []
 
 

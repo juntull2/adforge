@@ -12,6 +12,9 @@ from pydub.silence import detect_nonsilent
 from auto_stock_downloader import fetch_and_download_mixkit_stock_videos
 from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextSegment, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings
 from pycapcut.metadata.effect_meta import EffectMeta
+import threading
+
+capcut_draft_lock = threading.Lock()
 
 # -------------------------------------------------------------------
 # FFmpeg 환경변수 경로 보정 (Windows 실행 보장)
@@ -250,18 +253,85 @@ def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase
 # -------------------------------------------------------------------
 # 5. 스톡 비디오 소스 자동 수급 헬퍼
 # -------------------------------------------------------------------
-def get_or_download_stock_videos(keywords: list) -> list:
+from auto_stock_downloader import fetch_and_download_mixkit_stock_videos, fetch_pexels_portrait_videos, fetch_pixabay_portrait_videos
+import random
+
+def get_or_download_stock_videos(keywords: list, pexels_key: str = "", pixabay_key: str = "") -> list:
     stock_dir = os.path.join(os.getcwd(), "stock_videos")
     os.makedirs(stock_dir, exist_ok=True)
     
     mp4_files = glob.glob(os.path.join(stock_dir, "*.mp4"))
     if not mp4_files:
-        print("💡 저장된 스톡 비디오가 없어 자동으로 8개를 다운로드합니다...")
+        print("💡 저장된 스톡 비디오가 없어 자동으로 다운로드합니다...")
+        sources = ["mixkit"]
+        if pexels_key:
+            sources.append("pexels")
+        if pixabay_key:
+            sources.append("pixabay")
+            
         for kw in keywords:
-            fetch_and_download_mixkit_stock_videos(kw, count=4, output_dir=stock_dir)
+            chosen_source = random.choice(sources)
+            if chosen_source == "pexels":
+                fetch_pexels_portrait_videos(kw, api_key=pexels_key, count=4, output_dir=stock_dir)
+            elif chosen_source == "pixabay":
+                fetch_pixabay_portrait_videos(kw, api_key=pixabay_key, count=4, output_dir=stock_dir)
+            else:
+                fetch_and_download_mixkit_stock_videos(kw, count=4, output_dir=stock_dir)
+                
         mp4_files = glob.glob(os.path.join(stock_dir, "*.mp4"))
         
     return mp4_files
+
+def find_best_video_for_sentence(sentence: str, stock_videos: list, last_used_video: str = "") -> str:
+    if not stock_videos:
+        return ""
+        
+    # 키워드 매핑 (한국어 대본 단어 -> 파일명 키워드)
+    keyword_map = {
+        "마사지": ["massage"],
+        "문지": ["massage"], 
+        "비벼": ["massage"],
+        "스트레칭": ["stretching", "yoga"],
+        "늘려": ["stretching", "yoga"],
+        "당겨": ["stretching", "yoga"],
+        "허리": ["back_pain"],
+        "통증": ["back_pain", "relief"],
+        "요가": ["yoga"],
+        "명상": ["yoga", "healthy_lifestyle"],
+        "운동": ["fitness", "workout", "exercise"],
+        "스쿼트": ["fitness", "workout"],
+        "다리": ["fitness", "workout"],
+        "일어": ["fitness", "workout"],
+        "앉아": ["fitness", "workout"]
+    }
+    
+    sentence_lower = sentence.lower()
+    matched_videos = []
+    
+    # 문장에 매핑된 키워드가 포함되어 있는지 확인
+    for kr_kw, en_kws in keyword_map.items():
+        if kr_kw in sentence_lower:
+            for v_file in stock_videos:
+                v_name = os.path.basename(v_file).lower()
+                if any(en_kw in v_name for en_kw in en_kws):
+                    matched_videos.append(v_file)
+                    
+    # 중복 제거
+    matched_videos = list(set(matched_videos))
+    
+    # 1순위: 매칭된 비디오가 있다면 그 중에서 랜덤 선택
+    if matched_videos:
+        # 이전에 사용한 영상과 가급적 겹치지 않게 (매칭된게 2개 이상일 때)
+        candidates = [v for v in matched_videos if v != last_used_video]
+        if candidates:
+            return random.choice(candidates)
+        return random.choice(matched_videos)
+        
+    # 2순위: 매칭된 비디오가 없으면 전체에서 랜덤 선택하되, 직전 영상은 피함
+    candidates = [v for v in stock_videos if v != last_used_video]
+    if candidates:
+        return random.choice(candidates)
+    return random.choice(stock_videos)
 
 # -------------------------------------------------------------------
 # 6. 스마트스토어 상세페이지 결합 6가지+2가지 신규 대본 포맷 생성 엔진
@@ -530,7 +600,7 @@ BODY: [Your Description and Hashtags Here]
                 yield chunk.choices[0].delta.content
                 
     except Exception as e:
-        yield f"오류 발생: {str(e)}"
+        raise Exception(f"AI 대본 생성 실패: {str(e)}")
 
 def generate_cta_from_script_stream(script_text: str, api_key: str, model_name: str = "mistralai/mistral-nemotron"):
     """기존 대본으로부터 고정댓글(CTA) + DM 메세지 + 영상 설명 & 해시태그 생성 (스트리밍)"""
@@ -985,7 +1055,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
     return project_name
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None):
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key=""):
     if template_folder and template_folder != "none":
         return build_from_template(script_text, voice, el_api_key, template_folder)
     """
@@ -997,10 +1067,12 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     5. 캡컷 draft_content.json 파일 빌드 (포팅)
     """
     import time
-    project_name = f"AutoProject_{int(time.time())}"
+    import uuid
+    # 동시 실행 시 timestamp가 겹치지 않도록 uuid 추가
+    project_name = f"AutoProject_{int(time.time())}_{uuid.uuid4().hex[:6]}"
     
-    # 캡컷 프로젝트용 스톡 비디오 (임시 더미용)
     # 채널 방향성 문서 11항: 시니어 타겟과 어울리는 영상 키워드 우선 사용
+    # keyword가 있으면 해당 주제 + senior 컨텍스트로 검색
     SENIOR_VIDEO_CONTEXTS = [
         "senior exercise", "elderly gentle exercise", "older adult workout",
         "senior fitness", "elderly stretching", "senior healthy lifestyle",
@@ -1008,25 +1080,32 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     ]
     import random
     senior_ctx = random.choice(SENIOR_VIDEO_CONTEXTS)
-    stock_search_keywords = [senior_ctx, "abstract background"]
-    stock_videos = get_or_download_stock_videos(stock_search_keywords)
+    if keyword:
+        stock_search_keywords = [keyword, senior_ctx]
+    else:
+        stock_search_keywords = [senior_ctx, "abstract background"]
+    stock_videos = get_or_download_stock_videos(stock_search_keywords, pexels_key=pexels_api_key, pixabay_key=pixabay_api_key)
 
-    draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
-    draft_folder = cc.DraftFolder(draft_folder_path)
-
-    try:
-        script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
-    except PermissionError:
-        project_name = f"{project_name}_v11"
-        script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
-
-    # 9:16 세로 숏폼 캔버스 비율 명시적 고정
-    script_file.content["canvas_config"] = {"width": 1080, "height": 1920, "ratio": "9:16"}
-
-    # 🎬 트랙 3개 준비 (비디오 트랙 + 자막 트랙 + 오디오 트랙)
-    script_file.add_track(TrackType.video, track_name="메인_비디오_트랙")
-    script_file.add_track(TrackType.text, track_name="자막_트랙")
-    script_file.add_track(TrackType.audio, track_name="더빙_트랙")
+    # 캡컷 DraftFolder 접근은 순차적으로 (Lock으로 보호)
+    with capcut_draft_lock:
+        draft_folder_path = "C:/Users/5700G/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
+        # 폴더가 없으면 직접 생성
+        os.makedirs(draft_folder_path, exist_ok=True)
+        draft_folder = cc.DraftFolder(draft_folder_path)
+    
+        try:
+            script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
+        except (PermissionError, OSError) as e:
+            project_name = f"{project_name}_r{uuid.uuid4().hex[:4]}"
+            script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
+    
+        # 9:16 세로 숏폼 캔버스 비율 명시적 고정
+        script_file.content["canvas_config"] = {"width": 1080, "height": 1920, "ratio": "9:16"}
+    
+        # 🎬 트랙 3개 준비
+        script_file.add_track(TrackType.video, track_name="메인_비디오_트랙")
+        script_file.add_track(TrackType.text, track_name="자막_트랙")
+        script_file.add_track(TrackType.audio, track_name="더빙_트랙")
 
     temp_dir = os.path.join(os.getcwd(), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
@@ -1042,6 +1121,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
     current_time_us = 0
     video_usage_tracker = {v_file: 0 for v_file in stock_videos}
+    last_used_video = ""
 
     for s_idx, struct in enumerate(sentence_structures, 1):
         full_sentence = struct["full_sentence"]
@@ -1089,7 +1169,8 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
         # 🎬 1. 배경 비디오 소스 2~3초 단위 교차 자동 배치!
         if stock_videos:
-            v_file = stock_videos[(s_idx - 1) % len(stock_videos)]
+            v_file = find_best_video_for_sentence(full_sentence, stock_videos, last_used_video=last_used_video)
+            last_used_video = v_file
             try:
                 v_mat = VideoMaterial(v_file)
                 clip_dur = min(v_mat.duration, sentence_duration_us)
