@@ -1,0 +1,2 @@
+Scene ID,Narration,Visual Goal,Generated Queries,Candidates Evaluated,Final Decision,Selected Asset URL,Overall Match,Narrative Match,Subject Match,Action Match,Object Match,Total Score,Human Eval (PASS/FAIL),Notes
+BM_01_Pain,여름철 에어컨 바람에 어깨가 결리고 쑤신다면?,Person rubbing shoulder showing discomfort indoors,middle aged middle aged person shoulder rubbing stiff shoulder in pain | middle aged middle aged person shoulder rubbing stiff shoulder in pain,100,FAILED - No asset met the strict threshold or all evaluations failed.,NONE,0,0,0,0,0,0,pass,
