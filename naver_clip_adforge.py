@@ -590,7 +590,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
     return project_name
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key=""):
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None):
     if template_folder and template_folder != "none":
         return build_from_template(script_text, voice, el_api_key, template_folder)
     """
@@ -661,11 +661,22 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     video_usage_tracker = {v_file: 0 for v_file in stock_videos}
     last_used_video = ""
 
+    if media_mapping is None:
+        media_mapping = {}
+
     for s_idx, struct in enumerate(sentence_structures, 1):
         full_sentence = struct["full_sentence"]
         phrases = struct["phrases"]
+        mapping_idx = s_idx - 1
 
-        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', full_sentence).strip()
+        # 1. UI에서 선택한 매핑된 파일 가져오기
+        target_media_filename = media_mapping.get(mapping_idx)
+
+        # 2. 텍스트 정제 (정규식 태그 기능은 UI 매핑으로 대체됨)
+        clean_sentence = full_sentence.strip()
+        cleaned_phrases = [p.strip() for p in phrases if p.strip()]
+
+        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', clean_sentence).strip()
         if not clean_audio_text:
             continue
 
@@ -705,39 +716,70 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         audio_timerange = Timerange(current_time_us, sentence_duration_us)
         script_file.add_segment(AudioSegment(audio_mat, audio_timerange), track_name="더빙_트랙")
 
-        # 🎬 1. 배경 비디오 소스 2~3초 단위 교차 자동 배치!
-        if stock_videos:
-            v_file = find_best_video_for_sentence(full_sentence, stock_videos, last_used_video=last_used_video)
-            last_used_video = v_file
+        # 🎬 1. 배경 미디어 (로컬 지정 파일 또는 스톡 비디오 자동 배치)
+        v_file_to_use = None
+        is_local_media = False
+
+        if target_media_filename and local_media_folder:
+            potential_path = os.path.join(local_media_folder, target_media_filename)
+            if os.path.exists(potential_path):
+                v_file_to_use = potential_path
+                is_local_media = True
+            else:
+                print(f"  [경고] 지정한 로컬 미디어 파일을 찾을 수 없습니다: {potential_path}")
+
+        if not v_file_to_use and stock_videos:
+            v_file_to_use = find_best_video_for_sentence(clean_sentence, stock_videos, last_used_video=last_used_video)
+            last_used_video = v_file_to_use
+
+        if v_file_to_use:
             try:
-                v_mat = VideoMaterial(v_file)
-                clip_dur = min(v_mat.duration, sentence_duration_us)
+                v_mat = VideoMaterial(v_file_to_use)
                 
-                start_offset = video_usage_tracker.get(v_file, 0)
-                if start_offset + clip_dur > v_mat.duration:
-                    start_offset = 0
+                if is_local_media:
+                    ext = os.path.splitext(v_file_to_use)[1].lower()
+                    if ext in ['.jpg', '.jpeg', '.png']:
+                        # 사진인 경우: 오디오 길이만큼 꽉 채움
+                        clip_dur = sentence_duration_us
+                        start_offset = 0
+                    else:
+                        # 영상인 경우: 원본 길이와 오디오 길이 중 짧은 것 (start_offset=0)
+                        clip_dur = min(v_mat.duration, sentence_duration_us)
+                        start_offset = 0
+                else:
+                    # 기존 스톡 비디오 로직 (순차 재생)
                     clip_dur = min(v_mat.duration, sentence_duration_us)
+                    start_offset = video_usage_tracker.get(v_file_to_use, 0)
+                    if start_offset + clip_dur > v_mat.duration:
+                        start_offset = 0
+                        clip_dur = min(v_mat.duration, sentence_duration_us)
+                    video_usage_tracker[v_file_to_use] = start_offset + clip_dur
                     
                 src_timerange = Timerange(start_offset, clip_dur)
                 tgt_timerange = Timerange(current_time_us, clip_dur)
                 
                 # 9:16 (1080x1920) 캔버스에 맞게 자동 스케일링(크롭)
-                scale_factor = max(1080.0 / v_mat.width, 1920.0 / v_mat.height) if getattr(v_mat, 'width', 0) and getattr(v_mat, 'height', 0) else 1.0
+                v_width = getattr(v_mat, 'width', 0)
+                v_height = getattr(v_mat, 'height', 0)
+                if v_width and v_height:
+                    scale_factor = max(1080.0 / v_width, 1920.0 / v_height)
+                else:
+                    scale_factor = 1.0
+                    
                 clip_settings = ClipSettings(scale_x=scale_factor, scale_y=scale_factor)
                 
                 v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange, clip_settings=clip_settings)
                 script_file.add_segment(v_seg, track_name="메인_비디오_트랙")
-                video_usage_tracker[v_file] = start_offset + clip_dur
             except Exception as ve:
                 print(f"  (비디오 소스 연동 알림: {ve})")
 
-        # 🎯 2. 자막 구절별 100% 정밀 싱크 배치
-        phrase_effective_lens = [calculate_effective_speech_length(p) for p in phrases]
+        # 🎯 2. 자막 구절별 100% 정밀 싱크 배치 (태그 제거된 cleaned_phrases 사용)
+        phrase_effective_lens = [calculate_effective_speech_length(p) for p in cleaned_phrases]
         total_effective_len = sum(phrase_effective_lens) or 1.0
         phrase_start_us = current_time_us
 
-        for p_idx, (phrase, eff_len) in enumerate(zip(phrases, phrase_effective_lens)):
-            if p_idx == len(phrases) - 1:
+        for p_idx, (phrase, eff_len) in enumerate(zip(cleaned_phrases, phrase_effective_lens)):
+            if p_idx == len(cleaned_phrases) - 1:
                 phrase_duration_us = (current_time_us + sentence_duration_us) - phrase_start_us
             else:
                 phrase_duration_us = int(sentence_duration_us * (eff_len / total_effective_len))
@@ -769,7 +811,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             phrase_start_us += phrase_duration_us
 
         sec_val = sentence_duration_us / SEC
-        phrases_str = " -> ".join(phrases)
+        phrases_str = " -> ".join(cleaned_phrases)
         print(f"  [문장 {s_idx}] 오디오 ({sec_val:.2f}s) 생성 완료 | 자막 싱크(10자): {phrases_str}")
 
         current_time_us += sentence_duration_us

@@ -2,7 +2,7 @@ import os
 import re
 import pandas as pd
 import streamlit as st
-from naver_clip_adforge import build_capcut_project_for_naver_clip
+from naver_clip_adforge import build_capcut_project_for_naver_clip, split_script_by_sentences_and_phrases
 
 # -------------------------------------------------------------------
 # Streamlit 대시보드 페이지 설정
@@ -189,6 +189,44 @@ st.subheader("STEP 2: 캡컷 연동 및 자동 생성")
 default_script = st.session_state.get("parsed_script", "")
 script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨 / 직접 붙여넣기 가능)", value=default_script, height=200)
 
+# 로컬 미디어 폴더 입력창 추가
+local_media_folder = st.text_input("📁 로컬 미디어 소스 폴더 경로 (선택)", placeholder="예: C:\\Users\\User\\Videos\\Product")
+
+media_mapping = {}
+if local_media_folder and os.path.isdir(local_media_folder):
+    try:
+        valid_exts = ['.mp4', '.mov', '.jpg', '.jpeg', '.png']
+        local_files = [f for f in os.listdir(local_media_folder) if os.path.splitext(f)[1].lower() in valid_exts]
+        local_files.sort()
+        
+        if local_files:
+            with st.expander("🎬 로컬 미디어 수동 매핑 (선택)", expanded=True):
+                st.info("각 문장 재생 시 배경으로 표시될 로컬 미디어(영상/사진)를 선택하세요.")
+                
+                # 파싱해서 문장 목록 가져오기
+                sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
+                
+                media_options = ["(자동 배치 / 스톡 비디오)"] + local_files
+                
+                for i, struct in enumerate(sentence_structures):
+                    sentence = struct["full_sentence"]
+                    if not sentence.strip():
+                        continue
+                        
+                    selected_file = st.selectbox(
+                        f"문장 {i+1}: {sentence}",
+                        options=media_options,
+                        key=f"media_mapping_{i}"
+                    )
+                    
+                    if selected_file != "(자동 배치 / 스톡 비디오)":
+                        media_mapping[i] = selected_file
+        else:
+            st.warning("입력하신 폴더에 영상이나 이미지 파일(.mp4, .mov, .jpg, .png)이 없습니다.")
+    except Exception as e:
+        st.error(f"폴더를 읽는 중 오류가 발생했습니다: {e}")
+
+
 # 🔀 자막 줄바꿈 자동 정리
 def auto_format_subtitle(text: str, max_chars: int = 8) -> str:
     """한국어 자막 텍스트를 6~8자 단위로 자동 줄바꿈"""
@@ -338,7 +376,9 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=
                         pexels_api_key=pexels_api_key,
                         pixabay_api_key=pixabay_api_key,
                         voice=actual_voice_choice,
-                        el_api_key=el_api_key
+                        el_api_key=el_api_key,
+                        local_media_folder=local_media_folder,
+                        media_mapping=media_mapping
                     )
                     st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
                     st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
