@@ -8,3 +8,6 @@ uiautomation==2.0.29
 openai
 pydantic
 python-dotenv
+beautifulsoup4
+requests
+curl_cffi

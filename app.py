@@ -91,7 +91,7 @@ st.markdown("---")
 
 @st.cache_data(ttl=3600)
 def load_keyword_data():
-    sheet_url = "https://docs.google.com/spreadsheets/d/1-xfToD-ns9nBwj7Eh0URGOKc_YWcxxt5a3vJXgRqz9Q/export?format=csv"
+    sheet_url = "https://docs.google.com/spreadsheets/d/1-xfToD-ns9nBwj7Eh0URGOKc_YWcxxt5a3vJXgRqz9Q/export?format=csv&gid=1956992404"
     try:
         df = pd.read_csv(sheet_url)
         # 컬럼명의 개행문자 제거 및 공백 정리
@@ -103,18 +103,14 @@ def load_keyword_data():
             if len(df) > 0 and df.iloc[0]['키워드'] == '고유번호':
                 df = df.iloc[1:]
                 
-        # --- 네이버 클립 6탭 이내 노출 조건 필터링 ---
-        tab_cols = ['1탭', '2탭', '3탭', '4탭', '5탭', '6탭']
-        mask = pd.Series([False] * len(df), index=df.index)
-        for col in tab_cols:
-            if col in df.columns:
-                mask = mask | df[col].astype(str).str.contains('네이버 클립', na=False)
-        df = df[mask]
-        # ---------------------------------------------
+        if '접촉지점' in df.columns:
+            df['접촉지점'] = pd.to_numeric(df['접촉지점'], errors='coerce').fillna(0)
+                
+        # (기존 클립 6탭 이내 필터링 제거됨 - 모든 키워드 분석용)
         
         # 필터링할 주요 컬럼만 추출 (정규화된 이름에 맞춰서)
         display_cols = []
-        target_cols = ['키워드', '전체  검색량', 'MB  검색량', '블로그  글개수', '1탭', '2탭', '3탭', '4탭', '5탭', '6탭']
+        target_cols = ['키워드', '전체  검색량', 'MB  검색량', '블로그  글개수', '1탭', '2탭', '3탭', '4탭', '5탭', '6탭', '접촉지점']
         for c in target_cols:
             if c in df.columns:
                 display_cols.append(c)
@@ -130,7 +126,7 @@ col_sheet_title, col_sheet_btn = st.columns([8, 2])
 with col_sheet_title:
     st.subheader("📊 타겟 키워드 분석 데이터 (Google Sheet 연동)")
 with col_sheet_btn:
-    if st.button("🔄 데이터 최신화", use_container_width=True):
+    if st.button("🔄 데이터 최신화", width="stretch"):
         load_keyword_data.clear()
         st.rerun()
 
@@ -154,7 +150,7 @@ if df_keywords is not None and not df_keywords.empty:
     with col_table:
         event = st.dataframe(
             styled_df, 
-            use_container_width=True, 
+            width="stretch", 
             hide_index=True,
             on_select="rerun",
             selection_mode="single-row"
@@ -177,7 +173,126 @@ if df_keywords is not None and not df_keywords.empty:
         selected_idx = event.selection.rows[0]
         selected_keyword = df_keywords.iloc[selected_idx]['키워드']
 
+# -------------------------------------------------------------------
+# STEP 1.5: 실시간 키워드 분석 및 대본 생성 (신규)
+# -------------------------------------------------------------------
+st.markdown("---")
+st.subheader("🔍 실시간 키워드 탭 분석 및 자동 대본")
+col_kw1, col_kw2 = st.columns([2, 1])
 
+with col_kw1:
+    rt_keyword = st.text_input("분석할 키워드를 입력하세요", placeholder="예: 허리찜질기")
+
+with col_kw2:
+    st.markdown(" ") # 여백
+    st.markdown(" ")
+    if st.button("분석 및 대본 자동 생성 준비", width="stretch"):
+        if not rt_keyword:
+            st.error("키워드를 입력해주세요.")
+        else:
+            with st.spinner("네이버 모바일 탭 순위 및 검색량 조회 중..."):
+                from naver_scraper import get_naver_clip_rank, get_naver_search_volume
+                from dotenv import load_dotenv
+                import os
+                
+                load_dotenv()
+                cust_id = os.environ.get("NAVER_CUSTOMER_ID", "")
+                acc_lic = os.environ.get("NAVER_ACCESS_LICENSE", "")
+                sec_key = os.environ.get("NAVER_SECRET_KEY", "")
+                
+                rank = get_naver_clip_rank(rt_keyword)
+                vol = get_naver_search_volume(rt_keyword, cust_id, acc_lic, sec_key)
+                
+                st.session_state["rt_rank"] = rank
+                st.session_state["rt_vol"] = vol
+                st.session_state["rt_keyword"] = rt_keyword
+
+if "rt_rank" in st.session_state:
+    rank = st.session_state["rt_rank"]
+    vol = st.session_state["rt_vol"]
+    
+    col_res1, col_res2 = st.columns(2)
+    with col_res1:
+        if rank > 0 and rank <= 6:
+            st.success(f"✅ **[클립] 탭 노출 순위: {rank}번째 (합격)**")
+        elif rank > 6:
+            st.warning(f"⚠️ **[클립] 탭 노출 순위: {rank}번째 (6탭 밖)**")
+        else:
+            st.error(f"❌ **[클립] 탭을 찾을 수 없습니다.**")
+            
+    with col_res2:
+        if vol["total"] > 0:
+            st.info(f"📊 월간 검색량: {vol['total']:,} (모바일: {vol['mobile']:,})")
+        else:
+            st.warning("⚠️ 검색량 데이터 없음 (API 키 미설정 또는 조회 실패)")
+            
+    # 대본 생성 (제품 고정: 다피다 허리찜질기)
+    st.markdown("#### ✨ AI 자동 대본 생성 (타겟: 4050, 제품: 다피다 허리찜질기 기준)")
+    if st.button("이 키워드로 대본 즉시 생성", type="primary"):
+        st.info("LLM을 통한 대본 자동 생성 로직은 추후 구현될 예정입니다.")
+
+st.markdown("---")
+st.subheader("🚀 대량 키워드 실시간 분석 옵션 설정")
+st.caption("구글 시트에 기재된 키워드를 기반으로 실시간 탭 순위와 최신 검색량을 조회합니다.")
+
+col_opt1, col_opt2 = st.columns(2)
+with col_opt1:
+    min_contact = st.number_input("최소 접촉지점 점수", min_value=0, max_value=10, value=4, step=1, help="시트의 접촉지점이 이 점수 이상인 키워드만 1차로 필터링합니다.")
+with col_opt2:
+    min_volume = st.number_input("최소 총 검색량 (PC+모바일)", min_value=0, value=1000, step=100, help="API로 불러온 실시간 검색량이 이 수치 이상인 키워드만 최종 결과에 보여줍니다.")
+
+if st.button("설정한 조건으로 키워드 일괄 분석 시작", width="stretch"):
+    if df_keywords is None or df_keywords.empty:
+        st.error("데이터를 불러올 수 없거나 키워드가 없습니다.")
+    elif '접촉지점' not in df_keywords.columns:
+        st.error("'접촉지점' 열을 찾을 수 없습니다. 구글 시트 형식을 확인해주세요.")
+    else:
+        target_df = df_keywords[df_keywords['접촉지점'] >= min_contact].copy()
+        if target_df.empty:
+            st.warning(f"접촉지점이 {min_contact}점 이상인 키워드가 없습니다.")
+        else:
+            with st.spinner(f"총 {len(target_df)}개 키워드를 분석 중입니다. 잠시만 기다려주세요..."):
+                from naver_scraper import get_naver_clip_rank, get_naver_search_volume
+                from dotenv import load_dotenv
+                import os
+                import time
+                
+                load_dotenv()
+                cust_id = os.environ.get("NAVER_CUSTOMER_ID", "")
+                acc_lic = os.environ.get("NAVER_ACCESS_LICENSE", "")
+                sec_key = os.environ.get("NAVER_SECRET_KEY", "")
+                
+                results = []
+                progress_bar = st.progress(0)
+                
+                for i, row in enumerate(target_df.itertuples()):
+                    kw = getattr(row, '키워드')
+                    time.sleep(0.3) # 봇 차단 방지 및 API 속도 조절
+                    
+                    rank = get_naver_clip_rank(kw)
+                    vol = get_naver_search_volume(kw, cust_id, acc_lic, sec_key)
+                    
+                    if vol["total"] >= min_volume:
+                        results.append({
+                            "키워드": kw,
+                            "접촉지점": getattr(row, '접촉지점'),
+                            "실시간 클립 탭 순위": f"{rank}위" if (rank > 0 and rank <= 6) else (f"{rank}위 (위험)" if rank > 6 else "미노출"),
+                            "총 검색량": vol["total"],
+                            "PC 검색량": vol["pc"],
+                            "모바일 검색량": vol["mobile"]
+                        })
+                    progress_bar.progress((i + 1) / len(target_df))
+                
+                if not results:
+                    st.warning("분석 결과, 설정한 최소 검색량 조건을 만족하는 키워드가 없습니다.")
+                else:
+                    st.session_state["bulk_results"] = pd.DataFrame(results)
+
+if "bulk_results" in st.session_state:
+    st.success("✅ 대량 분석이 완료되었습니다!")
+    # 클립 노출(6위 이내)되고 검색량이 높은 순으로 정렬 표시
+    res_df = st.session_state["bulk_results"]
+    st.dataframe(res_df, width="stretch")
 
 # -------------------------------------------------------------------
 # STEP 2: 대본 입력 및 캡컷/Hailuo 자동화
@@ -287,7 +402,7 @@ col_fmt1, col_fmt2 = st.columns([1, 3])
 with col_fmt1:
     fmt_chars = st.number_input("줄당 최대 글자 수", min_value=4, max_value=20, value=8, step=1)
 with col_fmt2:
-    if st.button("🔀 자막 줄바꿈 자동 정리 (붙여넣은 대본 → 자막 포맷)", use_container_width=True):
+    if st.button("🔀 자막 줄바꿈 자동 정리 (붙여넣은 대본 → 자막 포맷)", width="stretch"):
         if not script_text.strip():
             st.error("대본이 비어있습니다!")
         else:
@@ -354,7 +469,7 @@ with col_v2:
 
 from naver_clip_adforge import build_capcut_project_for_naver_clip
 
-if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True):
+if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
     if not script_text.strip():
         st.error("대본이 비어있습니다!")
     else:
