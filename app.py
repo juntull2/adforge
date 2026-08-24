@@ -228,9 +228,71 @@ if "rt_rank" in st.session_state:
             
     # 대본 생성 (제품 고정: 다피다 허리찜질기)
     st.markdown("#### ✨ AI 자동 대본 생성 (타겟: 4050, 제품: 다피다 허리찜질기 기준)")
-    if st.button("이 키워드로 대본 즉시 생성", type="primary"):
-        st.info("LLM을 통한 대본 자동 생성 로직은 추후 구현될 예정입니다.")
-
+    
+    touchpoint_options = [
+        "자동 판별 (키워드 기반)", "SEARCH_EXERCISE", "SEARCH_SYMPTOM", "SEARCH_PROBLEM",
+        "SEARCH_PRODUCT", "SEARCH_ALTERNATIVE_PRODUCT", "SEARCH_COMPETITOR",
+        "SEARCH_INFORMATION", "SEARCH_COMPARISON", "SEARCH_GIFT", "SEARCH_REVIEW",
+        "SEARCH_LIFESTYLE", "DIRECT_PRODUCT", "CURIOSITY"
+    ]
+    user_tp = st.selectbox("🎯 Touchpoint 선택 (옵션)", touchpoint_options, index=0)
+    
+    if st.button("이 키워드로 대본 즉시 생성", type="primary", use_container_width=True):
+        if not os.environ.get("OPENROUTER_API_KEY"):
+            st.error("OPENROUTER_API_KEY 환경변수가 설정되지 않았습니다. .env 파일을 확인해주세요.")
+        else:
+            from script_engine import run_script_pipeline
+            
+            status_box = st.status("🚀 AI 대본 생성 파이프라인 가동 중...", expanded=True)
+            pipeline = run_script_pipeline(
+                keyword=rt_keyword,
+                user_touchpoint=user_tp,
+                product="다피다 허리찜질기",
+                target="40~60대 허리 불편 사용자",
+                content_goal="PRODUCT_CONVERSION",
+                duration=45
+            )
+            
+            final_result = None
+            for update in pipeline:
+                if update["step"] != "완료":
+                    status_box.write(f"⏳ **{update['step']}** \n{update['detail']}")
+                else:
+                    final_result = update
+                    
+            status_box.update(label="대본 생성 완료!", state="complete", expanded=False)
+            
+            if final_result:
+                st.session_state["generated_scripts"] = final_result["result"]
+                st.session_state["intent_data"] = final_result["intent_data"]
+                
+    if "generated_scripts" in st.session_state:
+        st.markdown("### 📝 생성된 대본 (A/B/C)")
+        
+        with st.expander("🔍 검색 의도 분석 결과 보기"):
+            st.json(st.session_state["intent_data"])
+            
+        import re
+        scripts_text = st.session_state["generated_scripts"]
+        parts = re.split(r'(?=\[[A-C]안\s*\|.*\])', scripts_text)
+        
+        cols = st.columns(3)
+        col_idx = 0
+        
+        def set_capcut_script(script_text):
+            st.session_state["parsed_script"] = script_text
+            
+        for part in parts:
+            part = part.strip()
+            if not part: continue
+            
+            with cols[col_idx % 3]:
+                # 컨테이너와 버튼 UI 정리
+                st.text_area(f"버전 {col_idx+1}", value=part, height=350, key=f"disp_ta_{col_idx}")
+                
+                if st.button("🎬 캡컷 조립 (텍스트 넘기기)", key=f"capcut_btn_{col_idx}", on_click=set_capcut_script, args=(part,), use_container_width=True):
+                    pass # Callback handles the state update
+            col_idx += 1
 st.markdown("---")
 st.subheader("🚀 대량 키워드 실시간 분석 옵션 설정")
 st.caption("구글 시트에 기재된 키워드를 기반으로 실시간 탭 순위와 최신 검색량을 조회합니다.")
