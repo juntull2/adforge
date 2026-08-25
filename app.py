@@ -405,8 +405,8 @@ if local_media_folder and os.path.isdir(local_media_folder):
 
 
 # 🔀 자막 줄바꿈 자동 정리
-def auto_format_subtitle(text: str, max_chars: int = 8) -> str:
-    """한국어 자막 텍스트를 6~8자 단위로 자동 줄바꿈"""
+def auto_format_subtitle(text: str, max_chars: int = 20) -> str:
+    """한국어 자막 텍스트를 어절 단위로 자동 줄바꿈 (단어 끊김 방지)"""
     import re
     
     # 빈 줄 기준으로 단락 분리
@@ -429,32 +429,21 @@ def auto_format_subtitle(text: str, max_chars: int = 8) -> str:
             if not sentence:
                 continue
             
-            # 이미 짧으면 그대로
-            if len(sentence) <= max_chars:
-                result_lines.append(sentence)
-                continue
-            
-            # 긴 문장: 공백 기준으로 토큰 분리 후 max_chars씩 묶기
-            tokens = sentence.split(' ')
+            # 긴 문장: 공백 기준으로 어절 분리 후 max_chars 한도 내에서 묶기
+            words = sentence.split(' ')
             current_line = ""
             
-            for token in tokens:
-                test = (current_line + token).strip()
-                if len(test) <= max_chars:
-                    current_line = test + " "
+            for word in words:
+                if not current_line:
+                    current_line = word
+                elif len(current_line) + 1 + len(word) <= max_chars:
+                    current_line += " " + word
                 else:
-                    if current_line.strip():
-                        result_lines.append(current_line.strip())
-                    # 토큰 자체가 max_chars보다 길면 글자수로 쪼개기
-                    if len(token) > max_chars:
-                        for i in range(0, len(token), max_chars):
-                            result_lines.append(token[i:i+max_chars])
-                        current_line = ""
-                    else:
-                        current_line = token + " "
+                    result_lines.append(current_line)
+                    current_line = word
             
-            if current_line.strip():
-                result_lines.append(current_line.strip())
+            if current_line:
+                result_lines.append(current_line)
         
         result_lines.append("")  # 단락 사이 빈 줄
     
@@ -462,7 +451,7 @@ def auto_format_subtitle(text: str, max_chars: int = 8) -> str:
 
 col_fmt1, col_fmt2 = st.columns([1, 3])
 with col_fmt1:
-    fmt_chars = st.number_input("줄당 최대 글자 수", min_value=4, max_value=20, value=8, step=1)
+    fmt_chars = st.number_input("줄당 최대 글자 수", min_value=4, max_value=40, value=20, step=1)
 with col_fmt2:
     if st.button("🔀 자막 줄바꿈 자동 정리 (붙여넣은 대본 → 자막 포맷)", width="stretch"):
         if not script_text.strip():

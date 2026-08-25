@@ -22,14 +22,15 @@ capcut_draft_lock = threading.Lock()
 os.environ["PATH"] += os.pathsep + r"C:\Program Files\FFmpeg\bin"
 
 import os
-_local_app_data = os.environ.get("LOCALAPPDATA", "C:/Users/Default/AppData/Local").replace("\\", "/")
+_local_app_data = os.environ.get('LOCALAPPDATA', 'C:/Users/Default/AppData/Local').replace("\\", "/")
+PRETENDARD_NAME = "Pretendard"
 _font_paths = [
-    f"{_local_app_data}/Microsoft/Windows/Fonts/Jalnan2TTF.ttf",
-    "C:/Windows/Fonts/Jalnan2TTF.ttf",
-    "C:/Windows/Fonts/Jalnan2.ttf"
+    f"{_local_app_data}/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    f"{_local_app_data}/Microsoft/Windows/Fonts/Pretendard-Medium.otf",
+    "C:/Windows/Fonts/Pretendard-Bold.otf"
 ]
-JALNAN_PATH = next((p for p in _font_paths if os.path.exists(p)), _font_paths[0])
-JALNAN_NAME = "Jalnan2"
+
+PRETENDARD_PATH = next((p for p in _font_paths if os.path.exists(p)), _font_paths[0] if _font_paths else "")
 
 class CustomFont:
     def __init__(self, font_name: str, font_path: str):
@@ -38,7 +39,7 @@ class CustomFont:
         self.resource_id = ""
         self.value = EffectMeta(font_name, False, "", "", "", [])
 
-JALNAN_FONT = CustomFont(JALNAN_NAME, JALNAN_PATH)
+PRETENDARD_FONT = CustomFont(PRETENDARD_NAME, PRETENDARD_PATH)
 
 # TextSegment.export_material Monkey-Patching
 _orig_export_material = TextSegment.export_material
@@ -50,17 +51,17 @@ def _custom_export_material(self):
         if "styles" in content_obj and len(content_obj["styles"]) > 0:
             content_obj["styles"][0]["font"] = {
                 "id": "",
-                "name": JALNAN_NAME,
-                "path": JALNAN_PATH,
-                "title": JALNAN_NAME
+                "name": PRETENDARD_NAME,
+                "path": PRETENDARD_PATH,
+                "title": PRETENDARD_NAME
             }
             ret["content"] = json.dumps(content_obj, ensure_ascii=False)
     except Exception:
         pass
 
-    ret["font_name"] = JALNAN_NAME
-    ret["font_title"] = JALNAN_NAME
-    ret["font_path"] = JALNAN_PATH
+    ret["font_name"] = PRETENDARD_NAME
+    ret["font_title"] = PRETENDARD_NAME
+    ret["font_path"] = PRETENDARD_PATH
     ret["font_resource_id"] = ""
     ret["font_id"] = ""
     return ret
@@ -209,7 +210,7 @@ def calculate_effective_speech_length(text: str) -> float:
     punct_count = len(re.findall(r'[,!?…]', text))
     return letters_count + (punct_count * 1.5)
 
-def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 10):
+def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 40):
     # 1. 문장 단위(오디오 생성 단위)는 구두점(.!?…) 기준으로만 분리 (원본 \n 유지)
     raw_sentences = re.split(r'(?<=[.!?…])', script_text)
     
@@ -449,7 +450,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     
     shutil.copytree(src_folder, dst_folder)
     
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=10)
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
     
     combined_audio = PydubAudio.empty()
     phrase_timings = []
@@ -593,21 +594,11 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
 def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None):
     if template_folder and template_folder != "none":
         return build_from_template(script_text, voice, el_api_key, template_folder)
-    """
-    순수 자동화 로직:
-    1. 대본 텍스트를 문장/구절(Phrases) 단위로 분리
-    2. TTS 오디오 생성 및 무음 제거 (Edge TTS or ElevenLabs)
-    3. 오디오 길이에 맞춰 스톡 비디오 컷 편집
-    4. 구절(Phrase) 단위로 100% 정밀 캡컷 자막(TextSegment) 싱크 배치
-    5. 캡컷 draft_content.json 파일 빌드 (포팅)
-    """
+    
     import time
     import uuid
-    # 동시 실행 시 timestamp가 겹치지 않도록 uuid 추가
     project_name = f"AutoProject_{int(time.time())}_{uuid.uuid4().hex[:6]}"
     
-    # 채널 방향성 문서 11항: 시니어 타겟과 어울리는 영상 키워드 우선 사용
-    # keyword가 있으면 해당 주제 + senior 컨텍스트로 검색
     SENIOR_VIDEO_CONTEXTS = [
         "senior exercise", "elderly gentle exercise", "older adult workout",
         "senior fitness", "elderly stretching", "senior healthy lifestyle",
@@ -620,14 +611,13 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     else:
         stock_search_keywords = [senior_ctx, "abstract background"]
     
-    # [수정] 사용자 요청: 영상 들어가지 않게 처리 (자막/음성만)
     stock_videos = []
-    # stock_videos = get_or_download_stock_videos(stock_search_keywords, pexels_key=pexels_api_key, pixabay_key=pixabay_api_key)
 
-    # 캡컷 DraftFolder 접근은 순차적으로 (Lock으로 보호)
     with capcut_draft_lock:
-        draft_folder_path = "C:/Users/임준모/AppData/Local/CapCut/User Data/Projects/com.lveditor.draft"
-        # 폴더가 없으면 직접 생성
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if not local_app_data:
+            local_app_data = os.path.expanduser("~\\AppData\\Local")
+        draft_folder_path = os.path.join(local_app_data, "CapCut", "User Data", "Projects", "com.lveditor.draft")
         os.makedirs(draft_folder_path, exist_ok=True)
         draft_folder = cc.DraftFolder(draft_folder_path)
     
@@ -637,10 +627,8 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             project_name = f"{project_name}_r{uuid.uuid4().hex[:4]}"
             script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
     
-        # 9:16 세로 숏폼 캔버스 비율 명시적 고정
         script_file.content["canvas_config"] = {"width": 1080, "height": 1920, "ratio": "9:16"}
     
-        # 🎬 트랙 3개 준비
         script_file.add_track(TrackType.video, track_name="메인_비디오_트랙")
         script_file.add_track(TrackType.text, track_name="자막_트랙")
         script_file.add_track(TrackType.audio, track_name="더빙_트랙")
@@ -648,15 +636,11 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     temp_dir = os.path.join(os.getcwd(), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
-    # 2~3줄 형태로 꽉 차게 보이기 위해 max_chars_per_phrase=18 적용
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
 
     print(f"\n========================================================")
     print(f"[네이버 클립 프로젝트 생성 시작] {project_name}")
     
-    print(f"[자동 비디오 교차 배치] 보유 스톡 비디오 {len(stock_videos)}개 교차 연동")
-    print(f"========================================================")
-
     current_time_us = 0
     video_usage_tracker = {v_file: 0 for v_file in stock_videos}
     last_used_video = ""
@@ -669,10 +653,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         phrases = struct["phrases"]
         mapping_idx = s_idx - 1
 
-        # 1. UI에서 선택한 매핑된 파일 가져오기
         target_media_filename = media_mapping.get(mapping_idx)
-
-        # 2. 텍스트 정제 (정규식 태그 기능은 UI 매핑으로 대체됨)
         clean_sentence = full_sentence.strip()
         cleaned_phrases = [p.strip() for p in phrases if p.strip()]
 
@@ -683,20 +664,17 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
         try:
             if voice.startswith("el_"):
-                # ElevenLabs TTS
                 real_voice_id = voice.replace("el_", "")
                 if not el_api_key:
                     raise Exception("ElevenLabs API Key가 없습니다.")
                 generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
             elif voice.startswith("fish_"):
-                # Fish Audio TTS
                 fish_reference_id = voice.replace("fish_", "")
                 fish_api_key = os.environ.get("FISH_API_KEY", "")
                 if not fish_api_key:
                     raise Exception("Fish Audio API Key가 없습니다.")
                 generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
             else:
-                # Edge TTS
                 asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
         except Exception as e:
             print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
@@ -706,17 +684,14 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             except Exception as e2:
                 raise Exception(f"오디오 생성 완전 실패: {e}")
 
-        # 오디오 무음 정밀 트림
         trim_audio_silence(mp3_path)
 
         audio_mat = AudioMaterial(mp3_path)
         sentence_duration_us = audio_mat.duration
 
-        # 오디오 트랙 추가
         audio_timerange = Timerange(current_time_us, sentence_duration_us)
         script_file.add_segment(AudioSegment(audio_mat, audio_timerange), track_name="더빙_트랙")
 
-        # 🎬 1. 배경 미디어 (로컬 지정 파일 또는 스톡 비디오 자동 배치)
         v_file_to_use = None
         is_local_media = False
 
@@ -725,8 +700,6 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             if os.path.exists(potential_path):
                 v_file_to_use = potential_path
                 is_local_media = True
-            else:
-                print(f"  [경고] 지정한 로컬 미디어 파일을 찾을 수 없습니다: {potential_path}")
 
         if not v_file_to_use and stock_videos:
             v_file_to_use = find_best_video_for_sentence(clean_sentence, stock_videos, last_used_video=last_used_video)
@@ -739,15 +712,12 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 if is_local_media:
                     ext = os.path.splitext(v_file_to_use)[1].lower()
                     if ext in ['.jpg', '.jpeg', '.png']:
-                        # 사진인 경우: 오디오 길이만큼 꽉 채움
                         clip_dur = sentence_duration_us
                         start_offset = 0
                     else:
-                        # 영상인 경우: 원본 길이와 오디오 길이 중 짧은 것 (start_offset=0)
                         clip_dur = min(v_mat.duration, sentence_duration_us)
                         start_offset = 0
                 else:
-                    # 기존 스톡 비디오 로직 (순차 재생)
                     clip_dur = min(v_mat.duration, sentence_duration_us)
                     start_offset = video_usage_tracker.get(v_file_to_use, 0)
                     if start_offset + clip_dur > v_mat.duration:
@@ -758,7 +728,6 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 src_timerange = Timerange(start_offset, clip_dur)
                 tgt_timerange = Timerange(current_time_us, clip_dur)
                 
-                # 9:16 (1080x1920) 캔버스에 맞게 자동 스케일링(크롭)
                 v_width = getattr(v_mat, 'width', 0)
                 v_height = getattr(v_mat, 'height', 0)
                 if v_width and v_height:
@@ -773,7 +742,6 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             except Exception as ve:
                 print(f"  (비디오 소스 연동 알림: {ve})")
 
-        # 🎯 2. 자막 구절별 100% 정밀 싱크 배치 (태그 제거된 cleaned_phrases 사용)
         phrase_effective_lens = [calculate_effective_speech_length(p) for p in cleaned_phrases]
         total_effective_len = sum(phrase_effective_lens) or 1.0
         phrase_start_us = current_time_us
@@ -786,7 +754,6 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
             phrase_timerange = Timerange(phrase_start_us, phrase_duration_us)
 
-            # 3초(3,000,000 us) 이전 구간은 후킹 강조 스타일, 이후는 일반 스타일
             is_hook = current_time_us < 3000000
 
             style = TextStyle(
@@ -801,7 +768,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             text_seg = TextSegment(
                 text=phrase,
                 timerange=phrase_timerange,
-                font=JALNAN_FONT,
+                font=PRETENDARD_FONT,
                 style=style,
                 border=border,
                 clip_settings=clip_settings
