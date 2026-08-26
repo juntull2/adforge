@@ -46,3 +46,4 @@ token.json
 .env
 storage/browser_profiles/
 temp_uploads/
+style_profiles/

@@ -521,6 +521,111 @@ with col_v2:
 from naver_clip_adforge import build_capcut_project_for_naver_clip
 
 # -------------------------------------------------------------------
+# 📹 레퍼런스 영상 학습 (스타일 프로필 생성)
+# -------------------------------------------------------------------
+st.markdown("---")
+with st.expander("📹 레퍼런스 영상 학습 (스타일 프로필 생성)", expanded=False):
+    st.markdown(
+        "잘 만들어진 숏폼 영상들을 분석하여 자막 스타일·컷 리듬을 학습합니다. "
+        "학습된 프로필은 이후 캡컷 프로젝트 생성 시 자동 적용됩니다."
+    )
+
+    ref_col1, ref_col2 = st.columns([2, 1])
+    with ref_col1:
+        ref_folder = st.text_input(
+            "📁 레퍼런스 영상 폴더 경로",
+            placeholder=r"예: C:\Users\임준모\Videos\references",
+            help="분석할 .mp4 파일들이 있는 폴더 경로를 입력하세요."
+        )
+    with ref_col2:
+        ref_profile_name = st.text_input(
+            "💾 프로필 이름",
+            value="default",
+            help="분석 결과를 저장할 프로필 이름"
+        )
+
+    intensity_label = st.select_slider(
+        "🎛️ 애니메이션 강도 제한",
+        options=["subtle (절제)", "medium (보통)", "bold (강조)"],
+        value="medium (보통)",
+        help="subtle: 페이드인/슬라이드 등 자연스러운 효과만 허용 | medium: 팝/확대 추가 | bold: 글리치/폭발 효과 허용"
+    )
+    max_intensity = intensity_label.split(" ")[0]  # "subtle" | "medium" | "bold"
+    st.session_state["max_intensity"] = max_intensity
+
+    if ref_folder and os.path.isdir(ref_folder):
+        mp4_files = [
+            os.path.join(ref_folder, f)
+            for f in os.listdir(ref_folder)
+            if f.lower().endswith(".mp4")
+        ]
+        if mp4_files:
+            st.info(f"📂 {len(mp4_files)}개 영상 감지: {', '.join([os.path.basename(f) for f in mp4_files[:5]])}" +
+                    (f" 외 {len(mp4_files)-5}개" if len(mp4_files) > 5 else ""))
+
+            if st.button("▶️ 레퍼런스 영상 분석 시작", type="primary"):
+                from reference_analyzer import ReferenceAnalyzer
+                analyzer = ReferenceAnalyzer(
+                    openrouter_api_key=os.environ.get("OPENROUTER_API_KEY", nvidia_api_key),
+                    nvidia_api_key=nvidia_api_key
+                )
+
+                progress_bar = st.progress(0.0)
+                status_text = st.empty()
+
+                def on_progress(frac, msg):
+                    progress_bar.progress(min(frac, 1.0))
+                    status_text.text(f"🔄 {msg}")
+
+                try:
+                    profile = analyzer.analyze_batch(
+                        mp4_files,
+                        profile_name=ref_profile_name,
+                        progress_callback=on_progress
+                    )
+                    st.session_state["active_style_profile"] = profile
+                    st.session_state["active_profile_name"] = ref_profile_name
+                    progress_bar.progress(1.0)
+                    status_text.text("✅ 분석 완료!")
+
+                    st.success(f"✅ {len(mp4_files)}개 영상 분석 완료 — 프로필 '{ref_profile_name}' 저장됨")
+                    cut = profile.get("cut_rhythm", {})
+                    st.metric("평균 컷 간격", f"{cut.get('avg_cut_interval_sec', 0):.1f}초")
+
+                except Exception as e:
+                    st.error(f"분석 오류: {e}")
+        else:
+            st.warning("해당 폴더에 .mp4 파일이 없습니다.")
+    elif ref_folder:
+        st.error("폴더 경로를 찾을 수 없습니다.")
+
+    # 저장된 프로필 로딩
+    from reference_analyzer import ReferenceAnalyzer
+    saved_profiles = ReferenceAnalyzer.list_profiles()
+    if saved_profiles:
+        st.markdown("**💾 저장된 프로필 불러오기**")
+        profile_options = {p["name"]: p for p in saved_profiles}
+        selected_prof = st.selectbox(
+            "프로필 선택",
+            options=["(사용 안 함)"] + list(profile_options.keys()),
+            key="profile_selector"
+        )
+        if selected_prof != "(사용 안 함)":
+            loaded = ReferenceAnalyzer.load_profile(selected_prof)
+            if loaded:
+                st.session_state["active_style_profile"] = loaded
+                st.session_state["active_profile_name"] = selected_prof
+                p = profile_options[selected_prof]
+                st.caption(
+                    f"📊 {p['source_count']}개 영상 기반 | "
+                    f"평균 컷 {p['avg_cut_interval']:.1f}초 | "
+                    f"총 {p['total_cuts']}컷 학습"
+                )
+        elif selected_prof == "(사용 안 함)":
+            st.session_state.pop("active_style_profile", None)
+            st.session_state.pop("active_profile_name", None)
+
+# -------------------------------------------------------------------
 # 🎨 AI 크리에이티브 연출 (옵시디언 마케팅 지식 기반)
 # -------------------------------------------------------------------
 st.markdown("---")
@@ -545,7 +650,14 @@ if use_ai_direction and script_text.strip():
     with col_preview:
         if st.button("🔍 연출 미리보기", use_container_width=True):
             from creative_director import CreativeDirector
-            cd = CreativeDirector()
+            active_profile = st.session_state.get("active_style_profile")
+            active_intensity = st.session_state.get("max_intensity", "medium")
+            cd = CreativeDirector(
+                max_intensity=active_intensity,
+                style_profile=active_profile
+            )
+            if active_profile:
+                st.caption(f"📊 프로필 '{st.session_state.get('active_profile_name', '')}' 적용 중 | 강도: {active_intensity}")
             
             if direction_mode.startswith("🤖"):
                 with st.spinner("🎬 옵시디언 마케팅 지식 로딩 + AI 대본 분석 중..."):
@@ -598,10 +710,23 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                 else:
                     os.environ["FISH_API_KEY"] = fish_api_key
                     
-                    # AI 연출 지시서 전달 (체크 시에만)
+                    # AI 연출 지시서 준비 (체크 시에만)
                     cd_data = None
-                    if use_ai_direction and "creative_direction" in st.session_state:
-                        cd_data = st.session_state["creative_direction"]
+                    if use_ai_direction:
+                        active_profile = st.session_state.get("active_style_profile")
+                        active_intensity = st.session_state.get("max_intensity", "medium")
+                        
+                        if "creative_direction" in st.session_state:
+                            # 이미 미리보기를 한 경우 재사용
+                            cd_data = st.session_state["creative_direction"]
+                        else:
+                            # 미리보기 없이 생성하는 경우 즉석 분석
+                            from creative_director import CreativeDirector
+                            cd = CreativeDirector(
+                                max_intensity=active_intensity,
+                                style_profile=active_profile
+                            )
+                            cd_data = cd._fallback_analysis(script_text)
                     
                     project_name = build_capcut_project_for_naver_clip(
                         script_text=script_text,
