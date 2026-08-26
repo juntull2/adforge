@@ -520,6 +520,67 @@ with col_v2:
 
 from naver_clip_adforge import build_capcut_project_for_naver_clip
 
+# -------------------------------------------------------------------
+# 🎨 AI 크리에이티브 연출 (옵시디언 마케팅 지식 기반)
+# -------------------------------------------------------------------
+st.markdown("---")
+use_ai_direction = st.checkbox(
+    "🎨 AI 크리에이티브 연출 (옵시디언 마케팅 지식 기반)",
+    value=False,
+    help="옵시디언 볼트의 마케팅 교육 매뉴얼을 기반으로 "
+         "자막 스타일, 애니메이션, 강조 효과를 AI가 자동 결정합니다."
+)
+
+if use_ai_direction and script_text.strip():
+    col_preview, col_mode = st.columns([3, 1])
+    
+    with col_mode:
+        direction_mode = st.radio(
+            "분석 모드",
+            ["🤖 AI 분석 (LLM)", "⚡ 규칙 기반 (즉시)"],
+            index=1,
+            help="AI 분석은 LLM API를 호출하여 더 정교하게 분석합니다. 규칙 기반은 즉시 결과를 제공합니다."
+        )
+    
+    with col_preview:
+        if st.button("🔍 연출 미리보기", use_container_width=True):
+            from creative_director import CreativeDirector
+            cd = CreativeDirector()
+            
+            if direction_mode.startswith("🤖"):
+                with st.spinner("🎬 옵시디언 마케팅 지식 로딩 + AI 대본 분석 중..."):
+                    or_api_key = os.environ.get("OPENROUTER_API_KEY", nvidia_api_key)
+                    direction = cd.analyze_script(script_text, api_key=or_api_key, model=model_choice)
+            else:
+                direction = cd._fallback_analysis(script_text)
+                
+            st.session_state["creative_direction"] = direction
+
+    if "creative_direction" in st.session_state:
+        direction = st.session_state["creative_direction"]
+        role_emoji = {
+            "hook": "🔥", "empathy": "💭", "agitate": "⚡",
+            "evidence": "📊", "solution": "💡", "usp": "🏆",
+            "cta": "🎯", "transition": "🔄", "normal": "📝"
+        }
+        
+        with st.expander("📋 AI 연출 지시서 미리보기", expanded=True):
+            for item in direction.get("sentences", []):
+                role = item.get("role", "normal")
+                emoji = role_emoji.get(role, "📝")
+                text_preview = item.get("text", "")[:45]
+                intro = item.get("text_intro", "없음") or "없음"
+                loop = item.get("text_loop_anim", "없음") or "없음"
+                reasoning = item.get("reasoning", "")
+                psychology = item.get("psychology", "")
+                
+                st.markdown(
+                    f"**{emoji} [{role.upper()}]** {text_preview}  \n"
+                    f"　└ 입장: `{intro}` | 루프: `{loop}`"
+                    + (f" | 💡 _{reasoning}_" if reasoning and "폴백" not in reasoning else "")
+                    + (f" | 🧠 _{psychology}_" if psychology else "")
+                )
+
 if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
     if not script_text.strip():
         st.error("대본이 비어있습니다!")
@@ -536,6 +597,12 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                     st.error("Fish Audio Reference ID를 입력해야 합니다.")
                 else:
                     os.environ["FISH_API_KEY"] = fish_api_key
+                    
+                    # AI 연출 지시서 전달 (체크 시에만)
+                    cd_data = None
+                    if use_ai_direction and "creative_direction" in st.session_state:
+                        cd_data = st.session_state["creative_direction"]
+                    
                     project_name = build_capcut_project_for_naver_clip(
                         script_text=script_text,
                         keyword=selected_keyword,
@@ -544,9 +611,14 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                         voice=actual_voice_choice,
                         el_api_key=el_api_key,
                         local_media_folder=local_media_folder,
-                        media_mapping=media_mapping
+                        media_mapping=media_mapping,
+                        creative_direction=cd_data
                     )
                     st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
-                    st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
+                    if cd_data:
+                        st.info("🎨 AI 크리에이티브 연출이 적용되었습니다. 캡컷에서 자막 애니메이션을 확인하세요!")
+                    else:
+                        st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
             except Exception as e:
                 st.error(f"오류 발생: {e}")
+
