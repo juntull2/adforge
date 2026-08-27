@@ -40,6 +40,48 @@ stock_videos/
 
 outputs/
 *.mp4
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Temporary Audio / Cache
+temp_audio/
+__pycache__/
+*.pyc
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+
+nv_api_key.txt
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Temporary Audio / Cache
+temp_audio/
+__pycache__/
+*.pyc
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+
+nv_api_key.txt
+
+el_api_key.txt
+fish_api_key.txt
+pexels_api_key.txt
+pixabay_api_key.txt
+stock_videos/
+
+outputs/
+*.mp4
 openrouter_api_key.txt
 client_secrets.json
 token.json
@@ -52,4 +94,4 @@ style_profiles/
 node_modules/
 temp_videos/
 scratch/
-vendor/
+vendor/
