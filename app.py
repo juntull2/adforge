@@ -842,7 +842,7 @@ if use_ai_direction and script_text.strip():
                     + (f" | 🧠 _{psychology}_" if psychology else "")
                 )
 
-if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
+if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True, key="btn_capcut_bottom"):
     if not script_text.strip():
         st.error("대본이 비어있습니다!")
     else:
