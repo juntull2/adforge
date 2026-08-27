@@ -2,7 +2,7 @@ import os
 import re
 import pandas as pd
 import streamlit as st
-from naver_clip_adforge import build_capcut_project_for_naver_clip, split_script_by_sentences_and_phrases
+from naver_clip_adforge import build_capcut_project_for_naver_clip, split_script_by_sentences_and_phrases, split_sentence_naturally
 
 # -------------------------------------------------------------------
 # Streamlit 대시보드 페이지 설정
@@ -281,6 +281,7 @@ if "rt_rank" in st.session_state:
         
         def set_capcut_script(script_text):
             st.session_state["parsed_script"] = script_text
+            st.session_state["script_text_area"] = script_text
             
         for part in parts:
             part = part.strip()
@@ -363,8 +364,116 @@ if "bulk_results" in st.session_state:
 st.markdown("---")
 st.subheader("STEP 2: 캡컷 연동 및 자동 생성")
 
-default_script = st.session_state.get("parsed_script", "")
-script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨 / 직접 붙여넣기 가능)", value=default_script, height=200)
+# 🔀 자막 줄바꿈 자동 정리 함수 (스마트 문맥 규칙 기반)
+def auto_format_subtitle(text: str, max_chars: int = 16) -> str:
+    """한국어 대본을 문맥 및 호흡 단위(수식어 보존, 연결어미 분리)에 맞게 자동 줄바꿈"""
+    if not text or not text.strip():
+        return ""
+    # 줄바꿈 정규화 (\r\n -> \n)
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    
+    # 누락된 구어체 종결 뒤 분리 보정 (예: '풀어줘요 차기만 하면' -> '풀어줘요. 차기만 하면')
+    text = re.sub(r'([요죠다네함음임])\s+(?=(?:차기만|왜냐하면|그래서|하지만|그러니|지금|당장|30일|특허|대기))', r'\1. ', text)
+    
+    paragraphs = re.split(r'\n{2,}', text.strip())
+    result_lines = []
+    
+    for para in paragraphs:
+        flat = re.sub(r'\s+', ' ', para).strip()
+        if not flat:
+            continue
+        
+        # 문장 단위로 분할 (.!?…~ 기준)
+        sentences = [s.strip() for s in re.split(r'(?<=[.!?…~])\s+', flat) if s.strip()]
+        
+        for sent in sentences:
+            lines = split_sentence_naturally(sent, max_chars=max_chars)
+            result_lines.extend(lines)
+            
+        result_lines.append("")  # 단락 구분용 빈 줄
+    
+    return "\n".join(result_lines).strip()
+
+def format_subtitle_with_ai(text: str, api_key: str, model: str = "", max_chars: int = 16) -> str:
+    """LLM을 이용해 광고 카피 자막을 최적의 호흡 단위로 줄바꿈"""
+    if not text or not text.strip() or not api_key:
+        return text
+    import requests
+    
+    prompt = f"""당신은 숏폼(9:16) 영상 자막 전문 카피라이터입니다.
+주어진 광고 대본을 시청자가 1~2초 안에 한눈에 읽을 수 있도록 가장 자연스러운 '의미 단위(호흡 덩어리)'로 1줄씩 줄바꿈(엔터)하세요.
+
+[필수 규칙]
+1. 1줄당 글자 수는 약 10~{max_chars}자 내외로 조절하세요.
+2. 단어/명사구가 어색하게 쪼개지지 않도록 연결어미(~고, ~면, ~아서), 쉼표, 호흡 단위에서 줄바꿈하세요.
+3. 원문의 글자, 단어, 어순을 절대 변경/삭제/추가하지 마세요. 오직 줄바꿈(\\n) 위치만 결정하세요.
+4. 설명이나 따옴표 없이 오직 줄바꿈된 대본 텍스트만 출력하세요.
+
+[대본]
+{text}"""
+
+    if api_key.startswith("sk-or-"):
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        body = {
+            "model": model if model else "openai/gpt-4o-mini",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2
+        }
+    else:
+        url = "https://integrate.api.nvidia.com/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+        body = {
+            "model": model if model else "mistralai/mistral-nemotron",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.2
+        }
+        
+    try:
+        resp = requests.post(url, headers=headers, json=body, timeout=20)
+        if resp.status_code == 200:
+            res_json = resp.json()
+            out_text = res_json['choices'][0]['message']['content'].strip()
+            if out_text.startswith("```"):
+                out_text = re.sub(r'^```[a-zA-Z]*\n', '', out_text)
+                out_text = re.sub(r'\n```$', '', out_text)
+            return out_text.strip()
+    except Exception as e:
+        print(f"AI format failed: {e}")
+    return text
+
+if "script_text_area" not in st.session_state:
+    st.session_state["script_text_area"] = st.session_state.get("parsed_script", "")
+
+def apply_auto_format():
+    raw = st.session_state.get("script_text_area", "")
+    if raw and raw.strip():
+        limit = st.session_state.get("fmt_chars_input", 16)
+        formatted = auto_format_subtitle(raw, max_chars=limit)
+        st.session_state["script_text_area"] = formatted
+        st.session_state["parsed_script"] = formatted
+
+def apply_ai_format():
+    raw = st.session_state.get("script_text_area", "")
+    if raw and raw.strip():
+        or_api_key = os.environ.get("OPENROUTER_API_KEY", nvidia_api_key)
+        limit = st.session_state.get("fmt_chars_input", 16)
+        with st.spinner("🤖 AI가 문맥과 호흡 단위로 최적의 자막 줄바꿈을 생성 중..."):
+            formatted = format_subtitle_with_ai(raw, api_key=or_api_key, model=model_choice, max_chars=limit)
+        st.session_state["script_text_area"] = formatted
+        st.session_state["parsed_script"] = formatted
+
+col_fmt1, col_fmt2, col_fmt3 = st.columns([1.2, 2.4, 2.4])
+with col_fmt1:
+    st.number_input("줄당 글자 수", min_value=8, max_value=30, value=16, step=1, key="fmt_chars_input", help="숏폼 자막은 14~18자가 한눈에 읽히는 최적 폭입니다.")
+with col_fmt2:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    st.button("⚡ 문맥 맞춤 줄바꿈 (스마트 규칙)", on_click=apply_auto_format, use_container_width=True, help="어절, 연결어미, 쉼표 등 문맥 호흡에 맞게 즉시 줄바꿈합니다.")
+with col_fmt3:
+    st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+    st.button("🤖 AI 문맥 줄바꿈 (LLM 카피)", on_click=apply_ai_format, use_container_width=True, help="AI가 문맥을 분석하여 시청자 호흡과 카피라이팅에 최적화된 1줄 자막으로 정리합니다.")
+
+script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨 / 직접 붙여넣기 가능)", key="script_text_area", height=220)
 
 # 로컬 미디어 폴더 입력창 추가
 local_media_folder = st.text_input("📁 로컬 미디어 소스 폴더 경로 (선택)", placeholder="예: C:\\Users\\User\\Videos\\Product")
@@ -402,64 +511,6 @@ if local_media_folder and os.path.isdir(local_media_folder):
             st.warning("입력하신 폴더에 영상이나 이미지 파일(.mp4, .mov, .jpg, .png)이 없습니다.")
     except Exception as e:
         st.error(f"폴더를 읽는 중 오류가 발생했습니다: {e}")
-
-
-# 🔀 자막 줄바꿈 자동 정리
-def auto_format_subtitle(text: str, max_chars: int = 20) -> str:
-    """한국어 자막 텍스트를 어절 단위로 자동 줄바꿈 (단어 끊김 방지)"""
-    import re
-    
-    # 빈 줄 기준으로 단락 분리
-    paragraphs = re.split(r'\n{2,}', text.strip())
-    result_lines = []
-    
-    for para in paragraphs:
-        # 단락 내 줄바꿈을 공백으로 합쳐서 하나의 텍스트로 만들기
-        flat = re.sub(r'\n', ' ', para).strip()
-        flat = re.sub(r' {2,}', ' ', flat)  # 중복 공백 제거
-        
-        if not flat:
-            continue
-        
-        # 문장부호(. ! ?)로 먼저 분리
-        sentences = re.split(r'(?<=[.!?])\s*', flat)
-        
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if not sentence:
-                continue
-            
-            # 긴 문장: 공백 기준으로 어절 분리 후 max_chars 한도 내에서 묶기
-            words = sentence.split(' ')
-            current_line = ""
-            
-            for word in words:
-                if not current_line:
-                    current_line = word
-                elif len(current_line) + 1 + len(word) <= max_chars:
-                    current_line += " " + word
-                else:
-                    result_lines.append(current_line)
-                    current_line = word
-            
-            if current_line:
-                result_lines.append(current_line)
-        
-        result_lines.append("")  # 단락 사이 빈 줄
-    
-    return "\n".join(result_lines).strip()
-
-col_fmt1, col_fmt2 = st.columns([1, 3])
-with col_fmt1:
-    fmt_chars = st.number_input("줄당 최대 글자 수", min_value=4, max_value=40, value=20, step=1)
-with col_fmt2:
-    if st.button("🔀 자막 줄바꿈 자동 정리 (붙여넣은 대본 → 자막 포맷)", width="stretch"):
-        if not script_text.strip():
-            st.error("대본이 비어있습니다!")
-        else:
-            formatted = auto_format_subtitle(script_text, max_chars=fmt_chars)
-            st.session_state["parsed_script"] = formatted
-            st.rerun()
 
 
 
@@ -693,6 +744,171 @@ if use_ai_direction and script_text.strip():
                     + (f" | 🧠 _{psychology}_" if psychology else "")
                 )
 
+# -------------------------------------------------------------------
+# ✍️ 수동 자막 스타일 설정
+# -------------------------------------------------------------------
+st.markdown("---")
+
+from anim_labels import make_selectbox_options
+import json
+
+TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "style_templates")
+os.makedirs(TEMPLATES_DIR, exist_ok=True)
+
+@st.cache_data
+def get_anim_options():
+    from pycapcut.metadata.text_intro import TextIntro
+    from pycapcut.metadata.text_outro import TextOutro
+    from pycapcut.metadata.text_loop import TextLoopAnim
+    intro_opts = make_selectbox_options([e.name for e in TextIntro], "intro")
+    loop_opts  = make_selectbox_options([e.name for e in TextLoopAnim], "loop")
+    outro_opts = make_selectbox_options([e.name for e in TextOutro], "outro")
+    return intro_opts, loop_opts, outro_opts
+
+intro_opts, loop_opts, outro_opts = get_anim_options()
+intro_labels = [ko for ko, _ in intro_opts]
+loop_labels  = [ko for ko, _ in loop_opts]
+outro_labels = [ko for ko, _ in outro_opts]
+
+import os as _os
+_lad = _os.environ.get("LOCALAPPDATA", "").replace("\\", "/")
+AVAILABLE_FONTS = {
+    "Pretendard": f"{_lad}/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "Black Han Sans": f"{_lad}/Microsoft/Windows/Fonts/BlackHanSans-Regular.ttf",
+}
+AVAILABLE_FONTS = {k: v for k, v in AVAILABLE_FONTS.items() if _os.path.exists(v)}
+FONT_NAMES = list(AVAILABLE_FONTS.keys()) or ["Pretendard"]
+
+def _find_default(opts_labels, ko_name):
+    try: return opts_labels.index(ko_name)
+    except ValueError: return 0
+
+def _make_role_ui(role_key, tab_label, defaults):
+    """역할 하나의 탭 UI를 렌더링하고 설정 dict 반환."""
+    c1, c2 = st.columns(2)
+    with c1:
+        font = st.selectbox("폰트", FONT_NAMES, key=f"{role_key}_font",
+                            index=FONT_NAMES.index(defaults["font"]) if defaults["font"] in FONT_NAMES else 0)
+        size = st.slider("글자 크기", 10.0, 30.0, defaults["size"], 0.5, key=f"{role_key}_size")
+    with c2:
+        intro_i = st.selectbox("등장 애니메이션", range(len(intro_labels)), key=f"{role_key}_intro",
+                               format_func=lambda i: intro_labels[i],
+                               index=_find_default(intro_labels, defaults["intro_ko"]))
+        loop_i  = st.selectbox("반복 애니메이션", range(len(loop_labels)), key=f"{role_key}_loop",
+                               format_func=lambda i: loop_labels[i],
+                               index=_find_default(loop_labels, defaults["loop_ko"]))
+        outro_i = st.selectbox("퇴장 애니메이션", range(len(outro_labels)), key=f"{role_key}_outro",
+                               format_func=lambda i: outro_labels[i],
+                               index=_find_default(outro_labels, defaults.get("outro_ko", "(없음)")))
+    return {
+        "font_name": font,
+        "font_path": AVAILABLE_FONTS.get(font, ""),
+        "size": size,
+        "intro": intro_opts[intro_i][1],
+        "loop":  loop_opts[loop_i][1],
+        "outro": outro_opts[outro_i][1],
+    }
+
+# 역할별 기본값
+ROLE_DEFAULTS = {
+    "hook":     {"font": "Black Han Sans", "size": 18.0, "intro_ko": "⭐ 팝업 (튀어나오기)",   "loop_ko": "⭐ 떨림 II",           "outro_ko": "(없음)"},
+    "empathy":  {"font": "Pretendard",     "size": 14.5, "intro_ko": "⭐ 페이드인",             "loop_ko": "(없음)",               "outro_ko": "(없음)"},
+    "evidence": {"font": "Pretendard",     "size": 14.0, "intro_ko": "⭐ 타자기",               "loop_ko": "(없음)",               "outro_ko": "(없음)"},
+    "solution": {"font": "Pretendard",     "size": 14.5, "intro_ko": "위로 슬라이드",           "loop_ko": "(없음)",               "outro_ko": "(없음)"},
+    "cta":      {"font": "Black Han Sans", "size": 17.0, "intro_ko": "⭐ 확대 등장",            "loop_ko": "⭐ 심장박동",          "outro_ko": "(없음)"},
+}
+
+def _load_template_to_state(tmpl: dict):
+    """템플릿 dict를 st.session_state에 주입."""
+    for role, cfg in tmpl.items():
+        if role not in ROLE_DEFAULTS:
+            continue
+        if "font_name" in cfg and cfg["font_name"] in FONT_NAMES:
+            st.session_state[f"{role}_font"] = cfg["font_name"]
+        if "size" in cfg:
+            st.session_state[f"{role}_size"] = float(cfg["size"])
+        for anim_key, opts, labels in [
+            ("intro", intro_opts, intro_labels),
+            ("loop",  loop_opts,  loop_labels),
+            ("outro", outro_opts, outro_labels),
+        ]:
+            cn = cfg.get(anim_key)
+            if cn:
+                for i, (_, v) in enumerate(opts):
+                    if v == cn:
+                        st.session_state[f"{role}_{anim_key}"] = i
+                        break
+            else:
+                st.session_state[f"{role}_{anim_key}"] = 0
+
+manual_style = None
+with st.expander("✍️ 자막 스타일 직접 설정 (역할별 폰트·애니메이션)", expanded=False):
+    # ── 템플릿 불러오기 ────────────────────────────────────────────
+    tmpl_files = [f for f in os.listdir(TEMPLATES_DIR) if f.endswith(".json")]
+    top_col1, top_col2, top_col3 = st.columns([2, 1, 1])
+    with top_col1:
+        selected_tmpl = st.selectbox("📂 저장된 템플릿 불러오기",
+                                     ["(선택 안 함)"] + [f.replace(".json", "") for f in tmpl_files],
+                                     key="tmpl_select")
+    with top_col2:
+        st.markdown(" ")
+        st.markdown(" ")
+        if st.button("📂 불러오기", key="tmpl_load", use_container_width=True):
+            if selected_tmpl != "(선택 안 함)":
+                path = os.path.join(TEMPLATES_DIR, f"{selected_tmpl}.json")
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        _load_template_to_state(json.load(f))
+                    st.success(f"'{selected_tmpl}' 템플릿을 불러왔습니다!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"불러오기 실패: {e}")
+    with top_col3:
+        st.markdown(" ")
+        st.markdown(" ")
+        if selected_tmpl != "(선택 안 함)" and st.button("🗑️ 삭제", key="tmpl_delete", use_container_width=True):
+            try:
+                os.remove(os.path.join(TEMPLATES_DIR, f"{selected_tmpl}.json"))
+                st.success("삭제했습니다.")
+                st.rerun()
+            except Exception as e:
+                st.error(f"삭제 실패: {e}")
+
+    st.caption("💡 AI가 각 문장의 역할(훅/공감/증거/솔루션/CTA)을 분류하고, 해당 역할에 맞는 폰트·애니메이션을 템플릿에서 자동 적용합니다.")
+
+    # ── 역할 탭 5개 ────────────────────────────────────────────────
+    tabs = st.tabs(["🔥 훅", "💭 공감", "📊 증거/데이터", "💡 솔루션", "🎯 CTA"])
+    role_keys = ["hook", "empathy", "evidence", "solution", "cta"]
+    role_configs = {}
+    for tab, role_key in zip(tabs, role_keys):
+        with tab:
+            role_configs[role_key] = _make_role_ui(role_key, role_key, ROLE_DEFAULTS[role_key])
+
+    # ── 적용 체크 ──────────────────────────────────────────────────
+    st.markdown("---")
+    use_manual = st.checkbox("✅ 템플릿 스타일 사용 (AI가 역할 분류 → 템플릿 스타일 적용)", value=False, key="use_manual_style")
+
+    # ── 템플릿 저장 ────────────────────────────────────────────────
+    save_col1, save_col2 = st.columns([3, 1])
+    with save_col1:
+        tmpl_name = st.text_input("💾 템플릿 이름", placeholder="예: 허리찜질기_스타일", key="tmpl_name")
+    with save_col2:
+        st.markdown(" ")
+        st.markdown(" ")
+        if st.button("💾 저장", key="tmpl_save", use_container_width=True):
+            if not tmpl_name.strip():
+                st.warning("템플릿 이름을 입력해주세요.")
+            else:
+                save_path = os.path.join(TEMPLATES_DIR, f"{tmpl_name.strip()}.json")
+                with open(save_path, "w", encoding="utf-8") as f:
+                    json.dump(role_configs, f, ensure_ascii=False, indent=2)
+                st.success(f"✅ '{tmpl_name}' 저장 완료!")
+
+    if use_manual:
+        manual_style = role_configs
+        manual_style["normal"] = role_configs.get("empathy", role_configs.get("hook", {}))
+        st.success("✅ 템플릿 스타일 적용 준비 완료! AI가 역할을 분류하고 템플릿 스타일을 적용합니다.")
+
 if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
     if not script_text.strip():
         st.error("대본이 비어있습니다!")
@@ -710,24 +926,28 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                 else:
                     os.environ["FISH_API_KEY"] = fish_api_key
                     
-                    # AI 연출 지시서 준비 (체크 시에만)
+                    # AI 연출 지시서 준비
                     cd_data = None
-                    if use_ai_direction:
+                    if use_ai_direction or manual_style:
+                        # 템플릿 스타일 사용 시에도 AI 역할 분류는 필수
                         active_profile = st.session_state.get("active_style_profile")
                         active_intensity = st.session_state.get("max_intensity", "medium")
-                        
+
                         if "creative_direction" in st.session_state:
-                            # 이미 미리보기를 한 경우 재사용
                             cd_data = st.session_state["creative_direction"]
                         else:
-                            # 미리보기 없이 생성하는 경우 즉석 분석
                             from creative_director import CreativeDirector
                             cd = CreativeDirector(
                                 max_intensity=active_intensity,
                                 style_profile=active_profile
                             )
-                            cd_data = cd._fallback_analysis(script_text)
-                    
+                            if manual_style and not use_ai_direction:
+                                # 템플릿 모드: 규칙 기반으로 역할만 빠르게 분류
+                                with st.spinner("🔍 AI 역할 분류 중 (훅/공감/증거/솔루션/CTA)..."):
+                                    cd_data = cd._fallback_analysis(script_text)
+                            else:
+                                cd_data = cd._fallback_analysis(script_text)
+
                     project_name = build_capcut_project_for_naver_clip(
                         script_text=script_text,
                         keyword=selected_keyword,
@@ -737,10 +957,13 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                         el_api_key=el_api_key,
                         local_media_folder=local_media_folder,
                         media_mapping=media_mapping,
-                        creative_direction=cd_data
+                        creative_direction=cd_data,
+                        manual_style=manual_style,
                     )
                     st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
-                    if cd_data:
+                    if manual_style:
+                        st.info("🎨 AI가 역할을 분류하고 템플릿 스타일을 적용했습니다. 캡컷에서 자막을 확인하세요!")
+                    elif cd_data:
                         st.info("🎨 AI 크리에이티브 연출이 적용되었습니다. 캡컷에서 자막 애니메이션을 확인하세요!")
                     else:
                         st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")

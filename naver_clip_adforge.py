@@ -11,6 +11,9 @@ from pydub.silence import detect_nonsilent
 
 from auto_stock_downloader import fetch_and_download_mixkit_stock_videos
 from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextSegment, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings
+from pycapcut.metadata.text_intro import TextIntro
+from pycapcut.metadata.text_outro import TextOutro
+from pycapcut.metadata.text_loop import TextLoopAnim
 from pycapcut.metadata.effect_meta import EffectMeta
 import threading
 
@@ -41,27 +44,44 @@ class CustomFont:
 
 PRETENDARD_FONT = CustomFont(PRETENDARD_NAME, PRETENDARD_PATH)
 
+BLACK_HAN_SANS_NAME = "Black Han Sans"
+_bhs_paths = [
+    f"{_local_app_data}/Microsoft/Windows/Fonts/BlackHanSans-Regular.ttf",
+    "C:/Windows/Fonts/BlackHanSans-Regular.ttf",
+]
+BLACK_HAN_SANS_PATH = next((p for p in _bhs_paths if os.path.exists(p)), _bhs_paths[0])
+BLACK_HAN_SANS_FONT = CustomFont(BLACK_HAN_SANS_NAME, BLACK_HAN_SANS_PATH)
+
 # TextSegment.export_material Monkey-Patching
 _orig_export_material = TextSegment.export_material
 
 def _custom_export_material(self):
     ret = _orig_export_material(self)
+    # 이 세그먼트에 설정된 폰트를 동적으로 읽음
+    seg_font = getattr(self, 'font', None)
+    if seg_font is not None:
+        font_name = getattr(seg_font, 'name', PRETENDARD_NAME)
+        font_path = getattr(seg_font, 'path', PRETENDARD_PATH)
+    else:
+        font_name = PRETENDARD_NAME
+        font_path = PRETENDARD_PATH
+
     try:
         content_obj = json.loads(ret["content"])
         if "styles" in content_obj and len(content_obj["styles"]) > 0:
             content_obj["styles"][0]["font"] = {
                 "id": "",
-                "name": PRETENDARD_NAME,
-                "path": PRETENDARD_PATH,
-                "title": PRETENDARD_NAME
+                "name": font_name,
+                "path": font_path,
+                "title": font_name
             }
             ret["content"] = json.dumps(content_obj, ensure_ascii=False)
     except Exception:
         pass
 
-    ret["font_name"] = PRETENDARD_NAME
-    ret["font_title"] = PRETENDARD_NAME
-    ret["font_path"] = PRETENDARD_PATH
+    ret["font_name"] = font_name
+    ret["font_title"] = font_name
+    ret["font_path"] = font_path
     ret["font_resource_id"] = ""
     ret["font_id"] = ""
     return ret
@@ -210,6 +230,96 @@ def calculate_effective_speech_length(text: str) -> float:
     punct_count = len(re.findall(r'[,!?…]', text))
     return letters_count + (punct_count * 1.5)
 
+# 단독으로 줄 끝에 오면 안 되는 수식어/관형사/부사/접두사
+_NO_LINE_END_WORDS = {
+    '몇', '이', '그', '저', '온갖', '모든', '새', '헌', '옛', '첫', '한', '두', '세', '네', '단',
+    '더', '덜', '꼭', '잘', '못', '안', '속', '겉', '겉만', '다', '막', '늘', '참', '갓', '또', '약',
+    '큰', '작은', '긴', '짧은', '좋은', '나쁜', '특허', '무선', '30일', '100%', '3cm', '매번', '가끔',
+    '티가', '옷', '물리치료', '병원', '원적외선', '듀얼', '속근육까지', '심부열을'
+}
+
+def _get_break_score(word: str) -> int:
+    """단어 끝의 줄바꿈 적합도 (높을수록 호흡하기 자연스러움)"""
+    clean_w = re.sub(r'[\'\"\[\]\(\)]', '', word)
+    if clean_w.endswith(',') or clean_w.endswith('~'):
+        return 10
+    if re.search(r'[.!?…]+$', clean_w):
+        return 10
+    high_priority_endings = [
+        '때마다', '때문에', '것보다', '보다도', '대신', '대신에',
+        '환불되니', '그만하시고', '끊고', '풀어줘요', '계시나요?',
+        '안착했습니다', '가벼워집니다', '치료하세요', '하셔야 해요',
+        '필수거든요', '필수라거든요', '정석이거든요', '핵심입니다',
+        '나고,', '녹아내려', '풀어줘요.', '가벼워집니다.', '풀리고'
+    ]
+    for h in high_priority_endings:
+        if clean_w.endswith(h):
+            return 8
+    conn_patterns = [
+        r'(고|며|며는)$',
+        r'(면|으면)$',
+        r'(니|으니|니까|으니까|거든요|라거든요|다구요)$',
+        r'(아서|어서|여서|해|내려|올려|되어)$',
+        r'(는데|은데|텐데)$',
+        r'(듯이|수록|도록|게)$',
+        r'(지만|으나|더라도)$'
+    ]
+    for p in conn_patterns:
+        if re.search(p, clean_w):
+            return 6
+    if re.search(r'(은|는|이|가|을|를|으로|로|에서|에게)$', clean_w):
+        return 3
+    return 0
+
+def split_sentence_naturally(sentence: str, max_chars: int = 18, min_chars: int = 7) -> list:
+    """한 문장을 문맥과 의미 단위에 맞게 자연스럽게 줄바꿈하여 리스트 반환"""
+    sentence = sentence.strip()
+    if not sentence:
+        return []
+    if len(sentence) <= max_chars:
+        return [sentence]
+    words = sentence.split(' ')
+    if not words:
+        return []
+    chunks = []
+    current_chunk = []
+    for i, w in enumerate(words):
+        current_chunk.append(w)
+        current_text = " ".join(current_chunk)
+        current_len = len(current_text)
+        if i == len(words) - 1:
+            chunks.append(current_text)
+            current_chunk = []
+            break
+        next_w = words[i+1]
+        next_len = current_len + 1 + len(next_w)
+        is_next_conj = next_w in ['왜냐하면', '그래서', '하지만', '그러니', '따라서', '그런데', '차기만', '30일']
+        clean_w = re.sub(r'[\'\"\,]', '', w)
+        is_no_end = clean_w in _NO_LINE_END_WORDS
+        score = _get_break_score(w)
+        must_break = False
+        good_break = False
+        if next_len > max_chars:
+            must_break = True
+            if is_no_end and len(current_chunk) > 1:
+                current_chunk.pop()
+                chunks.append(" ".join(current_chunk))
+                current_chunk = [w]
+                continue
+        elif current_len >= min_chars and not is_no_end:
+            if is_next_conj:
+                good_break = True
+            elif score >= 6:
+                rem_len = len(" ".join(words[i+1:]))
+                if rem_len >= 5:
+                    good_break = True
+        if must_break or good_break:
+            chunks.append(" ".join(current_chunk))
+            current_chunk = []
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+    return chunks
+
 def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 40):
     # 1. 문장 단위(오디오 생성 단위)는 구두점(.!?…) 기준으로만 분리 (원본 \n 유지)
     raw_sentences = re.split(r'(?<=[.!?…])', script_text)
@@ -230,23 +340,8 @@ def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase
             # 사용자가 직접 엔터로 자막 단위를 명시한 경우
             phrases = [p.strip() for p in sentence_raw.split('\n') if p.strip()]
         else:
-            # 엔터가 없는 경우, 기존 글자 수 기반 쪼개기 알고리즘 폴백
-            sentence = clean_sentence
-            if len(sentence) <= max_chars_per_phrase:
-                phrases = [sentence]
-            else:
-                words = sentence.split(" ")
-                phrases = []
-                current_phrase = ""
-                for word in words:
-                    if len(current_phrase) + len(word) + 1 <= max_chars_per_phrase:
-                        current_phrase += (" " if current_phrase else "") + word
-                    else:
-                        if current_phrase:
-                            phrases.append(current_phrase)
-                        current_phrase = word
-                if current_phrase:
-                    phrases.append(current_phrase)
+            # 엔터가 없는 경우, 문맥/호흡 단위 지능형 분할 알고리즘 적용
+            phrases = split_sentence_naturally(clean_sentence, max_chars=max_chars_per_phrase)
                     
         sentence_structures.append({
             "full_sentence": clean_sentence,
@@ -591,7 +686,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
     return project_name
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None):
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None, creative_direction=None, manual_style=None):
     if template_folder and template_folder != "none":
         return build_from_template(script_text, voice, el_api_key, template_folder)
     
@@ -754,25 +849,119 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
             phrase_timerange = Timerange(phrase_start_us, phrase_duration_us)
 
-            is_hook = current_time_us < 3000000
+            # 훅 여부: 시간 기준 OR creative_direction role
+            cd_role = None
+            if creative_direction and "sentences" in creative_direction:
+                for _s in creative_direction["sentences"]:
+                    if _s.get("index") == mapping_idx:
+                        cd_role = _s.get("role")
+                        break
+            is_hook = (current_time_us < 3000000) or (cd_role == "hook")
 
             style = TextStyle(
-                size=14.5,
+                size=18.0 if is_hook else 14.5,
                 color=(1.0, 0.9, 0.0) if is_hook else (1.0, 1.0, 1.0),
                 bold=True,
                 align=1
             )
-            border = TextBorder(color=(0.0, 0.0, 0.0), width=45.0 if is_hook else 25.0)
+            border = TextBorder(color=(0.0, 0.0, 0.0), width=55.0 if is_hook else 25.0)
             clip_settings = ClipSettings(transform_x=0.0, transform_y=0.0)
+            active_font = BLACK_HAN_SANS_FONT if is_hook else PRETENDARD_FONT
 
             text_seg = TextSegment(
                 text=phrase,
                 timerange=phrase_timerange,
-                font=PRETENDARD_FONT,
+                font=active_font,
                 style=style,
                 border=border,
                 clip_settings=clip_settings
             )
+
+            # ── 역할 결정 ─────────────────────────────────────────────
+            # creative_direction이 있으면 AI가 분류한 role 사용,
+            # 없으면 시간 기준 is_hook으로 fallback
+            effective_role = cd_role or ("hook" if is_hook else "normal")
+
+            # ── 모드 1: 템플릿(manual_style) + AI 역할 분류 ─────────────
+            # manual_style이 있으면 → AI가 분류한 role로 템플릿에서 스타일 조회
+            if manual_style:
+                ms = (manual_style.get(effective_role)
+                      or manual_style.get("normal")
+                      or {})
+
+                # 폰트 오버라이드
+                ms_font_name = ms.get("font_name")
+                ms_font_path = ms.get("font_path")
+                if ms_font_name and ms_font_path:
+                    text_seg.font = CustomFont(ms_font_name, ms_font_path)
+
+                # 크기 오버라이드
+                ms_size = ms.get("size")
+                if ms_size:
+                    current_color = (1.0, 0.9, 0.0) if (effective_role == "hook") else (1.0, 1.0, 1.0)
+                    text_seg.style = TextStyle(size=ms_size, color=current_color, bold=True, align=1)
+
+                # ── pycapcut enum 기반 애니메이션 ──
+                for anim_val, anim_cls in [
+                    (ms.get("intro"), TextIntro),
+                    (ms.get("loop"),  TextLoopAnim),
+                    (ms.get("outro"), TextOutro),
+                ]:
+                    if anim_val and anim_val in anim_cls.__members__:
+                        try: text_seg.add_animation(anim_cls[anim_val])
+                        except Exception: pass
+
+                # ── raw_anim: 로컬 캐시 기반 직접 주입 (놓기 등 enum 없는 효과) ──
+                # 형식: [{"resource_id": "...", "path": "...", "type": "in/loop/out", "name": "..."}]
+                raw_anims = ms.get("raw_anims", [])
+                if raw_anims:
+                    text_seg._raw_anims = raw_anims  # 나중에 _inject_raw_anims()에서 처리
+
+
+            # ── 모드 2: AI 크리에이티브 연출 단독 (템플릿 없을 때) ──────
+            elif creative_direction and "sentences" in creative_direction:
+                sentence_info = None
+                for s in creative_direction["sentences"]:
+                    if s.get("index") == mapping_idx:
+                        sentence_info = s
+                        break
+
+                if sentence_info:
+                    intro_name = sentence_info.get("text_intro")
+                    loop_name  = sentence_info.get("text_loop_anim")
+                    outro_name = sentence_info.get("text_outro")
+
+                    if intro_name:
+                        try:
+                            anim_enum = TextIntro[intro_name] if intro_name in TextIntro.__members__ else None
+                            if anim_enum: text_seg.add_animation(anim_enum)
+                        except Exception: pass
+
+                    if loop_name:
+                        try:
+                            anim_enum = TextLoopAnim[loop_name] if loop_name in TextLoopAnim.__members__ else None
+                            if anim_enum: text_seg.add_animation(anim_enum)
+                        except Exception: pass
+
+                    if outro_name:
+                        try:
+                            anim_enum = TextOutro[outro_name] if outro_name in TextOutro.__members__ else None
+                            if anim_enum: text_seg.add_animation(anim_enum)
+                        except Exception: pass
+
+                    c_style = sentence_info.get("subtitle_style")
+                    if c_style:
+                        try:
+                            size = c_style.get("size", 14.5)
+                            color_list = c_style.get("color", [1.0, 1.0, 1.0])
+                            color = tuple(color_list) if isinstance(color_list, list) else color_list
+                            bold = c_style.get("bold", True)
+                            text_seg.style = TextStyle(size=size, color=color, bold=bold, align=1)
+                            border_color_list = c_style.get("border_color", [0.0, 0.0, 0.0])
+                            border_color = tuple(border_color_list) if isinstance(border_color_list, list) else border_color_list
+                            border_width = c_style.get("border_width", 25.0)
+                            text_seg.border = TextBorder(color=border_color, width=border_width)
+                        except Exception: pass
 
             script_file.add_segment(text_seg, track_name="자막_트랙")
             phrase_start_us += phrase_duration_us
@@ -784,6 +973,80 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         current_time_us += sentence_duration_us
 
     script_file.save()
+
+    # ── raw_anim 후처리: draft_content.json 직접 패치 ─────────────────
+    # TextSegment에 _raw_anims가 있으면 sticker_animation으로 주입
+    try:
+        # text_segments 수집 (script_file 내부 트랙에서)
+        segs_with_raw = []
+        for track in script_file.tracks:
+            for seg in getattr(track, 'segments', []):
+                if hasattr(seg, '_raw_anims') and seg._raw_anims:
+                    segs_with_raw.append(seg)
+
+        if segs_with_raw:
+            import uuid
+            content_file = os.path.join(script_file.project_path, "draft_content.json")
+            with open(content_file, encoding='utf-8') as f:
+                draft = json.load(f)
+
+            if 'material_animations' not in draft['materials']:
+                draft['materials']['material_animations'] = []
+
+            # text 트랙에서 material_id 기준으로 segment 찾기
+            text_segs_in_draft = []
+            for track in draft.get('tracks', []):
+                if track.get('type') == 'text':
+                    text_segs_in_draft = track.get('segments', [])
+                    break
+
+            mat_id_map = {s.material_id: s for s in segs_with_raw}
+
+            for draft_seg in text_segs_in_draft:
+                mat_id = draft_seg.get('material_id')
+                src_seg = mat_id_map.get(mat_id)
+                if not src_seg:
+                    continue
+
+                # raw_anim별로 material_animation 생성 및 참조 추가
+                for raw in src_seg._raw_anims:
+                    ma_id = str(uuid.uuid4()).upper()
+                    anim_duration = draft_seg.get('target_timerange', {}).get('duration', 500000)
+                    anim_entry = {
+                        "id": raw.get('id', raw['resource_id']),
+                        "type": raw.get('anim_type', 'in'),
+                        "start": 0,
+                        "duration": 500000 if raw.get('anim_type', 'in') == 'in' else anim_duration,
+                        "path": raw['path'],
+                        "platform": "all",
+                        "resource_id": raw['resource_id'],
+                        "third_resource_id": raw.get('third_resource_id', ''),
+                        "source_platform": raw.get('source_platform', 1),
+                        "name": raw['name'],
+                        "category_id": raw.get('category_id', ''),
+                        "category_name": raw.get('category_name', ''),
+                        "panel": "",
+                        "material_type": "sticker",
+                        "anim_adjust_params": None,
+                        "request_id": raw.get('request_id', ''),
+                    }
+                    ma_block = {
+                        "id": ma_id,
+                        "type": "sticker_animation",
+                        "animations": [anim_entry],
+                        "multi_language_current": "none",
+                    }
+                    draft['materials']['material_animations'].append(ma_block)
+                    if 'extra_material_refs' not in draft_seg:
+                        draft_seg['extra_material_refs'] = []
+                    draft_seg['extra_material_refs'].append(ma_id)
+
+            with open(content_file, 'w', encoding='utf-8') as f:
+                json.dump(draft, f, ensure_ascii=False)
+            print(f"  [raw_anim] {len(segs_with_raw)}개 세그먼트에 직접 애니메이션 주입 완료")
+    except Exception as e:
+        print(f"  [raw_anim 경고] 직접 주입 실패 (무시): {e}")
+
     print(f"\n[완료] [AI더빙 + 비디오 컷 + 잘난체 자막] 100% 자동 완성! 초안: '{project_name}'")
     return project_name
 

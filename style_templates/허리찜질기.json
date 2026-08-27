@@ -1,0 +1,80 @@
+{
+  "hook": {
+    "font_name": "Black Han Sans",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/BlackHanSans-Regular.ttf",
+    "size": 24.0,
+    "intro": "故障",
+    "loop": "颤抖_II",
+    "outro": null,
+    "raw_anims": []
+  },
+  "empathy": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 15.0,
+    "intro": null,
+    "loop": null,
+    "outro": null,
+    "raw_anims": [
+      {
+        "resource_id": "7646375556660874516",
+        "path": "C:/Users/5700G/AppData/Local/CapCut/User Data/Cache/effect/7646375556660874516/ef6960d72e871192ca7e755004b4d871",
+        "anim_type": "in",
+        "name": "놓기",
+        "category_id": "ruchang",
+        "category_name": "text",
+        "third_resource_id": "0",
+        "source_platform": 1
+      }
+    ]
+  },
+  "evidence": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 15.0,
+    "intro": null,
+    "loop": null,
+    "outro": null,
+    "raw_anims": [
+      {
+        "resource_id": "7646375556660874516",
+        "path": "C:/Users/5700G/AppData/Local/CapCut/User Data/Cache/effect/7646375556660874516/ef6960d72e871192ca7e755004b4d871",
+        "anim_type": "in",
+        "name": "놓기",
+        "category_id": "ruchang",
+        "category_name": "text",
+        "third_resource_id": "0",
+        "source_platform": 1
+      }
+    ]
+  },
+  "solution": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 15.0,
+    "intro": null,
+    "loop": null,
+    "outro": null,
+    "raw_anims": [
+      {
+        "resource_id": "7646375556660874516",
+        "path": "C:/Users/5700G/AppData/Local/CapCut/User Data/Cache/effect/7646375556660874516/ef6960d72e871192ca7e755004b4d871",
+        "anim_type": "in",
+        "name": "놓기",
+        "category_id": "ruchang",
+        "category_name": "text",
+        "third_resource_id": "0",
+        "source_platform": 1
+      }
+    ]
+  },
+  "cta": {
+    "font_name": "Black Han Sans",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/BlackHanSans-Regular.ttf",
+    "size": 17.0,
+    "intro": "放大",
+    "loop": "心跳",
+    "outro": null,
+    "raw_anims": []
+  }
+}

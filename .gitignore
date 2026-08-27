@@ -46,4 +46,10 @@ token.json
 .env
 storage/browser_profiles/
 temp_uploads/
-style_profiles/
+style_profiles/
+
+# Temp / Local Workspace
+scratch/
+temp_videos/
+vendor/
+node_modules/
