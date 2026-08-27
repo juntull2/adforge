@@ -46,3 +46,10 @@ token.json
 .env
 storage/browser_profiles/
 temp_uploads/
+style_profiles/
+
+# Ignored large/temp folders
+node_modules/
+temp_videos/
+scratch/
+vendor/

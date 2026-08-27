@@ -518,7 +518,328 @@ with col_v2:
     else:
         actual_voice_choice = selected_voice
 
-from naver_clip_adforge import build_capcut_project_for_naver_clip
+from naver_clip_adforge import build_capcut_project_for_naver_clip, build_final_video_with_caption_os, build_capcut_project_with_caption_os_overlay
+
+col_render1, col_render2, col_render3 = st.columns(3)
+
+with col_render1:
+    st.markdown("#### 1. 캡컷 프로젝트 생성 (수동 편집용)")
+    if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            with st.spinner("CapCut 초안 프로젝트 렌더링 중..."):
+                try:
+                    if actual_voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
+                    else:
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        project_name = build_capcut_project_for_naver_clip(
+                            script_text=script_text,
+                            keyword=selected_keyword,
+                            pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            local_media_folder=local_media_folder,
+                            media_mapping=media_mapping
+                        )
+                        st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
+                        st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+
+with col_render2:
+    st.markdown("#### 2. 완제품 영상 직접 렌더링 (caption-os 자동화)")
+    
+    col_opt1, col_opt2 = st.columns(2)
+    with col_opt1:
+        mood_opts = {
+            "professional": "💼 전문적/정보성 (신뢰감)",
+            "old_money": "☕ 올드머니 (고급스러움)",
+            "girly": "🎀 걸리쉬 (러블리)",
+            "y2k_deco": "✨ 다꾸/Y2K (화려함)",
+            "street_hype": "🛹 스트릿 (하이텐션)",
+            "soft_natural": "🌿 소프트/내추럴 (잔잔함)",
+            "classic_editorial": "📰 잡지/클래식",
+            "retro_70s": "📻 레트로 70s"
+        }
+        caption_mood = st.selectbox("🎨 화면 무드 (색상/분위기)", options=list(mood_opts.keys()), format_func=lambda x: mood_opts[x])
+        
+    with col_opt2:
+        caption_style_raw = st.selectbox("✨ 자막 애니메이션", ["karaoke (단어별 팝업)", "kinetic3d (3D 모션)", "keyword (키워드 강조)", "minimal (심플 페이드업)"])
+        caption_style = caption_style_raw.split(" ")[0]
+    
+    if st.button("🚀 완제품 영상 1초 자동 생성", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            with st.spinner(f"FFmpeg 합성 및 {caption_style} 무드로 자막 렌더링 중... (최대 1~2분 소요)"):
+                try:
+                    if actual_voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
+                    else:
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        final_mp4 = build_final_video_with_caption_os(
+                            script_text=script_text,
+                            keyword=selected_keyword,
+                            pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            local_media_folder=local_media_folder,
+                            media_mapping=media_mapping,
+                            mood=caption_mood,
+                            style=caption_style
+                        )
+                        st.success("🎉 완제품 렌더링 성공!")
+                        st.video(final_mp4)
+                        
+                        with open(final_mp4, "rb") as f:
+                            st.download_button("💾 완성된 영상 다운로드", f, file_name=os.path.basename(final_mp4), mime="video/mp4", type="primary")
+                except Exception as e:
+                    st.error(f"렌더링 실패: {e}")
+
+with col_render3:
+    st.markdown("#### 3. 캡컷 프로젝트 내보내기 (투명 자막 오버레이)")
+    
+    col_opt3, col_opt4 = st.columns(2)
+    with col_opt3:
+        mood_opts_draft = {
+            "professional": "💼 전문적/정보성 (신뢰감)",
+            "old_money": "☕ 올드머니 (고급스러움)",
+            "girly": "🎀 걸리쉬 (러블리)",
+            "y2k_deco": "✨ 다꾸/Y2K (화려함)",
+            "street_hype": "🛹 스트릿 (하이텐션)",
+            "soft_natural": "🌿 소프트/내추럴 (잔잔함)",
+            "classic_editorial": "📰 잡지/클래식",
+            "retro_70s": "📻 레트로 70s"
+        }
+        caption_mood_draft = st.selectbox("🎨 자막 무드", options=list(mood_opts_draft.keys()), format_func=lambda x: mood_opts_draft[x], key="draft_mood")
+        
+    with col_opt4:
+        caption_style_raw_draft = st.selectbox("✨ 애니메이션", ["karaoke (단어별 팝업)", "kinetic3d (3D 모션)", "keyword (키워드 강조)", "minimal (심플 페이드업)"], key="draft_style")
+        caption_style_draft = caption_style_raw_draft.split(" ")[0]
+    
+    if st.button("🚀 캡컷 초안 1초 생성 (투명 자막 포함)", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            with st.spinner("투명 자막 오버레이(.mov) 렌더링 및 캡컷 프로젝트 구성 중... (최대 1~2분 소요)"):
+                try:
+                    if actual_voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
+                    else:
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        project_name = build_capcut_project_with_caption_os_overlay(
+                            script_text=script_text,
+                            keyword=selected_keyword,
+                            pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            local_media_folder=local_media_folder,
+                            media_mapping=media_mapping,
+                            mood=caption_mood_draft,
+                            style=caption_style_draft
+                        )
+                        st.success(f"🎉 캡컷 프로젝트 '{project_name}' 초안 생성 완료!")
+                        st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
+                        st.info("메인 트랙의 배경 영상들을 원하시는 대로 편집하시면 됩니다. 최상단 트랙의 자막 비디오는 투명 배경이므로 글자들만 깔끔하게 얹어집니다.")
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+
+
+# -------------------------------------------------------------------
+# 📹 레퍼런스 영상 학습 (스타일 프로필 생성)
+# -------------------------------------------------------------------
+st.markdown("---")
+with st.expander("📹 레퍼런스 영상 학습 (스타일 프로필 생성)", expanded=False):
+    st.markdown(
+        "잘 만들어진 숏폼 영상들을 분석하여 자막 스타일·컷 리듬을 학습합니다. "
+        "학습된 프로필은 이후 캡컷 프로젝트 생성 시 자동 적용됩니다."
+    )
+
+    ref_col1, ref_col2 = st.columns([2, 1])
+    with ref_col1:
+        ref_folder = st.text_input(
+            "📁 레퍼런스 영상 폴더 경로",
+            placeholder=r"예: C:\Users\임준모\Videos\references",
+            help="분석할 .mp4 파일들이 있는 폴더 경로를 입력하세요."
+        )
+    with ref_col2:
+        ref_profile_name = st.text_input(
+            "💾 프로필 이름",
+            value="default",
+            help="분석 결과를 저장할 프로필 이름"
+        )
+
+    intensity_label = st.select_slider(
+        "🎛️ 애니메이션 강도 제한",
+        options=["subtle (절제)", "medium (보통)", "bold (강조)"],
+        value="medium (보통)",
+        help="subtle: 페이드인/슬라이드 등 자연스러운 효과만 허용 | medium: 팝/확대 추가 | bold: 글리치/폭발 효과 허용"
+    )
+    max_intensity = intensity_label.split(" ")[0]  # "subtle" | "medium" | "bold"
+    st.session_state["max_intensity"] = max_intensity
+
+    if ref_folder and os.path.isdir(ref_folder):
+        mp4_files = [
+            os.path.join(ref_folder, f)
+            for f in os.listdir(ref_folder)
+            if f.lower().endswith(".mp4")
+        ]
+        if mp4_files:
+            st.info(f"📂 {len(mp4_files)}개 영상 감지: {', '.join([os.path.basename(f) for f in mp4_files[:5]])}" +
+                    (f" 외 {len(mp4_files)-5}개" if len(mp4_files) > 5 else ""))
+
+            if st.button("▶️ 레퍼런스 영상 분석 시작", type="primary"):
+                from reference_analyzer import ReferenceAnalyzer
+                analyzer = ReferenceAnalyzer(
+                    openrouter_api_key=os.environ.get("OPENROUTER_API_KEY", nvidia_api_key),
+                    nvidia_api_key=nvidia_api_key
+                )
+
+                progress_bar = st.progress(0.0)
+                status_text = st.empty()
+
+                def on_progress(frac, msg):
+                    progress_bar.progress(min(frac, 1.0))
+                    status_text.text(f"🔄 {msg}")
+
+                try:
+                    profile = analyzer.analyze_batch(
+                        mp4_files,
+                        profile_name=ref_profile_name,
+                        progress_callback=on_progress
+                    )
+                    st.session_state["active_style_profile"] = profile
+                    st.session_state["active_profile_name"] = ref_profile_name
+                    progress_bar.progress(1.0)
+                    status_text.text("✅ 분석 완료!")
+
+                    st.success(f"✅ {len(mp4_files)}개 영상 분석 완료 — 프로필 '{ref_profile_name}' 저장됨")
+                    cut = profile.get("cut_rhythm", {})
+                    st.metric("평균 컷 간격", f"{cut.get('avg_cut_interval_sec', 0):.1f}초")
+
+                except Exception as e:
+                    st.error(f"분석 오류: {e}")
+        else:
+            st.warning("해당 폴더에 .mp4 파일이 없습니다.")
+    elif ref_folder:
+        st.error("폴더 경로를 찾을 수 없습니다.")
+
+    # 저장된 프로필 로딩
+    from reference_analyzer import ReferenceAnalyzer
+    saved_profiles = ReferenceAnalyzer.list_profiles()
+    if saved_profiles:
+        st.markdown("**💾 저장된 프로필 불러오기**")
+        profile_options = {p["name"]: p for p in saved_profiles}
+        selected_prof = st.selectbox(
+            "프로필 선택",
+            options=["(사용 안 함)"] + list(profile_options.keys()),
+            key="profile_selector"
+        )
+        if selected_prof != "(사용 안 함)":
+            loaded = ReferenceAnalyzer.load_profile(selected_prof)
+            if loaded:
+                st.session_state["active_style_profile"] = loaded
+                st.session_state["active_profile_name"] = selected_prof
+                p = profile_options[selected_prof]
+                st.caption(
+                    f"📊 {p['source_count']}개 영상 기반 | "
+                    f"평균 컷 {p['avg_cut_interval']:.1f}초 | "
+                    f"총 {p['total_cuts']}컷 학습"
+                )
+        elif selected_prof == "(사용 안 함)":
+            st.session_state.pop("active_style_profile", None)
+            st.session_state.pop("active_profile_name", None)
+
+# -------------------------------------------------------------------
+# 🎨 AI 크리에이티브 연출 (옵시디언 마케팅 지식 기반)
+# -------------------------------------------------------------------
+st.markdown("---")
+use_ai_direction = st.checkbox(
+    "🎨 AI 크리에이티브 연출 (옵시디언 마케팅 지식 기반)",
+    value=False,
+    help="옵시디언 볼트의 마케팅 교육 매뉴얼을 기반으로 "
+         "자막 스타일, 애니메이션, 강조 효과를 AI가 자동 결정합니다."
+)
+
+if use_ai_direction and script_text.strip():
+    col_preview, col_mode = st.columns([3, 1])
+    
+    with col_mode:
+        direction_mode = st.radio(
+            "분석 모드",
+            ["🤖 AI 분석 (LLM)", "⚡ 규칙 기반 (즉시)"],
+            index=1,
+            help="AI 분석은 LLM API를 호출하여 더 정교하게 분석합니다. 규칙 기반은 즉시 결과를 제공합니다."
+        )
+    
+    with col_preview:
+        if st.button("🔍 연출 미리보기", use_container_width=True):
+            from creative_director import CreativeDirector
+            active_profile = st.session_state.get("active_style_profile")
+            active_intensity = st.session_state.get("max_intensity", "medium")
+            cd = CreativeDirector(
+                max_intensity=active_intensity,
+                style_profile=active_profile
+            )
+            if active_profile:
+                st.caption(f"📊 프로필 '{st.session_state.get('active_profile_name', '')}' 적용 중 | 강도: {active_intensity}")
+            
+            if direction_mode.startswith("🤖"):
+                with st.spinner("🎬 옵시디언 마케팅 지식 로딩 + AI 대본 분석 중..."):
+                    or_api_key = os.environ.get("OPENROUTER_API_KEY", nvidia_api_key)
+                    direction = cd.analyze_script(script_text, api_key=or_api_key, model=model_choice)
+            else:
+                direction = cd._fallback_analysis(script_text)
+                
+            st.session_state["creative_direction"] = direction
+
+    if "creative_direction" in st.session_state:
+        direction = st.session_state["creative_direction"]
+        role_emoji = {
+            "hook": "🔥", "empathy": "💭", "agitate": "⚡",
+            "evidence": "📊", "solution": "💡", "usp": "🏆",
+            "cta": "🎯", "transition": "🔄", "normal": "📝"
+        }
+        
+        with st.expander("📋 AI 연출 지시서 미리보기", expanded=True):
+            for item in direction.get("sentences", []):
+                role = item.get("role", "normal")
+                emoji = role_emoji.get(role, "📝")
+                text_preview = item.get("text", "")[:45]
+                intro = item.get("text_intro", "없음") or "없음"
+                loop = item.get("text_loop_anim", "없음") or "없음"
+                reasoning = item.get("reasoning", "")
+                psychology = item.get("psychology", "")
+                
+                st.markdown(
+                    f"**{emoji} [{role.upper()}]** {text_preview}  \n"
+                    f"　└ 입장: `{intro}` | 루프: `{loop}`"
+                    + (f" | 💡 _{reasoning}_" if reasoning and "폴백" not in reasoning else "")
+                    + (f" | 🧠 _{psychology}_" if psychology else "")
+                )
 
 if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
     if not script_text.strip():
@@ -536,6 +857,25 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                     st.error("Fish Audio Reference ID를 입력해야 합니다.")
                 else:
                     os.environ["FISH_API_KEY"] = fish_api_key
+                    
+                    # AI 연출 지시서 준비 (체크 시에만)
+                    cd_data = None
+                    if use_ai_direction:
+                        active_profile = st.session_state.get("active_style_profile")
+                        active_intensity = st.session_state.get("max_intensity", "medium")
+                        
+                        if "creative_direction" in st.session_state:
+                            # 이미 미리보기를 한 경우 재사용
+                            cd_data = st.session_state["creative_direction"]
+                        else:
+                            # 미리보기 없이 생성하는 경우 즉석 분석
+                            from creative_director import CreativeDirector
+                            cd = CreativeDirector(
+                                max_intensity=active_intensity,
+                                style_profile=active_profile
+                            )
+                            cd_data = cd._fallback_analysis(script_text)
+                    
                     project_name = build_capcut_project_for_naver_clip(
                         script_text=script_text,
                         keyword=selected_keyword,
@@ -544,9 +884,13 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
                         voice=actual_voice_choice,
                         el_api_key=el_api_key,
                         local_media_folder=local_media_folder,
-                        media_mapping=media_mapping
+                        media_mapping=media_mapping,
+                        creative_direction=cd_data
                     )
                     st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
-                    st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
+                    if cd_data:
+                        st.info("🎨 AI 크리에이티브 연출이 적용되었습니다. 캡컷에서 자막 애니메이션을 확인하세요!")
+                    else:
+                        st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
             except Exception as e:
                 st.error(f"오류 발생: {e}")
