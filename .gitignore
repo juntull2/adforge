@@ -37,5 +37,6 @@ stock_videos/
 
 # Temp / Workspace Folders
 scratch/
+scratch_*
 vendor/
 node_modules/

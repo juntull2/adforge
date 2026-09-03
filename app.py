@@ -178,25 +178,19 @@ if df_keywords is not None and not df_keywords.empty:
         selected_keyword = df_keywords.iloc[selected_idx]['키워드']
 
 # -------------------------------------------------------------------
-# 📸 인스타그램 광고 레퍼런스 (Meta Ad Library)
+# 📊 레퍼런스 적합도 검증기 (인스타 광고 레퍼런스 통합)
 # -------------------------------------------------------------------
 
 def _generate_related_keywords(keyword: str) -> list:
-    """키워드에서 관련 검색어를 생성합니다."""
-    # 키워드 기반 변형 생성
     suffixes = ["추천", "효과", "후기"]
-    suggestions = []
-    for suffix in suffixes:
-        suggestions.append(f"{keyword} {suffix}")
-    return suggestions[:4]  # 최대 4개
+    return [f"{keyword} {suffix}" for suffix in suffixes][:4]
 
 st.markdown("---")
-st.subheader("📸 인스타그램 광고 레퍼런스 (Meta Ad Library)")
-st.caption("키워드를 입력하면 Meta Ad Library에서 **장기 집행 중인 광고**(성과가 검증된 레퍼런스)를 조회합니다.")
+st.subheader("📊 인스타 광고 레퍼런스 & 적합도 검증기")
+st.caption("키워드 하나로 **네이버 검색량 + 메타 장기집행 광고**를 동시에 확인하고, 레퍼런스 적합도를 즉시 판단합니다.")
 
 from dotenv import load_dotenv
 load_dotenv()
-
 meta_token = os.environ.get("META_ACCESS_TOKEN", "")
 
 @st.cache_data(show_spinner=False, ttl=60)
@@ -212,162 +206,288 @@ def get_naver_autocomplete(keyword: str):
     except:
         return []
 
-col_ig1, col_ig2, col_ig3 = st.columns([3, 1, 1])
-with col_ig1:
-    ig_keyword = st.text_input(
-        "🔍 광고 검색 키워드",
-        value=selected_keyword if selected_keyword else "",
-        placeholder="예: 허리찜질기, 무릎보호대, 다이어트",
-        key="ig_ad_keyword"
-    )
-    
-    if ig_keyword:
-        related = get_naver_autocomplete(ig_keyword)
-        if related:
-            def update_keyword_from_pill():
-                if st.session_state.related_pills:
-                    st.session_state.ig_ad_keyword = st.session_state.related_pills
-
-            # st.pills의 on_change 콜백을 사용하여 오류 방지
-            pill_selection = st.pills(
-                "💡 네이버 연관 검색어 (클릭 시 키워드 변경)", 
-                related, 
-                key="related_pills",
-                on_change=update_keyword_from_pill
-            )
-with col_ig2:
-    ig_min_days = st.selectbox(
-        "📅 최소 집행 기간",
-        options=[50, 90, 120, 180, 365],
-        format_func=lambda d: f"{d}일 ({d // 30}개월+)",
-        index=0,
-        key="ig_min_days"
-    )
-with col_ig3:
-    ig_country = st.selectbox(
-        "🌍 검색 국가",
-        options=["KR", "US", "JP", "GB", "ALL"],
-        format_func=lambda c: {"KR": "🇰🇷 한국", "US": "🇺🇸 미국", "JP": "🇯🇵 일본", "GB": "🇬🇧 영국", "ALL": "🌐 전체"}.get(c, c),
-        index=0,
-        key="ig_country"
-    )
-
-if st.button("🔍 인스타 광고 레퍼런스 검색", use_container_width=True, type="primary"):
-    if not ig_keyword.strip():
-        st.error("검색 키워드를 입력해주세요.")
-    else:
-        with st.spinner(f"Meta Ad Library에서 '{ig_keyword}' 관련 {ig_min_days}일+ 집행 광고 검색 중..."):
-            from meta_ad_library import search_meta_ads
-            result = search_meta_ads(
-                keyword=ig_keyword.strip(),
-                access_token=meta_token,
-                country=ig_country,
-                min_days_running=ig_min_days,
-            )
-            st.session_state["ig_ad_result"] = result
-            st.session_state["ig_ad_keyword_used"] = ig_keyword.strip()
-
-if "ig_ad_result" in st.session_state:
-    result = st.session_state["ig_ad_result"]
-    kw_used = st.session_state.get("ig_ad_keyword_used", "")
-
-    # 항상 웹 링크 표시
-    col_link1, col_link2 = st.columns(2)
-    with col_link1:
-        st.markdown(
-            f"🔗 [Meta Ad Library에서 **'{kw_used}'** 직접 검색하기 →]({result['url']})",
+# ── 판정 기준 설정 (항상 노출) ─────────────────────────────────
+with st.expander("⚙️ 판정 기준값 설정", expanded=False):
+    _crit_col1, _crit_col2, _crit_col3 = st.columns(3)
+    with _crit_col1:
+        crit_min_volume = st.slider(
+            "📊 최소 네이버 검색량 (PC+모바일)",
+            min_value=1000, max_value=50000, value=10000, step=1000,
+            help="이 수치 이상이면 '검색량 합격'"
         )
-    with col_link2:
-        # 장기 집행 광고 전용 URL (있으면)
-        from meta_ad_library import _build_search_url_sorted
-        sorted_url = _build_search_url_sorted(kw_used, ig_country)
-        st.markdown(
-            f"📊 [장기 집행 광고 보기 (시작일 정렬) →]({sorted_url})",
+    with _crit_col2:
+        crit_min_days = st.slider(
+            "📅 메타 광고 최소 집행일",
+            min_value=10, max_value=365, value=50, step=5,
+            help="이 일수 이상 집행 중인 광고가 1건 이상이면 '메타 합격'"
+        )
+    with _crit_col3:
+        ig_country = st.selectbox(
+            "🌍 검색 국가",
+            options=["KR", "US", "JP", "GB"],
+            format_func=lambda c: {"KR": "🇰🇷 한국", "US": "🇺🇸 미국", "JP": "🇯🇵 일본", "GB": "🇬🇧 영국"}.get(c, c),
+            key="ig_country"
         )
 
-    if result.get("error"):
-        st.warning(f"⚠️ API 조회 중 오류: {result['error']}")
-        st.info("위 링크를 클릭하여 Meta Ad Library에서 직접 확인해보세요.")
-    elif result.get("permission_note") or (result["mode"] == "link"):
-        # 권한 부족이거나 토큰 없음 → 링크 모드 안내 + 사용 가이드
-        if result.get("permission_note"):
-            st.info("📋 Meta Ad Library API 상업 광고 접근 권한이 제한되어 **웹 링크 모드**로 동작합니다.")
+# ── 탭 ──────────────────────────────────────────────────────────
+tab_single, tab_bulk = st.tabs(["🔍 단일 키워드 검증", "📦 대량 일괄 검증"])
 
-        with st.container(border=True):
-            st.markdown("### 💡 3개월 이상 집행 광고 레퍼런스 찾는 법")
-            st.markdown(f"""
-1. **위 링크를 클릭**하여 Meta Ad Library 페이지로 이동합니다
-2. 검색 결과에서 **시작 날짜**를 확인합니다 — 오래 전 시작된 광고일수록 성과가 검증된 광고입니다
-3. **3개월 이상** (약 90일+) 집행 중인 광고는 ROAS가 양호하여 계속 예산을 투입하는 **"위닝 광고"**일 가능성이 높습니다
-4. 해당 광고의 **카피, 영상 구성, 썸네일 스타일**을 레퍼런스로 활용하세요
+# ────────────────────────────────────────────────────
+# 단일 키워드 검증 탭
+# ────────────────────────────────────────────────────
+with tab_single:
+    # 키워드 입력 + 연관 검색어 pills
+    _sv_col1, _sv_col2 = st.columns([4, 1])
+    with _sv_col1:
+        ig_keyword = st.text_input(
+            "🔍 검증할 키워드",
+            value=selected_keyword if selected_keyword else "",
+            placeholder="예: 허리찜질기, 무릎보호대, 다이어트",
+            key="ig_ad_keyword"
+        )
+        if ig_keyword:
+            _related = get_naver_autocomplete(ig_keyword)
+            if _related:
+                def _update_kw_from_pill():
+                    if st.session_state.get("related_pills_unified"):
+                        st.session_state.ig_ad_keyword = st.session_state.related_pills_unified
+                st.pills(
+                    "💡 네이버 연관 검색어 (클릭 시 변경)",
+                    _related,
+                    key="related_pills_unified",
+                    on_change=_update_kw_from_pill
+                )
+    with _sv_col2:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        _search_btn = st.button(
+            "🔍 검색 & 검증",
+            use_container_width=True,
+            type="primary",
+            key="sv_search_btn"
+        )
 
-> 🎯 **Tip**: 검색어 `{kw_used}`와 관련된 경쟁사 브랜드명이나 제품 카테고리명도 함께 검색해보세요!
-            """)
-
-            # 추천 검색어 제안
-            st.markdown("**🔍 추가 추천 검색어:**")
-            suggestions = _generate_related_keywords(kw_used)
-            cols = st.columns(len(suggestions))
-            for i, sug in enumerate(suggestions):
-                from meta_ad_library import _build_search_url
-                sug_url = _build_search_url(sug, ig_country)
-                with cols[i]:
-                    st.markdown(f"[`{sug}`]({sug_url})")
-
-    elif result["mode"] in ("api", "scrape"):
-        df = result["df"]
-        mode_label = "🕷️ 스크래핑" if result["mode"] == "scrape" else "🔌 API"
-        if df.empty:
-            st.info(f"'{kw_used}' 키워드로 {ig_min_days}일 이상 집행 중인 활성 광고를 찾지 못했습니다. 키워드를 변경하거나 최소 집행 기간을 줄여보세요.")
+    if _search_btn:
+        if not ig_keyword.strip():
+            st.error("키워드를 입력해주세요.")
         else:
-            st.success(f"✅ {mode_label} 방식으로 {len(df)}개의 광고 레퍼런스를 찾았습니다!")
+            from naver_scraper import get_naver_search_volume
+            from meta_ad_library import search_meta_ads
+            from naver_datalab import get_datalab_trends
+            import concurrent.futures as _cf
+            _cid = os.environ.get("NAVER_CUSTOMER_ID", "")
+            _lic = os.environ.get("NAVER_ACCESS_LICENSE", "")
+            _sk  = os.environ.get("NAVER_SECRET_KEY", "")
+            _kw_stripped = ig_keyword.strip()
 
-            # ── 카드 형태로 광고 표시 ──
-            for i, row in df.iterrows():
+            with st.spinner(f"'{_kw_stripped}' 검색량, 1·3년 트렌드, 연령·성별 및 메타 광고 실시간 수집 중..."):
+                def _fetch_vol():
+                    return get_naver_search_volume(_kw_stripped, _cid, _lic, _sk)
+                def _fetch_meta_ads():
+                    return search_meta_ads(
+                        keyword=_kw_stripped,
+                        access_token=meta_token,
+                        country=ig_country,
+                        min_days_running=crit_min_days,
+                        limit=30,
+                    )
+                def _fetch_datalab():
+                    return get_datalab_trends(_kw_stripped)
+
+                with _cf.ThreadPoolExecutor(max_workers=3) as _ex:
+                    _fv = _ex.submit(_fetch_vol)
+                    _fm = _ex.submit(_fetch_meta_ads)
+                    _fdl = _ex.submit(_fetch_datalab)
+
+                    _sv_vol  = _fv.result()
+                    _sv_meta = _fm.result()
+                    _sv_dl   = _fdl.result()
+
+            st.session_state["unified_result"] = {
+                "keyword": _kw_stripped,
+                "vol": _sv_vol,
+                "meta": _sv_meta,
+                "datalab": _sv_dl,
+                "crit_vol": crit_min_volume,
+                "crit_days": crit_min_days,
+                "country": ig_country,
+            }
+
+    # ── 결과 표시 ────────────────────────────────────────────────
+    if "unified_result" in st.session_state:
+        _r      = st.session_state["unified_result"]
+        _kw     = _r["keyword"]
+        _vol    = _r["vol"]
+        _meta   = _r["meta"]
+        _dl     = _r.get("datalab", {})
+        _cv     = _r["crit_vol"]
+        _cd     = _r["crit_days"]
+        _ctry   = _r.get("country", "KR")
+        _total  = _vol.get("total", 0)
+        _ads    = _meta.get("ads", [])
+        _ad_cnt = len(_ads)
+        _vol_ok  = _total >= _cv
+        _meta_ok = _ad_cnt >= 1
+
+        # 판정 배지
+        if _vol_ok and _meta_ok:
+            _vc, _vt, _ve = "#00C853", "적합", "✅"
+            _vd = f"검색 수요({_total:,})와 광고 성과({_ad_cnt}건) 모두 확인됨. 레퍼런스로 활용하기 좋습니다!"
+        elif _vol_ok:
+            _vc, _vt, _ve = "#FFB300", "조건부 (메타 레퍼런스 부족)", "⚠️"
+            _vd = f"검색량({_total:,})은 충분하지만 {_cd}일+ 집행 광고가 없습니다. 직접 메타 라이브러리를 확인하세요."
+        elif _meta_ok:
+            _vc, _vt, _ve = "#FFB300", "조건부 (검색량 부족)", "⚠️"
+            _vd = f"광고 성과({_ad_cnt}건)는 있지만 검색량({_total:,})이 기준({_cv:,}) 미달입니다."
+        else:
+            _vc, _vt, _ve = "#FF5252", "부적합", "❌"
+            _vd = f"검색량({_total:,})과 장기집행 광고 모두 기준 미달입니다."
+
+        st.markdown(
+            f"""<div style="background:{_vc}1A;border-left:5px solid {_vc};
+            border-radius:8px;padding:14px 18px;margin:12px 0;">
+            <span style="font-size:1.3rem;font-weight:800;color:{_vc};">{_ve} {_vt}</span><br>
+            <span style="font-size:0.93rem;color:#555;">{_vd}</span></div>""",
+            unsafe_allow_html=True
+        )
+
+        # metric 카드 및 좌우 분할 영역
+        _mc1, _mc2 = st.columns(2)
+        with _mc1:
+            with st.container(border=True):
+                st.metric(
+                    f"{'✅' if _vol_ok else '❌'} 네이버 검색량 (기준 {_cv:,}+)",
+                    f"{_total:,}",
+                    delta=f"PC {_vol.get('pc',0):,} | 모바일 {_vol.get('mobile',0):,}",
+                    delta_color="normal"
+                )
+
+                # ── 네이버 데이터랩 트렌드 & 연령/성별 분석 ──
+                st.markdown("---")
+                st.markdown("##### 📈 네이버 검색 트렌드 변화 그래프")
+
+                if _dl.get("ok"):
+                    _period_choice = st.radio(
+                        "기간 선택",
+                        ["최근 1년", "최근 3년"],
+                        horizontal=True,
+                        key="trend_period_radio",
+                        label_visibility="collapsed"
+                    )
+
+                    _chart_df = _dl.get("df_1y" if _period_choice == "최근 1년" else "df_3y")
+                    if _chart_df is not None and not _chart_df.empty:
+                        # 라인 차트 시각화
+                        st.line_chart(
+                            _chart_df.set_index("월")["검색지수"],
+                            height=200,
+                            color="#00C73C"
+                        )
+                        st.caption(f"💡 {_period_choice} 월별 상대 검색지수 (최고점 = 100 기준)")
+
+                    # ── 성별 & 연령대 분석 ──
+                    st.markdown("---")
+                    st.markdown("##### 👥 검색 연령 및 성별층 분석")
+
+                    _g_ratio = _dl.get("gender_ratio", {"남성": 50.0, "여성": 50.0})
+                    _a_ratio = _dl.get("age_ratio", {})
+                    _target_4050 = _dl.get("target_4050_ratio", 50.0)
+
+                    # 성별 분포
+                    _m_pct = _g_ratio.get("남성", 50.0)
+                    _f_pct = _g_ratio.get("여성", 50.0)
+
+                    _g_col1, _g_col2 = st.columns(2)
+                    with _g_col1:
+                        st.metric("👨 남성 관심도", f"{_m_pct}%")
+                    with _g_col2:
+                        st.metric("👩 여성 관심도", f"{_f_pct}%")
+
+                    # 4050 타겟 하이라이트 배지
+                    _4050_color = "#00C853" if _target_4050 >= 40 else "#FFB300"
+                    st.markdown(
+                        f"""<div style="background:{_4050_color}18; border: 1px solid {_4050_color}; 
+                        border-radius: 6px; padding: 6px 12px; margin: 8px 0; text-align: center;">
+                        <span style="font-weight: 700; color: {_4050_color}; font-size: 0.95rem;">
+                        🎯 4050 핵심 타겟 비중: {_target_4050}%
+                        </span>
+                        </div>""",
+                        unsafe_allow_html=True
+                    )
+
+                    # 연령대별 바 차트
+                    _age_df = pd.DataFrame([
+                        {"연령대": k, "관심도(%)": v} for k, v in _a_ratio.items()
+                    ])
+                    st.bar_chart(
+                        _age_df.set_index("연령대")["관심도(%)"],
+                        height=160,
+                        color="#3B82F6"
+                    )
+                else:
+                    st.caption("ℹ️ 네이버 데이터랩 트렌드 데이터를 불러오는 중이거나 조회가 지원되지 않는 키워드입니다.")
+
+        with _mc2:
+            with st.container(border=True):
+                _mode_label = {"scrape": "스크래핑", "api": "API", "link": "링크 모드"}.get(_meta.get("mode",""), "")
+                st.metric(
+                    f"{'✅' if _meta_ok else '❌'} 메타 {_cd}일+ 장기집행 광고",
+                    f"{_ad_cnt}건",
+                    delta=_mode_label,
+                    delta_color="normal"
+                )
+
+        # Meta Ad Library 링크
+        from meta_ad_library import _build_search_url, _build_search_url_sorted
+        _link_col1, _link_col2 = st.columns(2)
+        with _link_col1:
+            st.markdown(f"🔗 [Meta Ad Library 직접 검색 →]({_meta.get('url', _build_search_url(_kw, _ctry))})")
+        with _link_col2:
+            st.markdown(f"📊 [시작일 정렬로 보기 →]({_build_search_url_sorted(_kw, _ctry)})")
+
+        # 광고 카드 또는 링크 모드 안내
+        _df_meta = _meta.get("df")
+        if _meta.get("mode") in ("scrape", "api") and _df_meta is not None and not _df_meta.empty:
+            _mode_icon = "🕷️ 스크래핑" if _meta.get("mode") == "scrape" else "🔌 API"
+            st.success(f"{_mode_icon} 방식으로 {_cd}일+ 집행 광고 **{len(_df_meta)}개** 발견!")
+
+            for _i, _row in _df_meta.iterrows():
                 with st.container(border=True):
-                    card_col1, card_col2 = st.columns([3, 1])
-                    with card_col1:
-                        st.markdown(f"**🏪 {row['페이지명']}**")
-                        if row.get('광고 카피'):
-                            st.caption(row['광고 카피'])
-                        if row.get('CTA'):
-                            st.markdown(f"🔘 *{row['CTA']}*")
-                    with card_col2:
-                        st.metric("집행 기간", row.get('집행 기간', '-'))
-                        st.caption(f"시작: {row.get('집행 시작일', '-')}")
-                        if row.get('게시 플랫폼'):
-                            st.caption(f"📱 {row['게시 플랫폼']}")
-                        if row.get('광고 보기'):
-                            st.markdown(f"[👁️ 광고 보기 →]({row['광고 보기']})")
+                    _cc1, _cc2 = st.columns([3, 1])
+                    with _cc1:
+                        st.markdown(f"**🏪 {_row['페이지명']}**")
+                        if _row.get("광고 카피"):
+                            st.caption(_row["광고 카피"])
+                        if _row.get("CTA"):
+                            st.markdown(f"🔘 *{_row['CTA']}*")
+                    with _cc2:
+                        st.metric("집행 기간", _row.get("집행 기간", "-"))
+                        st.caption(f"시작: {_row.get('집행 시작일', '-')}")
+                        if _row.get("게시 플랫폼"):
+                            st.caption(f"📱 {_row['게시 플랫폼']}")
+                        if _row.get("광고 보기"):
+                            st.markdown(f"[👁️ 광고 보기 →]({_row['광고 보기']})")
 
+            # 기획 테이블 + 노션 저장
             st.markdown("---")
-
-            # ── 📋 기획 테이블 + 노션 저장 ──
             st.markdown("#### 📋 기획 테이블 — 노션 저장용")
             st.caption("아래 표를 확인하고 브랜드/진행 여부를 입력한 뒤 노션에 저장하세요.")
 
-            import pandas as pd
             from datetime import date as date_type
-
-            # 기획 테이블 데이터 준비
-            notion_rows = []
-            for i, row in df.iterrows():
-                notion_rows.append({
+            _notion_rows = []
+            for _, _row in _df_meta.iterrows():
+                _notion_rows.append({
                     "선택": True,
-                    "광고 카피": row.get("광고 카피", ""),
-                    "레퍼런스 링크": row.get("광고 보기", ""),
-                    "브랜드": row.get("페이지명", ""),
+                    "광고 카피": _row.get("광고 카피", ""),
+                    "레퍼런스 링크": _row.get("광고 보기", ""),
+                    "브랜드": _row.get("페이지명", ""),
                     "진행 여부": "검토중",
                     "날짜": date_type.today(),
                 })
-
-            notion_df = pd.DataFrame(notion_rows)
-
-            # 편집 가능한 데이터 편집기
-            edited_df = st.data_editor(
-                notion_df,
+            _notion_df = pd.DataFrame(_notion_rows)
+            _edited_df = st.data_editor(
+                _notion_df,
                 column_config={
-                    "선택": st.column_config.CheckboxColumn("☑️ 선택", help="저장할 항목을 선택하세요", default=True, width="small"),
+                    "선택": st.column_config.CheckboxColumn("☑️ 선택", default=True, width="small"),
                     "광고 카피": st.column_config.TextColumn("📝 광고 카피", width="large"),
                     "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스 링크", width="medium"),
                     "브랜드": st.column_config.TextColumn("🏷️ 브랜드", width="small"),
@@ -381,107 +501,199 @@ if "ig_ad_result" in st.session_state:
                 width="stretch",
                 hide_index=True,
                 num_rows="fixed",
-                key="notion_table",
+                key="notion_table_unified",
             )
 
-            st.markdown("")
-
-            # ── 노션 저장 버튼 ──
-            notion_token = os.environ.get("NOTION_TOKEN", "")
-            notion_db_id = os.environ.get("NOTION_DATABASE_ID", "")
-
-            if not notion_token or not notion_db_id:
-                with st.expander("⚙️ 노션 연동 설정 필요", expanded=True):
+            # 노션 저장
+            _notion_token = os.environ.get("NOTION_TOKEN", "")
+            _notion_db_id = os.environ.get("NOTION_DATABASE_ID", "")
+            if not _notion_token or not _notion_db_id:
+                with st.expander("⚙️ 노션 연동 설정 필요", expanded=False):
                     st.warning("노션에 저장하려면 아래 정보를 입력하세요.")
-                    n_col1, n_col2 = st.columns(2)
-                    with n_col1:
-                        input_token = st.text_input(
-                            "Notion Integration Token",
-                            placeholder="ntn_...",
-                            type="password",
-                            key="input_notion_token",
-                        )
-                    with n_col2:
-                        input_db_id = st.text_input(
-                            "Notion Database ID",
-                            placeholder="32자리 ID",
-                            key="input_notion_db_id",
-                        )
+                    _nc1, _nc2 = st.columns(2)
+                    with _nc1:
+                        _in_token = st.text_input("Notion Integration Token", placeholder="ntn_...", type="password", key="input_notion_token")
+                    with _nc2:
+                        _in_db = st.text_input("Notion Database ID", placeholder="32자리 ID", key="input_notion_db_id")
                     if st.button("💾 설정 저장", key="save_notion_settings"):
-                        if input_token and input_db_id:
-                            import re
-                            # .env 파일에 저장
-                            env_path = os.path.join(os.path.dirname(__file__), ".env")
-                            with open(env_path, "r", encoding="utf-8") as f:
-                                env_content = f.read()
-                            
-                            env_content = re.sub(r"^NOTION_TOKEN=.*$", f"NOTION_TOKEN={input_token}", env_content, flags=re.MULTILINE)
-                            env_content = re.sub(r"^NOTION_DATABASE_ID=.*$", f"NOTION_DATABASE_ID={input_db_id}", env_content, flags=re.MULTILINE)
-                            
-                            with open(env_path, "w", encoding="utf-8") as f:
-                                f.write(env_content)
+                        if _in_token and _in_db:
+                            _env_path = os.path.join(os.path.dirname(__file__), ".env")
+                            with open(_env_path, "r", encoding="utf-8") as _ef:
+                                _ec = _ef.read()
+                            _ec = re.sub(r"^NOTION_TOKEN=.*$", f"NOTION_TOKEN={_in_token}", _ec, flags=re.MULTILINE)
+                            _ec = re.sub(r"^NOTION_DATABASE_ID=.*$", f"NOTION_DATABASE_ID={_in_db}", _ec, flags=re.MULTILINE)
+                            with open(_env_path, "w", encoding="utf-8") as _ef:
+                                _ef.write(_ec)
                             load_dotenv(override=True)
                             st.success("✅ 설정이 저장되었습니다! 페이지를 새로고침하세요.")
                         else:
                             st.error("토큰과 DB ID를 모두 입력해주세요.")
             else:
-                # 연결 상태 표시
                 from notion_sync import test_notion_connection, save_ad_reference_to_notion
                 with st.expander("✅ 노션 연결됨", expanded=False):
-                    conn_test = test_notion_connection(notion_token, notion_db_id)
-                    if conn_test["ok"]:
-                        st.success(f"데이터베이스: **{conn_test['title']}**")
+                    _conn = test_notion_connection(_notion_token, _notion_db_id)
+                    if _conn["ok"]:
+                        st.success(f"데이터베이스: **{_conn['title']}**")
                     else:
-                        st.error(f"연결 오류: {conn_test['error']}")
+                        st.error(f"연결 오류: {_conn['error']}")
 
-                st.markdown("")
-                n_save_col1, n_save_col2 = st.columns([2, 1])
-                
-                selected_rows = edited_df[edited_df["선택"] == True]
-                
-                with n_save_col1:
-                    n_rows_label = f"☑️ 선택된 {len(selected_rows)}개 항목을 노션에 저장합니다"
-                    st.caption(n_rows_label)
-                with n_save_col2:
-                    save_btn = st.button(
-                        "📤 노션에 저장하기",
-                        type="primary",
-                        use_container_width=True,
-                        key="save_to_notion",
-                    )
-
-                if save_btn:
+                _sel_rows = _edited_df[_edited_df["선택"] == True]
+                _ns1, _ns2 = st.columns([2, 1])
+                with _ns1:
+                    st.caption(f"☑️ 선택된 {len(_sel_rows)}개 항목을 노션에 저장합니다")
+                with _ns2:
+                    _save_btn = st.button("📤 노션에 저장하기", type="primary", use_container_width=True, key="save_to_notion_unified")
+                if _save_btn:
                     with st.spinner("노션에 저장 중..."):
-                        saved_count = 0
-                        failed_count = 0
-                        last_error = ""
-                        
-                        if len(selected_rows) == 0:
+                        _saved, _failed, _last_err = 0, 0, ""
+                        if len(_sel_rows) == 0:
                             st.warning("선택된 항목이 없습니다.")
                         else:
-                            for _, row in selected_rows.iterrows():
-                                res = save_ad_reference_to_notion(
-                                    token=notion_token,
-                                    database_id=notion_db_id,
-                                    ad_copy=str(row.get("광고 카피", "")),
-                                    reference_url=str(row.get("레퍼런스 링크", "")),
-                                    brand=str(row.get("브랜드", "")),
-                                    status=str(row.get("진행 여부", "검토중")),
-                                    date=str(row.get("날짜", str(date_type.today()))),
-                                    keyword=kw_used,
+                            for _, _row in _sel_rows.iterrows():
+                                _res = save_ad_reference_to_notion(
+                                    token=_notion_token,
+                                    database_id=_notion_db_id,
+                                    ad_copy=str(_row.get("광고 카피", "")),
+                                    reference_url=str(_row.get("레퍼런스 링크", "")),
+                                    brand=str(_row.get("브랜드", "")),
+                                    status=str(_row.get("진행 여부", "검토중")),
+                                    date=str(_row.get("날짜", str(date_type.today()))),
+                                    keyword=_kw,
                                 )
-                                if res["ok"]:
-                                    saved_count += 1
+                                if _res["ok"]:
+                                    _saved += 1
                                 else:
-                                    failed_count += 1
-                                    last_error = res.get("error", "알 수 없는 에러")
-
-                    if failed_count == 0:
-                        st.success(f"✅ {saved_count}개 항목이 노션에 저장되었습니다!")
+                                    _failed += 1
+                                    _last_err = _res.get("error", "")
+                    if _failed == 0:
+                        st.success(f"✅ {_saved}개 항목이 노션에 저장되었습니다!")
                         st.balloons()
                     else:
-                        st.warning(f"저장 완료: {saved_count}개 성공, {failed_count}개 실패")
-                        st.error(f"실패 원인 (마지막 에러): {last_error}")
+                        st.warning(f"저장 완료: {_saved}개 성공, {_failed}개 실패")
+                        if _last_err:
+                            st.error(f"실패 원인: {_last_err}")
+
+        elif _meta.get("mode") == "link" or (_df_meta is None or _df_meta.empty):
+            # 링크 모드 or 결과 없음 안내
+            if _meta.get("mode") == "link":
+                st.info("📋 스크래핑이 차단됐거나 Access Token이 없어 직접 확인이 필요합니다.")
+            else:
+                st.info(f"'{_kw}' 키워드로 {_cd}일+ 집행 중인 활성 광고를 찾지 못했습니다. 기간을 줄이거나 키워드를 변경해보세요.")
+
+            with st.container(border=True):
+                st.markdown("### 💡 장기집행 광고 레퍼런스 찾는 법")
+                st.markdown(f"""
+1. 위 **Meta Ad Library** 링크로 이동하여 검색 결과의 **시작 날짜**를 확인합니다.
+2. 오래 전 시작된 광고 = ROAS가 좋아서 예산이 유지되는 **"위닝 광고"**입니다.
+3. 해당 광고의 **카피, 영상 구성, 썸네일 스타일**을 레퍼런스로 활용하세요.
+
+> 🎯 **Tip**: `{_kw}`와 관련된 경쟁사 브랜드명이나 제품 카테고리명도 함께 검색해보세요!
+                """)
+                _sug_kws = _generate_related_keywords(_kw)
+                _sc = st.columns(len(_sug_kws))
+                for _si, _sug in enumerate(_sug_kws):
+                    _sug_url = _build_search_url(_sug, _ctry)
+                    with _sc[_si]:
+                        st.markdown(f"[`{_sug}`]({_sug_url})")
+
+# ────────────────────────────────────────────────────
+# 대량 일괄 검증 탭
+# ────────────────────────────────────────────────────
+with tab_bulk:
+    st.caption("키워드를 **한 줄에 하나씩** 입력하면 전체를 일괄 검증합니다.")
+    bulk_kw_text = st.text_area(
+        "📝 키워드 목록 (줄바꿈으로 구분)",
+        placeholder="허리찜질기\n무릎보호대\n발뒤꿈치 통증\n목디스크 치료",
+        height=160,
+        key="bulk_kw_textarea"
+    )
+    _bulk_col1, _bulk_col2 = st.columns([3, 1])
+    with _bulk_col2:
+        bulk_btn = st.button("🚀 일괄 검증 시작", use_container_width=True, type="primary", key="bulk_btn")
+
+    if bulk_btn:
+        _raw_kws = [k.strip() for k in bulk_kw_text.strip().splitlines() if k.strip()]
+        if not _raw_kws:
+            st.error("키워드를 입력해주세요.")
+        else:
+            from naver_scraper import get_naver_search_volume
+            from meta_ad_library import search_meta_ads, _build_search_url
+            import time as _time
+            _cid2 = os.environ.get("NAVER_CUSTOMER_ID", "")
+            _lic2 = os.environ.get("NAVER_ACCESS_LICENSE", "")
+            _sk2  = os.environ.get("NAVER_SECRET_KEY", "")
+
+            _bulk_rows = []
+            _prog = st.progress(0)
+            _status = st.empty()
+
+            for _i, _kw2 in enumerate(_raw_kws):
+                _status.text(f"🔄 {_i+1}/{len(_raw_kws)} — {_kw2} 조회 중...")
+                try:
+                    _v = get_naver_search_volume(_kw2, _cid2, _lic2, _sk2)
+                    _v_total = _v.get("total", 0)
+                except Exception:
+                    _v_total = 0
+
+                try:
+                    _m = search_meta_ads(keyword=_kw2, access_token=meta_token, country=ig_country, min_days_running=crit_min_days, limit=10)
+                    _m_cnt = len(_m.get("ads", []))
+                    _m_url = _m.get("url", _build_search_url(_kw2, ig_country))
+                except Exception:
+                    _m_cnt = 0
+                    _m_url = _build_search_url(_kw2, ig_country)
+
+                _vol_ok2  = _v_total >= crit_min_volume
+                _meta_ok2 = _m_cnt >= 1
+                if _vol_ok2 and _meta_ok2:
+                    _v2 = "✅ 적합"
+                elif _vol_ok2 or _meta_ok2:
+                    _v2 = "⚠️ 조건부"
+                else:
+                    _v2 = "❌ 부적합"
+
+                _bulk_rows.append({
+                    "키워드": _kw2,
+                    f"검색량 (≥{crit_min_volume:,})": _v_total,
+                    f"메타 {crit_min_days}일+ 광고": f"{_m_cnt}건",
+                    "판정": _v2,
+                    "Meta 라이브러리": _m_url,
+                })
+                _prog.progress((_i + 1) / len(_raw_kws))
+                _time.sleep(0.3)
+
+            _status.empty()
+            _prog.empty()
+            st.session_state["bulk_sv_results"] = _bulk_rows
+
+    if "bulk_sv_results" in st.session_state:
+        _brows = st.session_state["bulk_sv_results"]
+        _bdf = pd.DataFrame(_brows)
+        _n_ok   = sum(1 for r in _brows if r["판정"].startswith("✅"))
+        _n_cond = sum(1 for r in _brows if r["판정"].startswith("⚠️"))
+        _n_bad  = sum(1 for r in _brows if r["판정"].startswith("❌"))
+
+        _s1, _s2, _s3, _s4 = st.columns(4)
+        _s1.metric("전체", f"{len(_brows)}건")
+        _s2.metric("✅ 적합", f"{_n_ok}건")
+        _s3.metric("⚠️ 조건부", f"{_n_cond}건")
+        _s4.metric("❌ 부적합", f"{_n_bad}건")
+
+        _sort_map = {"✅ 적합": 0, "⚠️ 조건부": 1, "❌ 부적합": 2}
+        _bdf["_s"] = _bdf["판정"].map(lambda x: _sort_map.get(x, 9))
+        _bdf = _bdf.sort_values("_s").drop(columns=["_s"]).reset_index(drop=True)
+
+        st.dataframe(
+            _bdf,
+            column_config={"Meta 라이브러리": st.column_config.LinkColumn("🔗 Meta 라이브러리")},
+            hide_index=True, width="stretch"
+        )
+        _csv = _bdf.drop(columns=["Meta 라이브러리"]).to_csv(index=False, encoding="utf-8-sig")
+        st.download_button("📥 결과 CSV 다운로드", data=_csv.encode("utf-8-sig"),
+                           file_name="reference_validation.csv", mime="text/csv")
+
+
+
 
 # -------------------------------------------------------------------
 # STEP 1.5: 실시간 키워드 분석 및 대본 생성 (신규)
