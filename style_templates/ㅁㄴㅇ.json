@@ -1,0 +1,42 @@
+{
+  "hook": {
+    "font_name": "Black Han Sans",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/BlackHanSans-Regular.ttf",
+    "size": 18.0,
+    "intro": "故障",
+    "loop": "颤抖_II",
+    "outro": null
+  },
+  "empathy": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 14.5,
+    "intro": "打字机",
+    "loop": null,
+    "outro": null
+  },
+  "evidence": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 14.0,
+    "intro": "打字机",
+    "loop": null,
+    "outro": null
+  },
+  "solution": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 14.5,
+    "intro": "打字机",
+    "loop": null,
+    "outro": null
+  },
+  "cta": {
+    "font_name": "Pretendard",
+    "font_path": "C:/Users/5700G/AppData/Local/Microsoft/Windows/Fonts/Pretendard-Bold.otf",
+    "size": 17.0,
+    "intro": "打字机",
+    "loop": null,
+    "outro": null
+  }
+}

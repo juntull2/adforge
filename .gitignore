@@ -3,53 +3,39 @@
 venv/
 ENV/
 
-# Temporary Audio / Cache
+# Temporary Audio / Cache / Videos
 temp_audio/
+temp_videos/
+temp_uploads/
 __pycache__/
 *.pyc
+
+# Outputs
+outputs/
+*.mp4
 
 # IDE / System
 .vscode/
 .idea/
 .DS_Store
 
+# API Keys & Secrets
 nv_api_key.txt
-
-# Virtual Environment
-.venv/
-venv/
-ENV/
-
-# Temporary Audio / Cache
-temp_audio/
-__pycache__/
-*.pyc
-
-# IDE / System
-.vscode/
-.idea/
-.DS_Store
-
-nv_api_key.txt
-
 el_api_key.txt
 fish_api_key.txt
 pexels_api_key.txt
 pixabay_api_key.txt
-stock_videos/
-
-outputs/
-*.mp4
 openrouter_api_key.txt
 client_secrets.json
 token.json
 .env
-storage/browser_profiles/
-temp_uploads/
-style_profiles/
 
-# Temp / Local Workspace
+# Storage & Profiles
+storage/browser_profiles/
+style_profiles/
+stock_videos/
+
+# Temp / Workspace Folders
 scratch/
-temp_videos/
 vendor/
-node_modules/
+node_modules/

@@ -2,7 +2,11 @@ import os
 import re
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 from naver_clip_adforge import build_capcut_project_for_naver_clip, split_script_by_sentences_and_phrases, split_sentence_naturally
+
+# .env 파일에서 환경 변수 로드 (최신 값 강제 로드)
+load_dotenv(override=True)
 
 # -------------------------------------------------------------------
 # Streamlit 대시보드 페이지 설정
@@ -172,6 +176,312 @@ if df_keywords is not None and not df_keywords.empty:
     if len(event.selection.rows) > 0:
         selected_idx = event.selection.rows[0]
         selected_keyword = df_keywords.iloc[selected_idx]['키워드']
+
+# -------------------------------------------------------------------
+# 📸 인스타그램 광고 레퍼런스 (Meta Ad Library)
+# -------------------------------------------------------------------
+
+def _generate_related_keywords(keyword: str) -> list:
+    """키워드에서 관련 검색어를 생성합니다."""
+    # 키워드 기반 변형 생성
+    suffixes = ["추천", "효과", "후기"]
+    suggestions = []
+    for suffix in suffixes:
+        suggestions.append(f"{keyword} {suffix}")
+    return suggestions[:4]  # 최대 4개
+
+st.markdown("---")
+st.subheader("📸 인스타그램 광고 레퍼런스 (Meta Ad Library)")
+st.caption("키워드를 입력하면 Meta Ad Library에서 **장기 집행 중인 광고**(성과가 검증된 레퍼런스)를 조회합니다.")
+
+from dotenv import load_dotenv
+load_dotenv()
+
+meta_token = os.environ.get("META_ACCESS_TOKEN", "")
+
+@st.cache_data(show_spinner=False, ttl=60)
+def get_naver_autocomplete(keyword: str):
+    if not keyword.strip(): return []
+    try:
+        import requests
+        url = f"https://ac.search.naver.com/nx/ac?q={keyword}&con=0&dict=0&a_gb=0&spq=0&recover=0&fq=0&mod=0&r_format=json&r_enc=UTF-8&r_unicode=0&t_koreng=1&ans=2&run=2&rev=4&q_enc=UTF-8&st=100"
+        r = requests.get(url, timeout=3)
+        data = r.json()
+        items = data.get('items', [[]])[0]
+        return [item[0] for item in items][:10]
+    except:
+        return []
+
+col_ig1, col_ig2, col_ig3 = st.columns([3, 1, 1])
+with col_ig1:
+    ig_keyword = st.text_input(
+        "🔍 광고 검색 키워드",
+        value=selected_keyword if selected_keyword else "",
+        placeholder="예: 허리찜질기, 무릎보호대, 다이어트",
+        key="ig_ad_keyword"
+    )
+    
+    if ig_keyword:
+        related = get_naver_autocomplete(ig_keyword)
+        if related:
+            def update_keyword_from_pill():
+                if st.session_state.related_pills:
+                    st.session_state.ig_ad_keyword = st.session_state.related_pills
+
+            # st.pills의 on_change 콜백을 사용하여 오류 방지
+            pill_selection = st.pills(
+                "💡 네이버 연관 검색어 (클릭 시 키워드 변경)", 
+                related, 
+                key="related_pills",
+                on_change=update_keyword_from_pill
+            )
+with col_ig2:
+    ig_min_days = st.selectbox(
+        "📅 최소 집행 기간",
+        options=[50, 90, 120, 180, 365],
+        format_func=lambda d: f"{d}일 ({d // 30}개월+)",
+        index=0,
+        key="ig_min_days"
+    )
+with col_ig3:
+    ig_country = st.selectbox(
+        "🌍 검색 국가",
+        options=["KR", "US", "JP", "GB", "ALL"],
+        format_func=lambda c: {"KR": "🇰🇷 한국", "US": "🇺🇸 미국", "JP": "🇯🇵 일본", "GB": "🇬🇧 영국", "ALL": "🌐 전체"}.get(c, c),
+        index=0,
+        key="ig_country"
+    )
+
+if st.button("🔍 인스타 광고 레퍼런스 검색", use_container_width=True, type="primary"):
+    if not ig_keyword.strip():
+        st.error("검색 키워드를 입력해주세요.")
+    else:
+        with st.spinner(f"Meta Ad Library에서 '{ig_keyword}' 관련 {ig_min_days}일+ 집행 광고 검색 중..."):
+            from meta_ad_library import search_meta_ads
+            result = search_meta_ads(
+                keyword=ig_keyword.strip(),
+                access_token=meta_token,
+                country=ig_country,
+                min_days_running=ig_min_days,
+            )
+            st.session_state["ig_ad_result"] = result
+            st.session_state["ig_ad_keyword_used"] = ig_keyword.strip()
+
+if "ig_ad_result" in st.session_state:
+    result = st.session_state["ig_ad_result"]
+    kw_used = st.session_state.get("ig_ad_keyword_used", "")
+
+    # 항상 웹 링크 표시
+    col_link1, col_link2 = st.columns(2)
+    with col_link1:
+        st.markdown(
+            f"🔗 [Meta Ad Library에서 **'{kw_used}'** 직접 검색하기 →]({result['url']})",
+        )
+    with col_link2:
+        # 장기 집행 광고 전용 URL (있으면)
+        from meta_ad_library import _build_search_url_sorted
+        sorted_url = _build_search_url_sorted(kw_used, ig_country)
+        st.markdown(
+            f"📊 [장기 집행 광고 보기 (시작일 정렬) →]({sorted_url})",
+        )
+
+    if result.get("error"):
+        st.warning(f"⚠️ API 조회 중 오류: {result['error']}")
+        st.info("위 링크를 클릭하여 Meta Ad Library에서 직접 확인해보세요.")
+    elif result.get("permission_note") or (result["mode"] == "link"):
+        # 권한 부족이거나 토큰 없음 → 링크 모드 안내 + 사용 가이드
+        if result.get("permission_note"):
+            st.info("📋 Meta Ad Library API 상업 광고 접근 권한이 제한되어 **웹 링크 모드**로 동작합니다.")
+
+        with st.container(border=True):
+            st.markdown("### 💡 3개월 이상 집행 광고 레퍼런스 찾는 법")
+            st.markdown(f"""
+1. **위 링크를 클릭**하여 Meta Ad Library 페이지로 이동합니다
+2. 검색 결과에서 **시작 날짜**를 확인합니다 — 오래 전 시작된 광고일수록 성과가 검증된 광고입니다
+3. **3개월 이상** (약 90일+) 집행 중인 광고는 ROAS가 양호하여 계속 예산을 투입하는 **"위닝 광고"**일 가능성이 높습니다
+4. 해당 광고의 **카피, 영상 구성, 썸네일 스타일**을 레퍼런스로 활용하세요
+
+> 🎯 **Tip**: 검색어 `{kw_used}`와 관련된 경쟁사 브랜드명이나 제품 카테고리명도 함께 검색해보세요!
+            """)
+
+            # 추천 검색어 제안
+            st.markdown("**🔍 추가 추천 검색어:**")
+            suggestions = _generate_related_keywords(kw_used)
+            cols = st.columns(len(suggestions))
+            for i, sug in enumerate(suggestions):
+                from meta_ad_library import _build_search_url
+                sug_url = _build_search_url(sug, ig_country)
+                with cols[i]:
+                    st.markdown(f"[`{sug}`]({sug_url})")
+
+    elif result["mode"] in ("api", "scrape"):
+        df = result["df"]
+        mode_label = "🕷️ 스크래핑" if result["mode"] == "scrape" else "🔌 API"
+        if df.empty:
+            st.info(f"'{kw_used}' 키워드로 {ig_min_days}일 이상 집행 중인 활성 광고를 찾지 못했습니다. 키워드를 변경하거나 최소 집행 기간을 줄여보세요.")
+        else:
+            st.success(f"✅ {mode_label} 방식으로 {len(df)}개의 광고 레퍼런스를 찾았습니다!")
+
+            # ── 카드 형태로 광고 표시 ──
+            for i, row in df.iterrows():
+                with st.container(border=True):
+                    card_col1, card_col2 = st.columns([3, 1])
+                    with card_col1:
+                        st.markdown(f"**🏪 {row['페이지명']}**")
+                        if row.get('광고 카피'):
+                            st.caption(row['광고 카피'])
+                        if row.get('CTA'):
+                            st.markdown(f"🔘 *{row['CTA']}*")
+                    with card_col2:
+                        st.metric("집행 기간", row.get('집행 기간', '-'))
+                        st.caption(f"시작: {row.get('집행 시작일', '-')}")
+                        if row.get('게시 플랫폼'):
+                            st.caption(f"📱 {row['게시 플랫폼']}")
+                        if row.get('광고 보기'):
+                            st.markdown(f"[👁️ 광고 보기 →]({row['광고 보기']})")
+
+            st.markdown("---")
+
+            # ── 📋 기획 테이블 + 노션 저장 ──
+            st.markdown("#### 📋 기획 테이블 — 노션 저장용")
+            st.caption("아래 표를 확인하고 브랜드/진행 여부를 입력한 뒤 노션에 저장하세요.")
+
+            import pandas as pd
+            from datetime import date as date_type
+
+            # 기획 테이블 데이터 준비
+            notion_rows = []
+            for i, row in df.iterrows():
+                notion_rows.append({
+                    "선택": True,
+                    "광고 카피": row.get("광고 카피", ""),
+                    "레퍼런스 링크": row.get("광고 보기", ""),
+                    "브랜드": row.get("페이지명", ""),
+                    "진행 여부": "검토중",
+                    "날짜": date_type.today(),
+                })
+
+            notion_df = pd.DataFrame(notion_rows)
+
+            # 편집 가능한 데이터 편집기
+            edited_df = st.data_editor(
+                notion_df,
+                column_config={
+                    "선택": st.column_config.CheckboxColumn("☑️ 선택", help="저장할 항목을 선택하세요", default=True, width="small"),
+                    "광고 카피": st.column_config.TextColumn("📝 광고 카피", width="large"),
+                    "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스 링크", width="medium"),
+                    "브랜드": st.column_config.TextColumn("🏷️ 브랜드", width="small"),
+                    "진행 여부": st.column_config.SelectboxColumn(
+                        "📌 진행 여부",
+                        options=["검토중", "진행", "보류", "완료"],
+                        width="small",
+                    ),
+                    "날짜": st.column_config.DateColumn("📅 날짜", width="small", format="YYYY-MM-DD"),
+                },
+                width="stretch",
+                hide_index=True,
+                num_rows="fixed",
+                key="notion_table",
+            )
+
+            st.markdown("")
+
+            # ── 노션 저장 버튼 ──
+            notion_token = os.environ.get("NOTION_TOKEN", "")
+            notion_db_id = os.environ.get("NOTION_DATABASE_ID", "")
+
+            if not notion_token or not notion_db_id:
+                with st.expander("⚙️ 노션 연동 설정 필요", expanded=True):
+                    st.warning("노션에 저장하려면 아래 정보를 입력하세요.")
+                    n_col1, n_col2 = st.columns(2)
+                    with n_col1:
+                        input_token = st.text_input(
+                            "Notion Integration Token",
+                            placeholder="ntn_...",
+                            type="password",
+                            key="input_notion_token",
+                        )
+                    with n_col2:
+                        input_db_id = st.text_input(
+                            "Notion Database ID",
+                            placeholder="32자리 ID",
+                            key="input_notion_db_id",
+                        )
+                    if st.button("💾 설정 저장", key="save_notion_settings"):
+                        if input_token and input_db_id:
+                            import re
+                            # .env 파일에 저장
+                            env_path = os.path.join(os.path.dirname(__file__), ".env")
+                            with open(env_path, "r", encoding="utf-8") as f:
+                                env_content = f.read()
+                            
+                            env_content = re.sub(r"^NOTION_TOKEN=.*$", f"NOTION_TOKEN={input_token}", env_content, flags=re.MULTILINE)
+                            env_content = re.sub(r"^NOTION_DATABASE_ID=.*$", f"NOTION_DATABASE_ID={input_db_id}", env_content, flags=re.MULTILINE)
+                            
+                            with open(env_path, "w", encoding="utf-8") as f:
+                                f.write(env_content)
+                            load_dotenv(override=True)
+                            st.success("✅ 설정이 저장되었습니다! 페이지를 새로고침하세요.")
+                        else:
+                            st.error("토큰과 DB ID를 모두 입력해주세요.")
+            else:
+                # 연결 상태 표시
+                from notion_sync import test_notion_connection, save_ad_reference_to_notion
+                with st.expander("✅ 노션 연결됨", expanded=False):
+                    conn_test = test_notion_connection(notion_token, notion_db_id)
+                    if conn_test["ok"]:
+                        st.success(f"데이터베이스: **{conn_test['title']}**")
+                    else:
+                        st.error(f"연결 오류: {conn_test['error']}")
+
+                st.markdown("")
+                n_save_col1, n_save_col2 = st.columns([2, 1])
+                
+                selected_rows = edited_df[edited_df["선택"] == True]
+                
+                with n_save_col1:
+                    n_rows_label = f"☑️ 선택된 {len(selected_rows)}개 항목을 노션에 저장합니다"
+                    st.caption(n_rows_label)
+                with n_save_col2:
+                    save_btn = st.button(
+                        "📤 노션에 저장하기",
+                        type="primary",
+                        use_container_width=True,
+                        key="save_to_notion",
+                    )
+
+                if save_btn:
+                    with st.spinner("노션에 저장 중..."):
+                        saved_count = 0
+                        failed_count = 0
+                        last_error = ""
+                        
+                        if len(selected_rows) == 0:
+                            st.warning("선택된 항목이 없습니다.")
+                        else:
+                            for _, row in selected_rows.iterrows():
+                                res = save_ad_reference_to_notion(
+                                    token=notion_token,
+                                    database_id=notion_db_id,
+                                    ad_copy=str(row.get("광고 카피", "")),
+                                    reference_url=str(row.get("레퍼런스 링크", "")),
+                                    brand=str(row.get("브랜드", "")),
+                                    status=str(row.get("진행 여부", "검토중")),
+                                    date=str(row.get("날짜", str(date_type.today()))),
+                                    keyword=kw_used,
+                                )
+                                if res["ok"]:
+                                    saved_count += 1
+                                else:
+                                    failed_count += 1
+                                    last_error = res.get("error", "알 수 없는 에러")
+
+                    if failed_count == 0:
+                        st.success(f"✅ {saved_count}개 항목이 노션에 저장되었습니다!")
+                        st.balloons()
+                    else:
+                        st.warning(f"저장 완료: {saved_count}개 성공, {failed_count}개 실패")
+                        st.error(f"실패 원인 (마지막 에러): {last_error}")
 
 # -------------------------------------------------------------------
 # STEP 1.5: 실시간 키워드 분석 및 대본 생성 (신규)
@@ -534,6 +844,7 @@ with col_v1:
             ("🐟 [Fish Audio] 건강한 여성 목소리", "fish_0340360282524779a06c68b76d80f773"),
             ("🐟 [Fish Audio] 3040 건강정보 단호한 아내", "fish_d93d9edfdc7649ce9fa573cfa7be504f"),
             ("🐟 [Fish Audio] 활기찬 건강 보이스", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
+            ("🐟 [Fish Audio] 신규 보이스", "fish_ed763b05d90b470284150bbc49a8d9e1"),
             ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom"),
             ("---", ""),
             ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),
@@ -569,7 +880,7 @@ with col_v2:
     else:
         actual_voice_choice = selected_voice
 
-from naver_clip_adforge import build_capcut_project_for_naver_clip
+from naver_clip_adforge import build_capcut_project_for_naver_clip, build_final_video_with_caption_os, build_capcut_project_with_caption_os_overlay
 
 # -------------------------------------------------------------------
 # 📹 레퍼런스 영상 학습 (스타일 프로필 생성)
@@ -785,21 +1096,32 @@ def _find_default(opts_labels, ko_name):
 
 def _make_role_ui(role_key, tab_label, defaults):
     """역할 하나의 탭 UI를 렌더링하고 설정 dict 반환."""
+    # session_state에 아직 값이 없을 때만 기본값을 미리 주입
+    # → index= 파라미터와 session_state가 동시에 존재하는 충돌 방지
+    if f"{role_key}_font" not in st.session_state:
+        st.session_state[f"{role_key}_font"] = (
+            defaults["font"] if defaults["font"] in FONT_NAMES else FONT_NAMES[0]
+        )
+    if f"{role_key}_size" not in st.session_state:
+        st.session_state[f"{role_key}_size"] = defaults["size"]
+    if f"{role_key}_intro" not in st.session_state:
+        st.session_state[f"{role_key}_intro"] = _find_default(intro_labels, defaults["intro_ko"])
+    if f"{role_key}_loop" not in st.session_state:
+        st.session_state[f"{role_key}_loop"] = _find_default(loop_labels, defaults["loop_ko"])
+    if f"{role_key}_outro" not in st.session_state:
+        st.session_state[f"{role_key}_outro"] = _find_default(outro_labels, defaults.get("outro_ko", "(없음)"))
+
     c1, c2 = st.columns(2)
     with c1:
-        font = st.selectbox("폰트", FONT_NAMES, key=f"{role_key}_font",
-                            index=FONT_NAMES.index(defaults["font"]) if defaults["font"] in FONT_NAMES else 0)
-        size = st.slider("글자 크기", 10.0, 30.0, defaults["size"], 0.5, key=f"{role_key}_size")
+        font = st.selectbox("폰트", FONT_NAMES, key=f"{role_key}_font")
+        size = st.slider("글자 크기", 10.0, 30.0, step=0.5, key=f"{role_key}_size")
     with c2:
         intro_i = st.selectbox("등장 애니메이션", range(len(intro_labels)), key=f"{role_key}_intro",
-                               format_func=lambda i: intro_labels[i],
-                               index=_find_default(intro_labels, defaults["intro_ko"]))
+                               format_func=lambda i: intro_labels[i])
         loop_i  = st.selectbox("반복 애니메이션", range(len(loop_labels)), key=f"{role_key}_loop",
-                               format_func=lambda i: loop_labels[i],
-                               index=_find_default(loop_labels, defaults["loop_ko"]))
+                               format_func=lambda i: loop_labels[i])
         outro_i = st.selectbox("퇴장 애니메이션", range(len(outro_labels)), key=f"{role_key}_outro",
-                               format_func=lambda i: outro_labels[i],
-                               index=_find_default(outro_labels, defaults.get("outro_ko", "(없음)")))
+                               format_func=lambda i: outro_labels[i])
     return {
         "font_name": font,
         "font_path": AVAILABLE_FONTS.get(font, ""),
@@ -808,6 +1130,7 @@ def _make_role_ui(role_key, tab_label, defaults):
         "loop":  loop_opts[loop_i][1],
         "outro": outro_opts[outro_i][1],
     }
+
 
 # 역할별 기본값
 ROLE_DEFAULTS = {
@@ -909,64 +1232,202 @@ with st.expander("✍️ 자막 스타일 직접 설정 (역할별 폰트·애�
         manual_style["normal"] = role_configs.get("empathy", role_configs.get("hook", {}))
         st.success("✅ 템플릿 스타일 적용 준비 완료! AI가 역할을 분류하고 템플릿 스타일을 적용합니다.")
 
-if st.button("🎬 캡컷 프로젝트 1초 자동 생성", width="stretch"):
-    if not script_text.strip():
-        st.error("대본이 비어있습니다!")
-    else:
-        with st.spinner("CapCut 초안 프로젝트 렌더링 중..."):
-            try:
-                if actual_voice_choice == "":
-                    st.error("올바른 성우를 선택해주세요.")
-                elif actual_voice_choice.startswith("el_") and not el_api_key:
-                    st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
-                elif actual_voice_choice.startswith("fish_") and not fish_api_key:
-                    st.error("Fish Audio API Key를 입력해야 합니다.")
-                elif actual_voice_choice == "fish_":
-                    st.error("Fish Audio Reference ID를 입력해야 합니다.")
-                else:
-                    os.environ["FISH_API_KEY"] = fish_api_key
-                    
-                    # AI 연출 지시서 준비
-                    cd_data = None
-                    if use_ai_direction or manual_style:
-                        # 템플릿 스타일 사용 시에도 AI 역할 분류는 필수
-                        active_profile = st.session_state.get("active_style_profile")
-                        active_intensity = st.session_state.get("max_intensity", "medium")
+col_render1, col_render2, col_render3 = st.columns(3)
 
-                        if "creative_direction" in st.session_state:
-                            cd_data = st.session_state["creative_direction"]
-                        else:
-                            from creative_director import CreativeDirector
-                            cd = CreativeDirector(
-                                max_intensity=active_intensity,
-                                style_profile=active_profile
-                            )
-                            if manual_style and not use_ai_direction:
-                                # 템플릿 모드: 규칙 기반으로 역할만 빠르게 분류
-                                with st.spinner("🔍 AI 역할 분류 중 (훅/공감/증거/솔루션/CTA)..."):
-                                    cd_data = cd._fallback_analysis(script_text)
-                            else:
-                                cd_data = cd._fallback_analysis(script_text)
+with col_render1:
+    st.markdown("#### 1. 캡컷 프로젝트 생성 (수동 편집용)")
+    
+    # --- 템플릿 선택 기능 추가 ---
+    from naver_clip_adforge import get_capcut_projects
+    capcut_projects = get_capcut_projects()
+    
+    st.markdown("<div style='background-color: #F0F4F8; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid #00E676;'>"
+                "<span style='font-size: 13px;'>✨ <b>SuperShorts 스타일 템플릿</b><br>미리 만들어둔 캡컷 프로젝트(카드형, 이미지 슬롯 등)의 레이아웃을 그대로 재활용합니다.</span></div>", unsafe_allow_html=True)
+    
+    template_options = {"none": "자동 생성 (기본 배치)"}
+    for name, folder in capcut_projects:
+        template_options[folder] = f"🖼️ {name}"
+        
+    selected_capcut_template = st.selectbox(
+        "🎞️ 영상 레이아웃 템플릿 선택", 
+        options=list(template_options.keys()), 
+        format_func=lambda x: template_options[x],
+        help="미리 만들어둔 캡컷 프로젝트를 선택하면 텍스트와 오디오만 새롭게 교체합니다."
+    )
 
-                    project_name = build_capcut_project_for_naver_clip(
-                        script_text=script_text,
-                        keyword=selected_keyword,
-                        pexels_api_key=pexels_api_key,
-                        pixabay_api_key=pixabay_api_key,
-                        voice=actual_voice_choice,
-                        el_api_key=el_api_key,
-                        local_media_folder=local_media_folder,
-                        media_mapping=media_mapping,
-                        creative_direction=cd_data,
-                        manual_style=manual_style,
-                    )
-                    st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
-                    if manual_style:
-                        st.info("🎨 AI가 역할을 분류하고 템플릿 스타일을 적용했습니다. 캡컷에서 자막을 확인하세요!")
-                    elif cd_data:
-                        st.info("🎨 AI 크리에이티브 연출이 적용되었습니다. 캡컷에서 자막 애니메이션을 확인하세요!")
+    if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            with st.spinner("CapCut 초안 프로젝트 렌더링 중..."):
+                try:
+                    if actual_voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
                     else:
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        
+                        # AI 연출 지시서 준비
+                        cd_data = None
+                        if use_ai_direction or manual_style:
+                            # 템플릿 스타일 사용 시에도 AI 역할 분류는 필수
+                            active_profile = st.session_state.get("active_style_profile")
+                            active_intensity = st.session_state.get("max_intensity", "medium")
+
+                            if "creative_direction" in st.session_state:
+                                cd_data = st.session_state["creative_direction"]
+                            else:
+                                from creative_director import CreativeDirector
+                                cd = CreativeDirector(
+                                    max_intensity=active_intensity,
+                                    style_profile=active_profile
+                                )
+                                if manual_style and not use_ai_direction:
+                                    # 템플릿 모드: 규칙 기반으로 역할만 빠르게 분류
+                                    with st.spinner("🔍 AI 역할 분류 중 (훅/공감/증거/솔루션/CTA)..."):
+                                        cd_data = cd._fallback_analysis(script_text)
+                                else:
+                                    cd_data = cd._fallback_analysis(script_text)
+
+                        project_name = build_capcut_project_for_naver_clip(
+                            script_text=script_text,
+                            keyword=selected_keyword,
+                            pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            local_media_folder=local_media_folder,
+                            media_mapping=media_mapping,
+                            creative_direction=cd_data,
+                            manual_style=manual_style,
+                            template_folder=selected_capcut_template if selected_capcut_template != "none" else None
+                        )
+                        st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
+                        if manual_style:
+                            st.info("🎨 AI가 역할을 분류하고 템플릿 스타일을 적용했습니다. 캡컷에서 자막을 확인하세요!")
+                        elif cd_data:
+                            st.info("🎨 AI 크리에이티브 연출이 적용되었습니다. 캡컷에서 자막 애니메이션을 확인하세요!")
+                        else:
+                            st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+
+with col_render2:
+    st.markdown("#### 2. 완제품 영상 직접 렌더링 (caption-os 자동화)")
+    
+    col_opt1, col_opt2 = st.columns(2)
+    with col_opt1:
+        mood_opts = {
+            "professional": "💼 전문적/정보성 (신뢰감)",
+            "old_money": "☕ 올드머니 (고급스러움)",
+            "girly": "🎀 걸리쉬 (러블리)",
+            "y2k_deco": "✨ 다꾸/Y2K (화려함)",
+            "street_hype": "🛹 스트릿 (하이텐션)",
+            "soft_natural": "🌿 소프트/내추럴 (잔잔함)",
+            "classic_editorial": "📰 잡지/클래식",
+            "retro_70s": "📻 레트로 70s"
+        }
+        caption_mood = st.selectbox("🎨 화면 무드 (색상/분위기)", options=list(mood_opts.keys()), format_func=lambda x: mood_opts[x])
+        
+    with col_opt2:
+        caption_style_raw = st.selectbox("✨ 자막 애니메이션", ["karaoke (단어별 팝업)", "kinetic3d (3D 모션)", "keyword (키워드 강조)", "minimal (심플 페이드업)"])
+        caption_style = caption_style_raw.split(" ")[0]
+    
+    if st.button("🚀 완제품 영상 1초 자동 생성", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            with st.spinner(f"FFmpeg 합성 및 {caption_style} 무드로 자막 렌더링 중... (최대 1~2분 소요)"):
+                try:
+                    if actual_voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
+                    else:
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        final_mp4 = build_final_video_with_caption_os(
+                            script_text=script_text,
+                            keyword=selected_keyword,
+                            pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            local_media_folder=local_media_folder,
+                            media_mapping=media_mapping,
+                            mood=caption_mood,
+                            style=caption_style
+                        )
+                        st.success("🎉 완제품 렌더링 성공!")
+                        st.video(final_mp4)
+                        
+                        with open(final_mp4, "rb") as f:
+                            st.download_button("💾 완성된 영상 다운로드", f, file_name=os.path.basename(final_mp4), mime="video/mp4", type="primary")
+                except Exception as e:
+                    st.error(f"렌더링 실패: {e}")
+
+with col_render3:
+    st.markdown("#### 3. 캡컷 프로젝트 내보내기 (투명 자막 오버레이)")
+    
+    col_opt3, col_opt4 = st.columns(2)
+    with col_opt3:
+        mood_opts_draft = {
+            "professional": "💼 전문적/정보성 (신뢰감)",
+            "old_money": "☕ 올드머니 (고급스러움)",
+            "girly": "🎀 걸리쉬 (러블리)",
+            "y2k_deco": "✨ 다꾸/Y2K (화려함)",
+            "street_hype": "🛹 스트릿 (하이텐션)",
+            "soft_natural": "🌿 소프트/내추럴 (잔잔함)",
+            "classic_editorial": "📰 잡지/클래식",
+            "retro_70s": "📻 레트로 70s"
+        }
+        caption_mood_draft = st.selectbox("🎨 자막 무드", options=list(mood_opts_draft.keys()), format_func=lambda x: mood_opts_draft[x], key="draft_mood")
+        
+    with col_opt4:
+        caption_style_raw_draft = st.selectbox("✨ 애니메이션", ["karaoke (단어별 팝업)", "kinetic3d (3D 모션)", "keyword (키워드 강조)", "minimal (심플 페이드업)"], key="draft_style")
+        caption_style_draft = caption_style_raw_draft.split(" ")[0]
+    
+    if st.button("🚀 캡컷 초안 1초 생성 (투명 자막 포함)", use_container_width=True):
+        if not script_text.strip():
+            st.error("대본이 비어있습니다!")
+        else:
+            with st.spinner("투명 자막 오버레이(.mov) 렌더링 및 캡컷 프로젝트 구성 중... (최대 1~2분 소요)"):
+                try:
+                    if actual_voice_choice == "":
+                        st.error("올바른 성우를 선택해주세요.")
+                    elif actual_voice_choice.startswith("el_") and not el_api_key:
+                        st.error("ElevenLabs 성우를 사용하려면 API Key를 입력해야 합니다.")
+                    elif actual_voice_choice.startswith("fish_") and not fish_api_key:
+                        st.error("Fish Audio API Key를 입력해야 합니다.")
+                    elif actual_voice_choice == "fish_":
+                        st.error("Fish Audio Reference ID를 입력해야 합니다.")
+                    else:
+                        os.environ["FISH_API_KEY"] = fish_api_key
+                        project_name = build_capcut_project_with_caption_os_overlay(
+                            script_text=script_text,
+                            keyword=selected_keyword,
+                            pexels_api_key=pexels_api_key,
+                            pixabay_api_key=pixabay_api_key,
+                            voice=actual_voice_choice,
+                            el_api_key=el_api_key,
+                            local_media_folder=local_media_folder,
+                            media_mapping=media_mapping,
+                            mood=caption_mood_draft,
+                            style=caption_style_draft
+                        )
+                        st.success(f"🎉 캡컷 프로젝트 '{project_name}' 초안 생성 완료!")
                         st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
-            except Exception as e:
-                st.error(f"오류 발생: {e}")
+                        st.info("메인 트랙의 배경 영상들을 원하시는 대로 편집하시면 됩니다. 최상단 트랙의 자막 비디오는 투명 배경이므로 글자들만 깔끔하게 얹어집니다.")
+                except Exception as e:
+                    st.error(f"오류 발생: {e}")
+
+
 

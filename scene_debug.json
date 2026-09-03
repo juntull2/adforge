@@ -1,0 +1,33 @@
+{
+  "intent": {
+    "narration": "하루 종일 컴퓨터 앞에 앉아 목이 뻐근하죠?",
+    "subject": "office worker",
+    "action": "rubbing neck",
+    "object": "computer",
+    "context": null,
+    "emotion": "pain",
+    "avoid": []
+  },
+  "candidates_evaluated": [
+    {
+      "rank": 1,
+      "asset_id": "1",
+      "provider": "mock",
+      "decision": "REJECT",
+      "reason": "Mock REJECT",
+      "latency": 0.0,
+      "api_retry_count": 0,
+      "confidence": ""
+    },
+    {
+      "rank": 2,
+      "asset_id": "2",
+      "provider": "mock",
+      "decision": "PASS",
+      "reason": "Mock PASS",
+      "latency": 0.0,
+      "api_retry_count": 0,
+      "confidence": ""
+    }
+  ]
+}

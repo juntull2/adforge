@@ -6,6 +6,16 @@ import glob
 import asyncio
 import edge_tts
 import pycapcut as cc
+
+# Monkey patch pycapcut SegmentAnimations to fix video animation export bug
+_original_export_json = cc.animation.SegmentAnimations.export_json
+def _patched_export_json(self):
+    data = _original_export_json(self)
+    if any(a.export_json().get("material_type") == "video" for a in self.animations):
+        data["type"] = "video_animation"
+    return data
+cc.animation.SegmentAnimations.export_json = _patched_export_json
+
 from pydub import AudioSegment as PydubAudio
 from pydub.silence import detect_nonsilent
 
@@ -686,6 +696,49 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
     return project_name
 
+def apply_context_aware_keyframes(v_seg, text, scale_factor, duration_us):
+    import pycapcut as cc
+    text = text.replace(" ", "")
+    base_s = scale_factor
+    
+    if any(w in text for w in ["갑자기", "충격", "놀라운", "하지만", "그러나", "그런데", "반전", "비밀"]):
+        # 다이나믹 줌인
+        try:
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, min(1000000, duration_us), base_s * 1.25)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, min(1000000, duration_us), base_s * 1.25)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s * 1.3)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s * 1.3)
+        except Exception as e: print('KF ERROR:', e)
+    elif any(w in text for w in ["결국", "그래서", "시간이지나", "부드러운", "편안한", "마침내", "자연스럽게"]):
+        # 페이드인 + 느린 줌아웃
+        try:
+            v_seg.add_keyframe(cc.KeyframeProperty.alpha, 0, 0.0)
+            v_seg.add_keyframe(cc.KeyframeProperty.alpha, min(800000, duration_us), 1.0)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.1)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.1)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s)
+        except Exception as e: print('KF ERROR:', e)
+    elif any(w in text for w in ["첫째", "둘째", "셋째", "다음으로", "그리고", "또한", "게다가"]):
+        # 크기 1.15배 확대 후 좌에서 우로 무빙
+        try:
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.15)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.15)
+            v_seg.add_keyframe(cc.KeyframeProperty.position_x, 0, -100)
+            v_seg.add_keyframe(cc.KeyframeProperty.position_x, duration_us, 100)
+        except Exception as e: print('KF ERROR:', e)
+    else:
+        # 잔잔한 줌인
+        try:
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s * 1.1)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s * 1.1)
+        except Exception as e: print('KF ERROR:', e)
+
+
 def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None, creative_direction=None, manual_style=None):
     if template_folder and template_folder != "none":
         return build_from_template(script_text, voice, el_api_key, template_folder)
@@ -833,6 +886,11 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 clip_settings = ClipSettings(scale_x=scale_factor, scale_y=scale_factor)
                 
                 v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange, clip_settings=clip_settings)
+                try:
+                    apply_context_aware_keyframes(v_seg, clean_sentence, scale_factor, duration_us=tgt_timerange.duration)
+                except Exception as e:
+                    print(f"  (키프레임 애니메이션 적용 오류: {e})")
+
                 script_file.add_segment(v_seg, track_name="메인_비디오_트랙")
             except Exception as ve:
                 print(f"  (비디오 소스 연동 알림: {ve})")
@@ -1049,6 +1107,397 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
     print(f"\n[완료] [AI더빙 + 비디오 컷 + 잘난체 자막] 100% 자동 완성! 초안: '{project_name}'")
     return project_name
+
+from caption_engine import generate_plan_json, render_caption_frames, composite_final_video
+
+def build_final_video_with_caption_os(script_text, keyword, pexels_api_key, pixabay_api_key, voice, el_api_key, local_media_folder, media_mapping, mood="professional", style="karaoke"):
+    import time
+    import uuid
+    import os
+    import re
+    import asyncio
+    import subprocess
+    from pydub import AudioSegment as PydubAudio
+    
+    project_name = f"AutoRender_{int(time.time())}_{uuid.uuid4().hex[:6]}"
+    
+    SENIOR_VIDEO_CONTEXTS = [
+        "senior exercise", "elderly gentle exercise", "older adult workout",
+        "senior fitness", "elderly stretching", "senior healthy lifestyle",
+        "older woman exercise home", "gentle senior movement"
+    ]
+    import random
+    senior_ctx = random.choice(SENIOR_VIDEO_CONTEXTS)
+    if keyword:
+        stock_search_keywords = [keyword, senior_ctx]
+    else:
+        stock_search_keywords = [senior_ctx, "abstract background"]
+    
+    stock_videos = []
+
+    temp_dir = os.path.join(os.getcwd(), "temp_videos", project_name)
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    temp_audio_dir = os.path.join(os.getcwd(), "temp_audio")
+    os.makedirs(temp_audio_dir, exist_ok=True)
+
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
+    
+    current_time_us = 0
+    video_usage_tracker = {v_file: 0 for v_file in stock_videos}
+    last_used_video = ""
+    if media_mapping is None:
+        media_mapping = {}
+
+    phrases_data = []
+    clip_list_path = os.path.join(temp_dir, "clips.txt")
+    clip_list = []
+    
+    import subprocess
+    from pydub import AudioSegment as PydubAudio
+
+    for s_idx, struct in enumerate(sentence_structures, 1):
+        full_sentence = struct["full_sentence"]
+        phrases = struct["phrases"]
+        mapping_idx = s_idx - 1
+
+        target_media_filename = media_mapping.get(mapping_idx)
+        clean_sentence = full_sentence.strip()
+        cleaned_phrases = [p.strip() for p in phrases if p.strip()]
+
+        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', clean_sentence).strip()
+        if not clean_audio_text:
+            continue
+
+        mp3_path = os.path.join(temp_audio_dir, f"{project_name}_s{s_idx}.mp3")
+        try:
+            if voice.startswith("el_"):
+                real_voice_id = voice.replace("el_", "")
+                if not el_api_key:
+                    raise Exception("ElevenLabs API Key가 없습니다.")
+                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
+            elif voice.startswith("fish_"):
+                fish_reference_id = voice.replace("fish_", "")
+                fish_api_key = os.environ.get("FISH_API_KEY", "")
+                if not fish_api_key:
+                    raise Exception("Fish Audio API Key가 없습니다.")
+                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
+            else:
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
+        except Exception as e:
+            print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
+            try:
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
+            except Exception as e2:
+                raise Exception(f"오디오 생성 완전 실패: {e2}")
+
+        trim_audio_silence(mp3_path)
+        
+        audio = PydubAudio.from_file(mp3_path)
+        sentence_duration_us = len(audio) * 1000  # ms to us
+
+        v_file_to_use = None
+        is_local_media = False
+
+        if target_media_filename and local_media_folder:
+            potential_path = os.path.join(local_media_folder, target_media_filename)
+            if os.path.exists(potential_path):
+                v_file_to_use = potential_path
+                is_local_media = True
+
+        if not v_file_to_use and stock_videos:
+            v_file_to_use = find_best_video_for_sentence(clean_sentence, stock_videos, last_used_video=last_used_video)
+            last_used_video = v_file_to_use
+
+        sentence_dur_sec = sentence_duration_us / 1000000.0
+        out_clip_path = os.path.join(temp_dir, f"clip_{s_idx}.mp4")
+
+        if v_file_to_use:
+            ext = os.path.splitext(v_file_to_use)[1].lower()
+            if ext in ['.jpg', '.jpeg', '.png']:
+                cmd_ffmpeg = [
+                    "ffmpeg", "-loop", "1", "-i", v_file_to_use, "-i", mp3_path,
+                    "-c:v", "libx264", "-t", str(sentence_dur_sec), "-c:a", "aac",
+                    "-b:a", "192k", "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1",
+                    "-pix_fmt", "yuv420p", "-shortest", "-y", out_clip_path
+                ]
+            else:
+                cmd_ffmpeg = [
+                    "ffmpeg", "-stream_loop", "-1", "-i", v_file_to_use, "-i", mp3_path,
+                    "-c:v", "libx264", "-t", str(sentence_dur_sec), "-c:a", "aac",
+                    "-b:a", "192k", "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1",
+                    "-pix_fmt", "yuv420p", "-y", out_clip_path
+                ]
+            subprocess.run(cmd_ffmpeg, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        else:
+            cmd_ffmpeg = [
+                "ffmpeg", "-f", "lavfi", "-i", "color=c=black:s=1080x1920", "-i", mp3_path,
+                "-c:v", "libx264", "-t", str(sentence_dur_sec), "-c:a", "aac",
+                "-b:a", "192k", "-pix_fmt", "yuv420p", "-y", out_clip_path
+            ]
+            subprocess.run(cmd_ffmpeg, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        clip_list.append(f"file 'clip_{s_idx}.mp4'\n")
+        
+        phrase_effective_lens = [calculate_effective_speech_length(p) for p in cleaned_phrases]
+        total_effective_len = sum(phrase_effective_lens) or 1.0
+        phrase_start_us = current_time_us
+
+        line_phrases = []
+        for p_idx, (phrase, eff_len) in enumerate(zip(cleaned_phrases, phrase_effective_lens)):
+            if p_idx == len(cleaned_phrases) - 1:
+                phrase_duration_us = (current_time_us + sentence_duration_us) - phrase_start_us
+            else:
+                phrase_duration_us = int(sentence_duration_us * (eff_len / total_effective_len))
+            
+            line_phrases.append({
+                "text": phrase,
+                "start_us": phrase_start_us,
+                "end_us": phrase_start_us + phrase_duration_us
+            })
+            phrase_start_us += phrase_duration_us
+
+        phrases_data.append({
+            "start_us": current_time_us,
+            "end_us": current_time_us + sentence_duration_us,
+            "phrases": line_phrases
+        })
+
+        current_time_us += sentence_duration_us
+
+    with open(clip_list_path, "w", encoding="utf-8") as f:
+        f.writelines(clip_list)
+        
+    base_video_path = os.path.join(temp_dir, "base_video.mp4")
+    concat_cmd = [
+        "ffmpeg", "-f", "concat", "-safe", "0", "-i", clip_list_path,
+        "-c", "copy", "-y", base_video_path
+    ]
+    subprocess.run(concat_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    
+    plan_path = os.path.join(temp_dir, "plan.json")
+    generate_plan_json(phrases_data, current_time_us, style=style, mood=mood, plan_out_path=plan_path)
+    
+    frames_dir = render_caption_frames(plan_path, current_time_us / 1000000.0, fps=30)
+    
+    outputs_dir = os.path.join(os.getcwd(), "outputs")
+    os.makedirs(outputs_dir, exist_ok=True)
+    final_output_path = os.path.join(outputs_dir, f"{project_name}_final.mp4")
+    
+    composite_final_video(base_video_path, frames_dir, final_output_path, fps=30)
+    return final_output_path
+
+import os
+import re
+import time
+import uuid
+import asyncio
+import subprocess
+from pydub import AudioSegment as PydubAudio
+
+import pycapcut as cc
+from pycapcut import Timerange, TrackType, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings
+from caption_engine import generate_plan_json, render_caption_frames, render_transparent_video
+
+def build_capcut_project_with_caption_os_overlay(script_text, keyword, pexels_api_key, pixabay_api_key, voice, el_api_key, local_media_folder, media_mapping, mood="professional", style="karaoke"):
+    project_name = f"AutoDraft_{int(time.time())}_{uuid.uuid4().hex[:6]}"
+    
+    SENIOR_VIDEO_CONTEXTS = [
+        "senior exercise", "elderly gentle exercise", "older adult workout",
+        "senior fitness", "elderly stretching", "senior healthy lifestyle",
+        "older woman exercise home", "gentle senior movement"
+    ]
+    import random
+    senior_ctx = random.choice(SENIOR_VIDEO_CONTEXTS)
+    if keyword:
+        stock_search_keywords = [keyword, senior_ctx]
+    else:
+        stock_search_keywords = [senior_ctx, "abstract background"]
+    
+    stock_videos = []
+    
+    with capcut_draft_lock:
+        local_app_data = os.environ.get("LOCALAPPDATA")
+        if not local_app_data:
+            local_app_data = os.path.expanduser("~\\AppData\\Local")
+        draft_folder_path = os.path.join(local_app_data, "CapCut", "User Data", "Projects", "com.lveditor.draft")
+        os.makedirs(draft_folder_path, exist_ok=True)
+        draft_folder = cc.DraftFolder(draft_folder_path)
+    
+        try:
+            script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
+        except (PermissionError, OSError) as e:
+            project_name = f"{project_name}_r{uuid.uuid4().hex[:4]}"
+            script_file = draft_folder.create_draft(project_name, width=1080, height=1920, fps=30, allow_replace=True)
+    
+        script_file.content["canvas_config"] = {"width": 1080, "height": 1920, "ratio": "9:16"}
+    
+        script_file.add_track(TrackType.video, track_name="메인_비디오_트랙")
+        script_file.add_track(TrackType.video, track_name="자막_오버레이_트랙")
+        script_file.add_track(TrackType.audio, track_name="더빙_트랙")
+
+    temp_dir = os.path.join(os.getcwd(), "temp_videos", project_name)
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    temp_audio_dir = os.path.join(os.getcwd(), "temp_audio")
+    os.makedirs(temp_audio_dir, exist_ok=True)
+
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
+    
+    current_time_us = 0
+    video_usage_tracker = {v_file: 0 for v_file in stock_videos}
+    last_used_video = ""
+    if media_mapping is None:
+        media_mapping = {}
+
+    phrases_data = []
+
+    for s_idx, struct in enumerate(sentence_structures, 1):
+        full_sentence = struct["full_sentence"]
+        phrases = struct["phrases"]
+        mapping_idx = s_idx - 1
+
+        target_media_filename = media_mapping.get(mapping_idx)
+        clean_sentence = full_sentence.strip()
+        cleaned_phrases = [p.strip() for p in phrases if p.strip()]
+
+        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', clean_sentence).strip()
+        if not clean_audio_text:
+            continue
+
+        mp3_path = os.path.join(temp_audio_dir, f"{project_name}_s{s_idx}.mp3")
+        try:
+            if voice.startswith("el_"):
+                real_voice_id = voice.replace("el_", "")
+                if not el_api_key:
+                    raise Exception("ElevenLabs API Key가 없습니다.")
+                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
+            elif voice.startswith("fish_"):
+                fish_reference_id = voice.replace("fish_", "")
+                fish_api_key = os.environ.get("FISH_API_KEY", "")
+                if not fish_api_key:
+                    raise Exception("Fish Audio API Key가 없습니다.")
+                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
+            else:
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
+        except Exception as e:
+            print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
+            try:
+                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
+            except Exception as e2:
+                raise Exception(f"오디오 생성 완전 실패: {e2}")
+
+        trim_audio_silence(mp3_path)
+        
+        audio = PydubAudio.from_file(mp3_path)
+        sentence_duration_us = len(audio) * 1000
+
+        audio_mat = AudioMaterial(mp3_path)
+        audio_timerange = Timerange(current_time_us, sentence_duration_us)
+        script_file.add_segment(AudioSegment(audio_mat, audio_timerange), track_name="더빙_트랙")
+
+        v_file_to_use = None
+        is_local_media = False
+
+        if target_media_filename and local_media_folder:
+            potential_path = os.path.join(local_media_folder, target_media_filename)
+            if os.path.exists(potential_path):
+                v_file_to_use = potential_path
+                is_local_media = True
+
+        if not v_file_to_use and stock_videos:
+            v_file_to_use = find_best_video_for_sentence(clean_sentence, stock_videos, last_used_video=last_used_video)
+            last_used_video = v_file_to_use
+
+        if v_file_to_use:
+            try:
+                v_mat = VideoMaterial(v_file_to_use)
+                
+                if is_local_media:
+                    ext = os.path.splitext(v_file_to_use)[1].lower()
+                    if ext in ['.jpg', '.jpeg', '.png']:
+                        clip_dur = sentence_duration_us
+                        start_offset = 0
+                    else:
+                        clip_dur = min(v_mat.duration, sentence_duration_us)
+                        start_offset = 0
+                else:
+                    clip_dur = min(v_mat.duration, sentence_duration_us)
+                    start_offset = video_usage_tracker.get(v_file_to_use, 0)
+                    if start_offset + clip_dur > v_mat.duration:
+                        start_offset = 0
+                        clip_dur = min(v_mat.duration, sentence_duration_us)
+                    video_usage_tracker[v_file_to_use] = start_offset + clip_dur
+                    
+                src_timerange = Timerange(start_offset, clip_dur)
+                tgt_timerange = Timerange(current_time_us, clip_dur)
+                
+                v_width = getattr(v_mat, 'width', 0)
+                v_height = getattr(v_mat, 'height', 0)
+                if v_width and v_height:
+                    scale_factor = max(1080.0 / v_width, 1920.0 / v_height)
+                else:
+                    scale_factor = 1.0
+                    
+                clip_settings = ClipSettings(scale_x=scale_factor, scale_y=scale_factor)
+                
+                v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange, clip_settings=clip_settings)
+                try:
+                    apply_context_aware_keyframes(v_seg, clean_sentence, scale_factor, duration_us=tgt_timerange.duration)
+                except Exception as e:
+                    print(f"  (키프레임 애니메이션 적용 오류: {e})")
+
+                script_file.add_segment(v_seg, track_name="메인_비디오_트랙")
+            except Exception as ve:
+                print(f"  (비디오 소스 연동 알림: {ve})")
+
+        phrase_effective_lens = [calculate_effective_speech_length(p) for p in cleaned_phrases]
+        total_effective_len = sum(phrase_effective_lens) or 1.0
+        phrase_start_us = current_time_us
+
+        line_phrases = []
+        for p_idx, (phrase, eff_len) in enumerate(zip(cleaned_phrases, phrase_effective_lens)):
+            if p_idx == len(cleaned_phrases) - 1:
+                phrase_duration_us = (current_time_us + sentence_duration_us) - phrase_start_us
+            else:
+                phrase_duration_us = int(sentence_duration_us * (eff_len / total_effective_len))
+            
+            line_phrases.append({
+                "text": phrase,
+                "start_us": phrase_start_us,
+                "end_us": phrase_start_us + phrase_duration_us
+            })
+            phrase_start_us += phrase_duration_us
+
+        phrases_data.append({
+            "start_us": current_time_us,
+            "end_us": current_time_us + sentence_duration_us,
+            "phrases": line_phrases
+        })
+
+        current_time_us += sentence_duration_us
+
+    # caption-os 렌더링 시작
+    plan_path = os.path.join(temp_dir, "plan.json")
+    generate_plan_json(phrases_data, current_time_us, style=style, mood=mood, plan_out_path=plan_path)
+    
+    frames_dir = render_caption_frames(plan_path, current_time_us / 1000000.0, fps=30)
+    
+    mov_path = os.path.join(temp_dir, "caption_overlay.mov")
+    render_transparent_video(frames_dir, mov_path, fps=30)
+    
+    # 생성된 투명 비디오를 캡컷 오버레이 트랙에 추가
+    cap_mat = VideoMaterial(mov_path)
+    cap_tgt_timerange = Timerange(0, cap_mat.duration)
+    cap_src_timerange = Timerange(0, cap_mat.duration)
+    # 크기 조절 (화면 꽉 차게)
+    cap_v_seg = VideoSegment(cap_mat, cap_tgt_timerange, source_timerange=cap_src_timerange)
+    script_file.add_segment(cap_v_seg, track_name="자막_오버레이_트랙")
+
+    script_file.save()
+    print(f"\n[완료] 투명 자막 오버레이가 포함된 캡컷 프로젝트 초안: '{project_name}'")
+    return project_name
+
 
 if __name__ == "__main__":
     build_capcut_project_for_naver_clip("다피다 허리 찜질기", "허리아플때")
