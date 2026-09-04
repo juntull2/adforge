@@ -1,13 +1,18 @@
-comtypes==1.4.16
-ImageIO==2.37.4
-numpy==2.5.1
-pillow==12.3.0
-pycapcut==0.0.3
-pymediainfo==7.0.1
-uiautomation==2.0.29
+streamlit>=1.35.0
+pandas>=2.0.0
+numpy
+pillow
+requests
+beautifulsoup4
+curl_cffi>=0.7.0
+python-dotenv
+python-dateutil
 openai
 pydantic
-python-dotenv
-beautifulsoup4
-requests
-curl_cffi
+imageio
+pymediainfo
+pycapcut==0.0.3
+edge-tts
+pydub
+comtypes==1.4.16; sys_platform == 'win32'
+uiautomation==2.0.29; sys_platform == 'win32'
