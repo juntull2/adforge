@@ -1276,6 +1276,7 @@ with col_v1:
             ("🐟 [Fish Audio] 3040 건강정보 단호한 아내", "fish_d93d9edfdc7649ce9fa573cfa7be504f"),
             ("🐟 [Fish Audio] 활기찬 건강 보이스", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
             ("🐟 [Fish Audio] 신규 보이스", "fish_ed763b05d90b470284150bbc49a8d9e1"),
+            ("🐟 [Fish Audio] 진우-기쁨-", "fish_a9574d6184714eac96a0a892b719289f"),
             ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom"),
             ("---", ""),
             ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),
