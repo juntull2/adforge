@@ -690,7 +690,7 @@ with tab_single:
             # 기획 테이블 + 노션 저장
             st.markdown("---")
             st.markdown("#### 📋 기획 테이블 — 노션 저장용")
-            st.caption("아래 표를 확인하고 브랜드/진행 여부를 입력한 뒤 노션에 저장하세요.")
+            st.caption("아래 표를 확인하고 광고 계정명/진행 여부를 입력한 뒤 노션에 저장하세요.")
 
             from datetime import date as date_type
             _notion_rows = []
@@ -699,7 +699,7 @@ with tab_single:
                     "선택": True,
                     "광고 카피": _row.get("광고 카피", ""),
                     "레퍼런스 링크": _row.get("광고 보기", ""),
-                    "브랜드": _row.get("페이지명", ""),
+                    "광고 계정명": _row.get("페이지명", ""),
                     "진행 여부": "검토중",
                     "날짜": date_type.today(),
                 })
@@ -710,7 +710,7 @@ with tab_single:
                     "선택": st.column_config.CheckboxColumn("☑️ 선택", default=True, width="small"),
                     "광고 카피": st.column_config.TextColumn("📝 광고 카피", width="large"),
                     "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스 링크", width="medium"),
-                    "브랜드": st.column_config.TextColumn("🏷️ 브랜드", width="small"),
+                    "광고 계정명": st.column_config.TextColumn("🏷️ 광고 계정명", width="small"),
                     "진행 여부": st.column_config.SelectboxColumn(
                         "📌 진행 여부",
                         options=["검토중", "진행", "보류", "완료"],
@@ -776,10 +776,11 @@ with tab_single:
                                     database_id=_notion_db_id,
                                     ad_copy=str(_row.get("광고 카피", "")),
                                     reference_url=str(_row.get("레퍼런스 링크", "")),
-                                    brand=str(_row.get("브랜드", "")),
+                                    account_name=str(_row.get("광고 계정명", _row.get("브랜드", ""))),
                                     status=str(_row.get("진행 여부", "검토중")),
                                     date=str(_row.get("날짜", str(date_type.today()))),
                                     keyword=_kw,
+                                    page_name=str(_row.get("광고 계정명", "")),
                                 )
                                 if _res["ok"]:
                                     _saved += 1
