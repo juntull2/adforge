@@ -1355,20 +1355,20 @@ with st.expander("📹 레퍼런스 영상 학습 (스타일 프로필 생성)",
                     (f" 외 {len(mp4_files)-5}개" if len(mp4_files) > 5 else ""))
 
             if st.button("▶️ 레퍼런스 영상 분석 시작", type="primary"):
-                from reference_analyzer import ReferenceAnalyzer
-                analyzer = ReferenceAnalyzer(
-                    openrouter_api_key=os.environ.get("OPENROUTER_API_KEY", nvidia_api_key),
-                    nvidia_api_key=nvidia_api_key
-                )
-
-                progress_bar = st.progress(0.0)
-                status_text = st.empty()
-
-                def on_progress(frac, msg):
-                    progress_bar.progress(min(frac, 1.0))
-                    status_text.text(f"🔄 {msg}")
-
                 try:
+                    from reference_analyzer import ReferenceAnalyzer
+                    analyzer = ReferenceAnalyzer(
+                        openrouter_api_key=os.environ.get("OPENROUTER_API_KEY", nvidia_api_key),
+                        nvidia_api_key=nvidia_api_key
+                    )
+
+                    progress_bar = st.progress(0.0)
+                    status_text = st.empty()
+
+                    def on_progress(frac, msg):
+                        progress_bar.progress(min(frac, 1.0))
+                        status_text.text(f"🔄 {msg}")
+
                     profile = analyzer.analyze_batch(
                         mp4_files,
                         profile_name=ref_profile_name,
@@ -1391,8 +1391,13 @@ with st.expander("📹 레퍼런스 영상 학습 (스타일 프로필 생성)",
         st.error("폴더 경로를 찾을 수 없습니다.")
 
     # 저장된 프로필 로딩
-    from reference_analyzer import ReferenceAnalyzer
-    saved_profiles = ReferenceAnalyzer.list_profiles()
+    try:
+        from reference_analyzer import ReferenceAnalyzer
+        saved_profiles = ReferenceAnalyzer.list_profiles()
+    except Exception:
+        ReferenceAnalyzer = None
+        saved_profiles = []
+
     if saved_profiles:
         st.markdown("**💾 저장된 프로필 불러오기**")
         profile_options = {p["name"]: p for p in saved_profiles}
@@ -1402,16 +1407,20 @@ with st.expander("📹 레퍼런스 영상 학습 (스타일 프로필 생성)",
             key="profile_selector"
         )
         if selected_prof != "(사용 안 함)":
-            loaded = ReferenceAnalyzer.load_profile(selected_prof)
-            if loaded:
-                st.session_state["active_style_profile"] = loaded
-                st.session_state["active_profile_name"] = selected_prof
-                p = profile_options[selected_prof]
-                st.caption(
-                    f"📊 {p['source_count']}개 영상 기반 | "
-                    f"평균 컷 {p['avg_cut_interval']:.1f}초 | "
-                    f"총 {p['total_cuts']}컷 학습"
-                )
+            if ReferenceAnalyzer:
+                try:
+                    loaded = ReferenceAnalyzer.load_profile(selected_prof)
+                    if loaded:
+                        st.session_state["active_style_profile"] = loaded
+                        st.session_state["active_profile_name"] = selected_prof
+                        p = profile_options[selected_prof]
+                        st.caption(
+                            f"📊 {p['source_count']}개 영상 기반 | "
+                            f"평균 컷 {p['avg_cut_interval']:.1f}초 | "
+                            f"총 {p['total_cuts']}컷 학습"
+                        )
+                except Exception:
+                    pass
         elif selected_prof == "(사용 안 함)":
             st.session_state.pop("active_style_profile", None)
             st.session_state.pop("active_profile_name", None)

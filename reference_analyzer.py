@@ -18,8 +18,16 @@ from pathlib import Path
 from typing import Optional
 import numpy as np
 
-import cv2
-import whisper
+try:
+    import cv2
+except Exception:
+    cv2 = None
+
+try:
+    import whisper
+except Exception:
+    whisper = None
+
 import requests
 from dotenv import load_dotenv
 
@@ -86,6 +94,8 @@ class ReferenceAnalyzer:
         self._whisper_model = None  # 지연 로딩
 
     def _get_whisper_model(self):
+        if whisper is None:
+            raise RuntimeError("whisper 모듈이 설치되어 있지 않습니다.")
         if self._whisper_model is None:
             print("[ReferenceAnalyzer] Whisper 모델 로딩 중... (base)")
             self._whisper_model = whisper.load_model("base")
@@ -149,6 +159,8 @@ class ReferenceAnalyzer:
     # -------------------------------------------------------------------
     def extract_key_frames(self, video_path: str, cut_times: list, max_frames: int = 20) -> list:
         """컷 전환 직후 프레임을 추출하여 Base64로 반환"""
+        if cv2 is None:
+            raise RuntimeError("OpenCV (cv2) 모듈이 설치되어 있지 않습니다.")
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30
         frames = []
