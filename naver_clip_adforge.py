@@ -16,8 +16,23 @@ def _patched_export_json(self):
     return data
 cc.animation.SegmentAnimations.export_json = _patched_export_json
 
-from pydub import AudioSegment as PydubAudio
-from pydub.silence import detect_nonsilent
+# pydub import with fallback for Python 3.13+ where audioop was removed
+try:
+    import audioop
+except ImportError:
+    try:
+        import audioop_lts as audioop
+        import sys
+        sys.modules["audioop"] = audioop
+    except Exception:
+        pass
+
+try:
+    from pydub import AudioSegment as PydubAudio
+    from pydub.silence import detect_nonsilent
+except Exception:
+    PydubAudio = None
+    detect_nonsilent = None
 
 from auto_stock_downloader import fetch_and_download_mixkit_stock_videos
 from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextSegment, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings

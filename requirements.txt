@@ -14,5 +14,6 @@ pymediainfo
 pycapcut==0.0.3
 edge-tts
 pydub
+audioop-lts
 comtypes==1.4.16; sys_platform == 'win32'
 uiautomation==2.0.29; sys_platform == 'win32'
