@@ -10,6 +10,11 @@ temp_uploads/
 __pycache__/
 *.pyc
 
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
 # Outputs
 outputs/
 *.mp4
