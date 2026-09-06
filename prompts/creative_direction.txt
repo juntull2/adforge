@@ -28,79 +28,120 @@
 
 ## 역할별 연출 가이드
 
-각 역할에 따라 아래 프리셋 중 하나를 선택하거나 미세 조정하세요:
+## 역할별 연출 가이드 (전문 편집자 스타일: 깔끔한 가독성 & 절제미)
 
-### hook (후킹)
-- size: 15.0~17.0 (크게)
-- color: [1.0, 0.9, 0.0] (노란색) 또는 [1.0, 0.3, 0.1] (주황빨강)
+모든 자막은 9:16 세로 화면 하단 세이프존에 **반투명 라운드 블랙 캡슐**이 깔려 있으므로, 테두리는 얇고 정돈되게(16~22), 자막 떨림(루프 진동)은 전면 배제하여 가독성을 극대화합니다:
+
+### hook (후킹 - 첫 1~3초)
+- size: 16.0~17.0 (크게)
+- color: [1.0, 0.9, 0.0] (시선 강탈 노란색)
 - bold: true
-- border_width: 40.0~50.0 (두껍게)
-- text_intro 추천: "弹出", "故障", "冲屏位移", "放大", "MC爆炸"
-- text_loop_anim 추천: "颤抖_II", "闪动脉冲", "心跳"
+- border_width: 20.0~24.0
+- text_intro: "弹出" (깔끔한 팝 진입)
+- text_loop_anim: null (자막이 계속 덜덜 떨리는 AI티 방지를 위해 루프 애니메이션 절대 금지)
+- transition_out: "White_Flash" (다음 씬 전환 시 강렬한 화이트 플래시)
 
-### empathy (공감)
-- size: 13.5~14.5
-- color: [1.0, 1.0, 1.0] (흰색)
+### empathy (공감 / 문제 제기)
+- size: 14.0
+- color: [1.0, 1.0, 1.0] (깔끔한 화이트)
 - bold: true
-- border_width: 20.0~30.0
-- text_intro 추천: "渐显", "向上滑动", "模糊"
-- text_loop_anim: null (없음)
-
-### agitate (자극)
-- size: 14.5~15.5
-- color: [1.0, 0.6, 0.2] (주황) 또는 [1.0, 0.4, 0.4] (연빨강)
-- bold: true
-- border_width: 30.0~40.0
-- text_intro 추천: "故障", "模糊", "闪动"
-- text_loop_anim 추천: "晃动", "颤抖_II"
-
-### evidence (증거)
-- size: 13.0~14.0
-- color: [0.85, 1.0, 0.85] (연두) 또는 [0.8, 0.95, 1.0] (연하늘)
-- bold: false
-- border_width: 18.0~25.0
-- text_intro 추천: "打字机", "逐字", "渐显"
+- border_width: 16.0
+- text_intro: "渐显" (부드러운 페이드)
 - text_loop_anim: null
+- transition_out: "none" (자연스러운 하드 컷)
 
-### solution (해결책)
-- size: 14.0~15.0
-- color: [0.7, 0.95, 1.0] (하늘) 또는 [1.0, 1.0, 1.0] (흰색)
+### agitate (문제 심화 / 자극)
+- size: 14.5
+- color: [1.0, 0.85, 0.7] (연한 피치/아이보리)
 - bold: true
-- border_width: 25.0~35.0
-- text_intro 추천: "渐显", "向上滑动", "弹出"
-- text_loop_anim: null 또는 "漂浮"
-
-### usp (차별점 강조)
-- size: 14.5~16.0
-- color: [1.0, 1.0, 1.0] (흰색)
-- bold: true
-- border_width: 35.0~45.0 (테두리 강조)
-- text_intro 추천: "放大", "弹出", "冲屏位移"
-- text_loop_anim 추천: "放大缩小", "闪动脉冲"
-
-### cta (행동 유도)
-- size: 16.0~18.0 (가장 크게)
-- color: [1.0, 0.25, 0.25] (빨강) 또는 [1.0, 0.9, 0.0] (노란)
-- bold: true
-- border_width: 45.0~55.0
-- text_intro 추천: "冲屏位移", "放大", "弹出", "MC爆炸"
-- text_loop_anim 추천: "心跳", "闪动脉冲", "放大缩小"
-
-### transition (전환)
-- size: 13.0~14.0
-- color: [0.8, 0.8, 0.8] (연회색)
-- bold: false
-- border_width: 15.0~20.0
-- text_intro 추천: "渐显"
+- border_width: 18.0
+- text_intro: "渐显"
 - text_loop_anim: null
+- transition_out: "none"
 
-### normal (일반)
+### evidence (증거 / B/A 비교)
+- size: 13.5
+- color: [0.9, 1.0, 0.9] (신뢰를 주는 연민트)
+- bold: true
+- border_width: 16.0
+- text_intro: "渐显"
+- text_loop_anim: null
+- transition_out: "none"
+
+### solution (해결책 / 제품 등장 전환점)
+- size: 15.0
+- color: [0.75, 0.95, 1.0] (청량한 스카이블루)
+- bold: true
+- border_width: 18.0
+- text_intro: "弹出"
+- text_loop_anim: null
+- transition_out: "Snap_Zoom" (제품 최초 공개 시 역동적 스냅 줌 전환)
+
+### usp (핵심 차별점)
+- size: 14.5
+- color: [1.0, 1.0, 1.0]
+- bold: true
+- border_width: 18.0
+- text_intro: "渐显"
+- text_loop_anim: null
+- transition_out: "none"
+
+### cta (행동 유도 / 클로징)
+- size: 16.0
+- color: [1.0, 0.9, 0.0] (주목도 높은 노랑)
+- bold: true
+- border_width: 22.0
+- text_intro: "弹出"
+- text_loop_anim: null
+- transition_out: "none"
+
+### transition (장면 전환 브릿지)
+- size: 13.5
+- color: [0.85, 0.85, 0.85]
+- bold: true
+- border_width: 16.0
+- text_intro: "渐显"
+- text_loop_anim: null
+- transition_out: "Whip_Tear" (빠른 화면 전환)
+
+### normal (일반 나레이션)
 - size: 14.0
 - color: [1.0, 1.0, 1.0]
 - bold: true
-- border_width: 25.0
-- text_intro 추천: "渐显"
+- border_width: 16.0
+- text_intro: "渐显"
 - text_loop_anim: null
+- transition_out: "none"
+
+## 🎥 비디오 연출 및 컷 전환 가이드 (Professional Editor Restraint)
+
+전문 영상 편집자는 **화면 전환 효과(Transition)를 남발하지 않습니다.** 컷의 80% 이상은 깔끔한 하드 컷(`none`)을 유지하고, **스토리의 결정적 변곡점(1~2곳)에서만** 임팩트 있게 사용합니다:
+
+### transition_out 규칙
+- `White_Flash`: 훅(첫 문장)이 끝나고 본론으로 들어가는 순간에만 1회 사용.
+- `Snap_Zoom` 또는 `Whip_Tear`: 고통/문제에서 **[제품 해결책이 처음 등장하는 피벗 순간]**에만 1회 사용.
+- 그 외 80% 이상의 일반 문장: 반드시 `"none"` (깔끔한 하드 컷) 지정! 컷마다 전환 효과를 넣으면 촌스러운 AI 템플릿 느낌이 납니다.
+
+### video_motion (카메라 무빙)
+- `punch_in`: 훅에서만 사용 (동영상은 원본 카메라 무빙 보존, 사진은 부드러운 1.08배 줌)
+- `slow_push`: 천천히 다가가는 안정적인 줌 (empathy, agitate, usp)
+- `slow_pull`: 전체 제품 실물 공개 줌아웃 (solution)
+- `pan_right`: 좌에서 우로 자연스러운 패닝 (evidence B/A 비교)
+- `pulse`: 클로징 부드러운 강조 (cta)
+
+## 🤖 영상 소스 추천 (source_type) 및 Hailuo AI 프롬프트 가이드
+
+영상 소스는 **[🤖 Hailuo AI 생성 영상]**과 **[📁 보유 사진(실물/상세/후기)]**의 하이브리드 조합이 원칙입니다:
+- `hailuo_ai`: 인물 감정/표정, 고통/고민 상황, 핸드헬드 일상, 만족스러운 미소, 시네마틱 B롤
+- `local_photo`: 실제 제품 실물/패키지, 상세페이지 특허/원리 그래픽, 샤오홍슈 비포/애프터 비교 등 신뢰도 증빙
+
+### Hailuo 프롬프트 작성 6단계 공식 (Hailuo 공식 엔지니어링 룰):
+1. **카메라 렌즈 & 무빙 (전면 배치)**: "realistic"이나 "4k" 대신 반드시 렌즈 명시 (`Shot on 85mm at f/2.8, shallow depth of field, subtle handheld camera sway`)
+2. **피사체/인물**: 주변에서 볼 수 있는 현실적 인물 (`a 20s East Asian woman with authentic facial features`)
+3. **구체적 행동 (사건의 절정에서 시작 / Mid-Action)**: 빌드업 없이 첫 프레임부터 절정 동작 (`starting mid-action: looking into bathroom mirror, gently touching a red blemish with a frustrated grimace`)
+4. **배경/장소**: 현실적인 일상 공간 (`in a warm modern bathroom interior`)
+5. **광원 명시 (Sourced Light)**: 명확한 광원 (`soft morning window daylight mixed with vanity mirror lights`)
+6. **질감 및 디테일 (플라스틱 피부 방지)**: `visible skin pores, authentic skin texture, natural flyaway hair, cinematic 9:16 vertical video`
 
 ## 출력 형식
 
@@ -115,16 +156,26 @@
       "role": "hook",
       "reasoning": "DA 4형식의 후킹 구간. 시선강탈 목적으로 강렬한 질문형 오프닝.",
       "psychology": "매몰비용 자극 - 기존에 써온 파스 비용을 환기",
+      "video_motion": "punch_in",
+      "transition_out": "White_Flash",
+      "source_type": "hailuo_ai",
+      "source_guide": "🤖 Hailuo 영상 권장 (거울 보며 트러블 고민하는 클로즈업 영상)",
+      "hailuo_prompt": "Shot on 85mm at f/2.8, subtle handheld camera sway, starting mid-action: a distressed 20s East Asian woman looking into bathroom mirror and gently pressing a red blemish on cheek with a frustrated grimace, warm modern bathroom, soft morning window light, visible skin pores, authentic skin texture, cinematic 9:16 vertical video",
+      "hook_variations": {
+        "var_a": "Shot on 85mm at f/2.8, handheld, starting mid-action: a worried 20s East Asian woman touching red blemish on cheek looking into mirror, morning bathroom light, visible skin pores, 9:16 vertical video",
+        "var_b": "Shot on 50mm lens, extreme close-up, starting mid-action: hands desperately applying makeup cushion over red skin trouble, anxious expression, visible skin texture, 9:16 vertical video",
+        "var_c": "Shot on 85mm at f/2.8, direct address, starting mid-action: a young East Asian person looking directly into camera with an exhausted sigh, touching face, authentic natural lighting, 9:16 vertical video"
+      },
       "subtitle_style": {
-        "size": 16.0,
+        "size": 16.5,
         "color": [1.0, 0.9, 0.0],
         "bold": true,
         "border_color": [0.0, 0.0, 0.0],
-        "border_width": 45.0
+        "border_width": 22.0
       },
       "text_intro": "弹出",
       "text_outro": null,
-      "text_loop_anim": "颤抖_II"
+      "text_loop_anim": null
     }
   ]
 }
@@ -133,9 +184,11 @@
 ## 중요 규칙
 
 1. 대본의 **모든 문장**에 대해 분석하세요. 빠뜨리지 마세요.
-2. text_intro, text_outro, text_loop_anim 값은 위 가이드에 명시된 이름만 사용하세요.
-3. 필요 없는 애니메이션은 null로 설정하세요. 모든 문장에 루프 애니메이션을 넣으면 산만합니다.
-4. hook과 cta에만 text_loop_anim을 적극적으로 사용하고, 나머지는 절제하세요.
-5. `reasoning`에는 왜 이 역할과 연출을 선택했는지 마케팅 지식 근거를 간단히 기술하세요.
-6. `psychology`에는 해당 문장에 적용된 설득 심리학 기법이 있으면 기술하세요. 없으면 null.
-7. JSON만 출력하세요. markdown 코드블록(```)도 포함하지 마세요.
+2. `source_type`은 `"hailuo_ai"` 또는 `"local_photo"` 중 하나를 지정하세요.
+3. `source_guide`에는 한국어로 권장 소스 유형과 촬영/배치 내용을 간결히 적으세요.
+4. `hailuo_prompt`는 위 6단계 공식에 맞춘 고품질 영문 프롬프트(9:16 vertical)로 작성하세요. `local_photo`인 경우에도 해당 장면에 어울리는 시네마틱 B롤 프롬프트를 함께 제공하세요.
+5. `role == "hook"`인 문장에는 `hook_variations` (var_a, var_b, var_c)를 반드시 포함하세요. hook이 아닌 문장에서는 `hook_variations`를 null로 설정하세요.
+6. text_intro, text_outro, text_loop_anim, video_motion, transition_out 값은 가이드에 명시된 이름만 사용하세요. 마지막 문장의 transition_out은 반드시 "none"으로 설정하세요.
+7. `reasoning`에는 왜 이 역할과 연출을 선택했는지 마케팅 지식 근거를 간단히 기술하세요.
+8. `psychology`에는 해당 문장에 적용된 설득 심리학 기법이 있으면 기술하세요. 없으면 null.
+9. JSON만 출력하세요. markdown 코드블록(```)도 포함하지 마세요.

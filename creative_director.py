@@ -18,53 +18,71 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # -------------------------------------------------------------------
-# 역할별 기본 프리셋 (LLM 호출 없이도 폴백으로 사용 가능)
+# 역할별 기본 프리셋 (전문 편집자 스타일: 절제된 트랜지션, 캡슐 자막 맞춤 외곽선, 루프 애니메이션 배제)
 # -------------------------------------------------------------------
 ROLE_PRESETS = {
     "hook": {
-        "size": 16.0, "color": [1.0, 0.9, 0.0], "bold": True,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 45.0,
-        "text_intro": "弹出", "text_outro": None, "text_loop_anim": "颤抖_II",
+        "size": 16.5, "color": [1.0, 0.9, 0.0], "bold": True,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 22.0,
+        "text_intro": "弹出", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "punch_in", "transition_out": "White_Flash",
+        "source_type": "hailuo_ai", "source_guide": "🤖 Hailuo 영상 권장 (스킵 방지용 시선 강탈 & 절정 동작 클로즈업)",
     },
     "empathy": {
         "size": 14.0, "color": [1.0, 1.0, 1.0], "bold": True,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 25.0,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 16.0,
         "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "slow_push", "transition_out": "none",
+        "source_type": "hailuo_ai", "source_guide": "🤖 Hailuo 영상 권장 (일상 속 고통/불안/고민 상황 연출)",
     },
     "agitate": {
-        "size": 15.0, "color": [1.0, 0.6, 0.2], "bold": True,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 35.0,
-        "text_intro": "故障", "text_outro": None, "text_loop_anim": "晃动",
-    },
-    "evidence": {
-        "size": 13.5, "color": [0.85, 1.0, 0.85], "bold": False,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 20.0,
-        "text_intro": "打字机", "text_outro": None, "text_loop_anim": None,
-    },
-    "solution": {
-        "size": 14.5, "color": [0.7, 0.95, 1.0], "bold": True,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 30.0,
-        "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
-    },
-    "usp": {
-        "size": 15.0, "color": [1.0, 1.0, 1.0], "bold": True,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 40.0,
-        "text_intro": "放大", "text_outro": None, "text_loop_anim": "放大缩小",
-    },
-    "cta": {
-        "size": 17.0, "color": [1.0, 0.25, 0.25], "bold": True,
-        "border_color": [1.0, 1.0, 1.0], "border_width": 50.0,
-        "text_intro": "冲屏位移", "text_outro": None, "text_loop_anim": "心跳",
-    },
-    "transition": {
-        "size": 13.5, "color": [0.8, 0.8, 0.8], "bold": False,
+        "size": 14.5, "color": [1.0, 0.85, 0.7], "bold": True,
         "border_color": [0.0, 0.0, 0.0], "border_width": 18.0,
         "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "slow_push", "transition_out": "none",
+        "source_type": "hailuo_ai", "source_guide": "🤖 Hailuo 영상 권장 (해결되지 않는 답답한 상황 연출)",
+    },
+    "evidence": {
+        "size": 13.5, "color": [0.9, 1.0, 0.9], "bold": True,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 16.0,
+        "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "pan_right", "transition_out": "none",
+        "source_type": "local_photo", "source_guide": "📁 보유 사진 권장 (샤오홍슈 B/A 비교 또는 상세페이지 후기)",
+    },
+    "solution": {
+        "size": 15.0, "color": [0.75, 0.95, 1.0], "bold": True,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 18.0,
+        "text_intro": "弹出", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "slow_pull", "transition_out": "Snap_Zoom",
+        "source_type": "local_photo", "source_guide": "📁 보유 사진 권장 (실제 제품 실물 누끼/언박싱/제형 컷)",
+    },
+    "usp": {
+        "size": 14.5, "color": [1.0, 1.0, 1.0], "bold": True,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 18.0,
+        "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "slow_push", "transition_out": "none",
+        "source_type": "local_photo", "source_guide": "📁 보유 사진 권장 (상세페이지 특허 성분/원리 그래픽)",
+    },
+    "cta": {
+        "size": 16.0, "color": [1.0, 0.9, 0.0], "bold": True,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 22.0,
+        "text_intro": "弹出", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "pulse", "transition_out": "none",
+        "source_type": "hailuo_ai", "source_guide": "🤖 Hailuo 영상 권장 (만족스러운 미소) + 제품 실물 컷",
+    },
+    "transition": {
+        "size": 13.5, "color": [0.85, 0.85, 0.85], "bold": True,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 16.0,
+        "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "punch_in", "transition_out": "Whip_Tear",
+        "source_type": "hailuo_ai", "source_guide": "🤖 Hailuo 영상 권장 (분위기 반전 컷)",
     },
     "normal": {
         "size": 14.0, "color": [1.0, 1.0, 1.0], "bold": True,
-        "border_color": [0.0, 0.0, 0.0], "border_width": 25.0,
+        "border_color": [0.0, 0.0, 0.0], "border_width": 16.0,
         "text_intro": "渐显", "text_outro": None, "text_loop_anim": None,
+        "video_motion": "slow_push", "transition_out": "none",
+        "source_type": "local_photo", "source_guide": "📁 보유 사진/영상 권장",
     },
 }
 
@@ -373,12 +391,19 @@ class CreativeDirector:
             if i not in existing_indices:
                 role = self._guess_role_simple(sentence, i, len(sentences))
                 preset = presets[role]
+                src_type, src_guide, h_prompt, h_vars = self.generate_hailuo_prompt(sentence, role)
                 direction["sentences"].append({
                     "index": i,
                     "text": sentence,
                     "role": role,
                     "reasoning": "자동 폴백 (LLM 분석 누락)",
                     "psychology": None,
+                    "video_motion": preset.get("video_motion", "slow_push"),
+                    "transition_out": "none" if i == len(sentences) - 1 else preset.get("transition_out", "none"),
+                    "source_type": src_type,
+                    "source_guide": src_guide,
+                    "hailuo_prompt": h_prompt,
+                    "hook_variations": h_vars,
                     "subtitle_style": {
                         "size": preset["size"],
                         "color": preset["color"],
@@ -395,15 +420,35 @@ class CreativeDirector:
         direction["sentences"].sort(key=lambda x: x.get("index", 0))
 
         # 각 항목 유효성 보정 + 강도 필터
-        for item in direction["sentences"]:
+        total_s = len(direction["sentences"])
+        for idx, item in enumerate(direction["sentences"]):
             role = item.get("role", "normal")
             if role not in valid_roles:
                 item["role"] = "normal"
                 role = "normal"
 
+            preset = presets[role]
+
+            # 비디오 모션 및 트랜지션 보정
+            if "video_motion" not in item or not item["video_motion"]:
+                item["video_motion"] = preset.get("video_motion", "slow_push")
+
+            if idx == total_s - 1:
+                item["transition_out"] = "none"
+            elif "transition_out" not in item or not item["transition_out"]:
+                item["transition_out"] = preset.get("transition_out", "none")
+
+            # 소스 추천 및 Hailuo 프롬프트 누락 시 자동 보충
+            if "source_type" not in item or not item["source_type"] or "hailuo_prompt" not in item or not item["hailuo_prompt"]:
+                src_type, src_guide, h_prompt, h_vars = self.generate_hailuo_prompt(item.get("text", ""), role)
+                item["source_type"] = item.get("source_type") or src_type
+                item["source_guide"] = item.get("source_guide") or src_guide
+                item["hailuo_prompt"] = item.get("hailuo_prompt") or h_prompt
+                if role == "hook" and not item.get("hook_variations"):
+                    item["hook_variations"] = h_vars
+
             # subtitle_style 누락 시 프리셋 적용
             if "subtitle_style" not in item or not item["subtitle_style"]:
-                preset = presets[role]
                 item["subtitle_style"] = {
                     "size": preset["size"],
                     "color": preset["color"],
@@ -411,13 +456,188 @@ class CreativeDirector:
                     "border_color": preset["border_color"],
                     "border_width": preset["border_width"],
                 }
+            else:
+                # LLM이 과도하게 두꺼운 외곽선 지정 시 캡슐 배경에 맞춰 정제
+                if "border_width" in item["subtitle_style"]:
+                    item["subtitle_style"]["border_width"] = min(float(item["subtitle_style"]["border_width"]), 22.0)
 
-            # 애니메이션 강도 필터 적용 (LLM이 bold를 골라도 max_intensity에 따라 다운그레이드)
+            # 애니메이션 강도 필터 적용
             item["text_intro"] = self._filter_animation(item.get("text_intro"), "intros")
             item["text_outro"] = self._filter_animation(item.get("text_outro"), "outros")
-            item["text_loop_anim"] = self._filter_animation(item.get("text_loop_anim"), "loops")
+            # 전문 편집자 원칙: 자막 떨림/루프 애니메이션 전면 배제 (가독성 및 모던 룩 보장)
+            item["text_loop_anim"] = None
 
         return direction
+
+    @staticmethod
+    def generate_hailuo_prompt(sentence: str, role: str) -> tuple:
+        """Hailuo AI 공식 6-Block 공식 및 마케팅 인사이트(인버티드 프롬프트/렌즈 명시/피부 질감) 기반 프롬프트 생성
+
+        Returns:
+            (source_type, source_guide, hailuo_prompt, hook_variations)
+        """
+        s = sentence.lower()
+
+        # 도메인 감지 (뷰티/피부 vs 허리/통증 vs 다이어트/체형 vs 일반)
+        is_skin = any(kw in s for kw in ["여드름", "트러블", "피부", "모공", "흉터", "각질", "세안", "붉은", "진정", "시카", "화장", "기초", "세럼", "크림", "톤"])
+        is_pain = any(kw in s for kw in ["허리", "파스", "속근육", "통증", "찜질", "결림", "어깨", "목", "근육", "쑤시", "아프", "뻐근"])
+        is_diet = any(kw in s for kw in ["붓기", "살", "다이어트", "체중", "뱃살", "라인", "감량", "식단", "부종"])
+
+        hook_variations = None
+
+        if role == "hook":
+            source_type = "hailuo_ai"
+            source_guide = "🤖 Hailuo 영상 권장 (스킵 방지용 시선 강탈 & 절정 동작 클로즈업)"
+            if is_skin:
+                if any(kw in s for kw in ["의사", "전문의", "피부과", "싫어", "폐업"]):
+                    # 6869 레퍼런스 스타일: 피부과 전문의 정면 클로즈업 훅
+                    hailuo_prompt = (
+                        "Shot on 85mm at f/2.8, eye level, subtle handheld sway, starting mid-action: "
+                        "an authentic 30s East Asian male dermatologist wearing white doctor gown, surgical cap and light blue medical mask looking serious directly into camera, "
+                        "bright modern dermatology clinic examination room background, visible skin texture, authentic clinical atmosphere, cinematic 9:16 vertical video"
+                    )
+                elif any(kw in s for kw in ["남자", "남성", "곰보", "패인", "연애", "살렸"]):
+                    # 6868 레퍼런스 스타일: 20대 남성 패인 흉터 리얼 스토리 훅
+                    hailuo_prompt = (
+                        "Shot on 85mm at f/2.8, subtle handheld camera sway, starting mid-action: "
+                        "a distressed 20s East Asian young man with visible red pitted acne scars on cheek touching face in mirror with genuine frustration, "
+                        "warm modern bathroom interior, soft morning daylight, visible skin pores, natural flyaway hair, cinematic 9:16 vertical video"
+                    )
+                else:
+                    hailuo_prompt = (
+                        "Shot on 85mm at f/2.8, subtle handheld camera sway, starting mid-action: "
+                        "a distressed 20s East Asian woman looking into bathroom vanity mirror and gently pressing a red blemish on cheek with a frustrated grimace, "
+                        "warm modern bathroom interior, soft morning window daylight mixed with vanity mirror lights, "
+                        "visible skin pores, authentic skin texture, natural flyaway hair, cinematic 9:16 vertical video"
+                    )
+
+                hook_variations = {
+                    "var_a": "Shot on 85mm at f/2.8, eye level, subtle sway: an authentic 30s East Asian male dermatologist in white gown, surgical cap and mask looking serious directly at camera, modern clinic background, visible skin texture, 9:16 vertical video",
+                    "var_b": "Shot on 85mm at f/2.8, subtle handheld, starting mid-action: a 20s East Asian young man with visible red pitted acne scars on cheek looking into bathroom mirror with genuine emotional distress, visible skin pores, 9:16 vertical video",
+                    "var_c": "Shot on 85mm at f/2.8, subtle handheld sway: a worried 20s East Asian woman touching red blemish on cheek looking into bathroom mirror, soft morning light, visible skin pores, authentic skin texture, 9:16 vertical video"
+                }
+            elif is_pain:
+                hailuo_prompt = (
+                    "Shot on 85mm at f/2.8, subtle handheld camera sway, starting mid-action: "
+                    "a tired 30s East Asian person standing in living room clutching lower back with a painful grimace, "
+                    "cozy home interior, warm afternoon window light, "
+                    "authentic micro-expression of physical tension, natural documentary movement, cinematic 9:16 vertical video"
+                )
+                hook_variations = {
+                    "var_a": "Shot on 85mm at f/2.8, handheld sway, starting mid-action: a 30s East Asian person suddenly grimacing and holding lower back while standing up from chair, warm living room light, authentic expression, 9:16 vertical video",
+                    "var_b": "Shot on 50mm lens, close-up, starting mid-action: hands awkwardly trying to slap a pain relief patch onto lower back with a groan of frustration, realistic home setting, 9:16 vertical video",
+                    "var_c": "Shot on 85mm at f/2.8, direct address, starting mid-action: a person looking into camera rubbing lower back with an exhausted look, asking an honest question, natural room light, 9:16 vertical video"
+                }
+            elif is_diet:
+                hailuo_prompt = (
+                    "Shot on 50mm lens, subtle handheld camera sway, starting mid-action: "
+                    "a 20s East Asian woman looking in a full-length mirror gently pinching her waist with a troubled sigh, "
+                    "bright morning bedroom, soft sunlight through sheer curtains, "
+                    "authentic expression, natural body motion, cinematic 9:16 vertical video"
+                )
+                hook_variations = {
+                    "var_a": "Shot on 50mm lens, subtle handheld, starting mid-action: a woman checking morning face swelling in mirror with a concerned frown, bright natural morning light, 9:16 vertical video",
+                    "var_b": "Shot on 50mm lens, close-up, starting mid-action: trying to button tight jeans and exhaling with frustration, authentic lifestyle setting, 9:16 vertical video",
+                    "var_c": "Shot on 85mm at f/2.8, direct address, starting mid-action: a relatable young woman looking directly into camera with an exasperated smile, natural room light, 9:16 vertical video"
+                }
+            else:
+                hailuo_prompt = (
+                    "Shot on 85mm at f/2.8, subtle handheld camera sway, starting mid-action: "
+                    "a relatable 20s East Asian person reacting with surprise and intense curiosity, looking into camera, "
+                    "modern lifestyle interior, warm cinematic lighting, authentic micro-expressions, cinematic 9:16 vertical video"
+                )
+                hook_variations = {
+                    "var_a": "Shot on 85mm at f/2.8, subtle handheld, starting mid-action: a person reacting with eyes widening in disbelief, authentic indoor lighting, 9:16 vertical video",
+                    "var_b": "Shot on 50mm lens, close-up, starting mid-action: an everyday person shaking head in frustration over a common problem, natural home setting, 9:16 vertical video",
+                    "var_c": "Shot on 85mm at f/2.8, direct address, starting mid-action: person looking into camera gesturing eagerly to ask a direct question, warm soft light, 9:16 vertical video"
+                }
+        elif role in ["empathy", "agitate"]:
+            source_type = "hailuo_ai"
+            source_guide = "🤖 Hailuo 영상 권장 (일상 속 고통/불안/고민 상황 연출)"
+            if is_skin:
+                hailuo_prompt = (
+                    "Shot on 50mm lens, subtle handheld camera sway, starting mid-action: "
+                    "an everyday 20s East Asian woman touching irritated facial skin with a worried sigh, "
+                    "cozy bedroom vanity setting, soft warm ambient lighting, "
+                    "visible skin pores, authentic skin texture, cinematic 9:16 vertical video"
+                )
+            elif is_pain:
+                hailuo_prompt = (
+                    "Shot on 50mm lens, subtle handheld camera sway, starting mid-action: "
+                    "a middle-aged person working at desk repeatedly massaging neck and lower back with stiff motion, "
+                    "soft home office lighting, natural exhaustion expression, cinematic 9:16 vertical video"
+                )
+            else:
+                hailuo_prompt = (
+                    "Shot on 50mm lens, subtle handheld camera sway, starting mid-action: "
+                    "a relatable East Asian person looking tired and exasperated with routine problems, "
+                    "realistic everyday home interior, soft natural room lighting, cinematic 9:16 vertical video"
+                )
+        elif role in ["solution", "usp"]:
+            source_type = "local_photo"
+            source_guide = "📁 보유 사진 권장 (실제 제품 실물 누끼/언박싱/제형 컷 — 켄번스 줌인 적용)"
+            if is_skin:
+                hailuo_prompt = (
+                    "Shot on 85mm macro lens at f/2.8, slow push-in, "
+                    "a clean glass dropper dispensing a soothing skincare serum droplet falling onto glowing clear surface, "
+                    "bright clean studio lighting, soft light refraction, shallow depth of field, 4k texture, cinematic 9:16 vertical video"
+                )
+            elif is_pain:
+                hailuo_prompt = (
+                    "Shot on 85mm macro lens at f/2.8, slow push-in, "
+                    "a sleek modern heating therapy device emitting soothing warm red infrared light glow, "
+                    "high-end studio presentation, soft gradient background, cinematic 9:16 vertical video"
+                )
+            else:
+                hailuo_prompt = (
+                    "Shot on 85mm macro lens at f/2.8, slow push-in, "
+                    "cinematic product presentation with elegant lighting sweep across surface, "
+                    "clean minimalist studio backdrop, shallow depth of field, cinematic 9:16 vertical video"
+                )
+        elif role == "evidence":
+            source_type = "local_photo"
+            source_guide = "📁 보유 사진 권장 (샤오홍슈 B/A 비교 또는 상세페이지 시험 성적서/후기)"
+            if is_skin:
+                hailuo_prompt = (
+                    "Shot on 50mm lens, locked-off shot, clean clinical laboratory background, "
+                    "macro scientific side-by-side skin inspection, bright diffused lighting, authentic skin pores, cinematic 9:16 vertical video"
+                )
+            else:
+                hailuo_prompt = (
+                    "Shot on 50mm lens, locked-off shot, clean professional aesthetic, "
+                    "clear documentary proof and test result demonstration, bright diffused laboratory lighting, cinematic 9:16 vertical video"
+                )
+        elif role == "cta":
+            source_type = "hailuo_ai"
+            source_guide = "🤖 Hailuo 영상 권장 (만족스러운 미소/개선된 일상) + 제품 실물 컷"
+            if is_skin:
+                hailuo_prompt = (
+                    "Shot on 85mm at f/2.8, slow push-in, "
+                    "a radiant 20s East Asian woman smiling with glowing clear skin, touching smooth cheek with pure joy, "
+                    "warm golden hour sunlight streaming in, genuine cheerful smile, authentic skin texture, cinematic 9:16 vertical video"
+                )
+            elif is_pain:
+                hailuo_prompt = (
+                    "Shot on 85mm at f/2.8, slow push-in, "
+                    "a relieved 30s East Asian person stretching comfortably with a happy relaxed smile, "
+                    "bright morning sunlit living room, genuine feeling of relief and energy, cinematic 9:16 vertical video"
+                )
+            else:
+                hailuo_prompt = (
+                    "Shot on 85mm at f/2.8, slow push-in, "
+                    "a confident happy person smiling warmly into camera with satisfaction, "
+                    "bright inviting lifestyle interior, golden hour backlight, cinematic 9:16 vertical video"
+                )
+        else:  # transition / normal
+            source_type = "hailuo_ai" if role == "transition" else "local_photo"
+            source_guide = "🤖 Hailuo 영상 권장 (분위기 반전 컷)" if role == "transition" else "📁 보유 사진/영상 권장"
+            hailuo_prompt = (
+                "Shot on 50mm lens, subtle handheld camera sway, starting mid-action: "
+                "an everyday East Asian person paused thoughtfully with a sudden realization, "
+                "warm natural room lighting, authentic micro-expression, cinematic 9:16 vertical video"
+            )
+
+        return source_type, source_guide, hailuo_prompt, hook_variations
 
     def _guess_role_simple(self, sentence: str, index: int, total: int) -> str:
         """LLM 없이 간단한 규칙으로 역할 추정 (폴백용)"""
@@ -467,12 +687,20 @@ class CreativeDirector:
         for i, sentence in enumerate(sentences):
             role = self._guess_role_simple(sentence, i, len(sentences))
             preset = presets[role]
+            is_last = (i == len(sentences) - 1)
+            src_type, src_guide, h_prompt, h_vars = self.generate_hailuo_prompt(sentence, role)
             result["sentences"].append({
                 "index": i,
                 "text": sentence,
                 "role": role,
                 "reasoning": f"규칙 기반 자동 분류 ({role})",
                 "psychology": None,
+                "video_motion": preset.get("video_motion", "slow_push"),
+                "transition_out": "none" if is_last else preset.get("transition_out", "none"),
+                "source_type": src_type,
+                "source_guide": src_guide,
+                "hailuo_prompt": h_prompt,
+                "hook_variations": h_vars,
                 "subtitle_style": {
                     "size": preset["size"],
                     "color": preset["color"],
@@ -505,8 +733,12 @@ if __name__ == "__main__":
     print(f"[테스트] 마케팅 지식 로딩: {len(knowledge):,}자")
     print(f"[테스트] medium 이하 허용 인트로: {cd.get_allowed_animations('intros')}")
 
-    test_script = "허리 아파서 파스만 붙이고 계세요?\n파스는 속근육까지 닿지 않습니다.\n원적외선이 해결합니다.\n지금 확인하세요!"
+    test_script = "아직도 여드름을 손으로 짜고 계신가요?\n손톱 세균 때문에 흉터만 더 붉어집니다.\n특허받은 시카 성분이 피부 속 깊이 진정시킵니다.\n3일 만에 가라앉은 실제 피부 변화를 확인하세요.\n지금 프로필 링크에서 만나보세요!"
     result = cd._fallback_analysis(test_script)
     for item in result["sentences"]:
-        print(f"  [{item['role']:>10}] {item['text'][:40]}  intro={item['text_intro']}  loop={item['text_loop_anim']}")
+        print(f"  [{item['role']:>10}] {item['text'][:35]} | 소스: {item['source_type']} | 가이드: {item['source_guide']}")
+        print(f"     🎬 Hailuo: {item['hailuo_prompt'][:70]}...")
+        if item.get("hook_variations"):
+            print(f"     🎯 Hook Variations: {list(item['hook_variations'].keys())}")
     print("[ALL TESTS PASSED]")
+

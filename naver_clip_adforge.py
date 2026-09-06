@@ -35,12 +35,43 @@ except Exception:
     detect_nonsilent = None
 
 from auto_stock_downloader import fetch_and_download_mixkit_stock_videos
-from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextSegment, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings
+from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextBackground, TextSegment, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings
 from pycapcut.metadata.text_intro import TextIntro
 from pycapcut.metadata.text_outro import TextOutro
 from pycapcut.metadata.text_loop import TextLoopAnim
 from pycapcut.metadata.effect_meta import EffectMeta
+from pycapcut.metadata.transition_meta import TransitionType
 import threading
+
+# ── 숏폼/메타 광고 최적화 전환 효과 매핑 ──
+TRANSITION_MAP = {
+    "White_Flash": TransitionType.White_Flash,
+    "Flash": TransitionType.Flash,
+    "Lumin_Flash": TransitionType.Lumin_Flash,
+    "Whip_Tear": TransitionType.Whip_Tear,
+    "Snap_Zoom": TransitionType.Snap_Zoom,
+    "Zoom_Transition": TransitionType.Zoom_Transition,
+    "Slide_Drop": TransitionType.Slide_Drop,
+    "Swipe_Left": TransitionType.Swipe_Left,
+    "Signal_Glitch_2": TransitionType.Signal_Glitch_2,
+    "Film_Burn": TransitionType.Film_Burn,
+}
+
+def apply_transition_to_segment(v_seg, transition_name: str, clip_duration_us: int):
+    """pycapcut의 TransitionType을 비디오 세그먼트에 안전하게 적용"""
+    if not transition_name or transition_name == "none":
+        return
+    trans_enum = TRANSITION_MAP.get(transition_name)
+    if not trans_enum:
+        return
+    # 전환 길이는 클립 길이의 최대 40% 이내로 제한 (기본 350ms)
+    duration_us = min(350000, int(clip_duration_us * 0.4))
+    if duration_us < 100000:
+        return
+    try:
+        v_seg.add_transition(trans_enum, duration=duration_us)
+    except Exception as e:
+        print(f"  (트랜지션 '{transition_name}' 적용 알림: {e})")
 
 capcut_draft_lock = threading.Lock()
 
@@ -345,25 +376,30 @@ def split_sentence_naturally(sentence: str, max_chars: int = 18, min_chars: int 
         chunks.append(" ".join(current_chunk))
     return chunks
 
-def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 40):
+def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase: int = 16):
     # 1. 문장 단위(오디오 생성 단위)는 구두점(.!?…) 기준으로만 분리 (원본 \n 유지)
     raw_sentences = re.split(r'(?<=[.!?…])', script_text)
     
     sentence_structures = []
     
     for raw in raw_sentences:
-        sentence_raw = raw.strip(' \t\r')
-        if not sentence_raw.strip():
+        clean_raw = raw.strip()
+        if not clean_raw:
             continue
             
         # 오디오 생성을 위한 깨끗한 문장 (엔터를 공백으로 치환)
-        clean_sentence = sentence_raw.replace('\n', ' ').strip()
+        clean_sentence = clean_raw.replace('\n', ' ').strip()
         clean_sentence = re.sub(r'\s+', ' ', clean_sentence)
         
-        # 2. 자막 쪼개기 (엔터 기준 최우선 적용)
-        if '\n' in sentence_raw:
-            # 사용자가 직접 엔터로 자막 단위를 명시한 경우
-            phrases = [p.strip() for p in sentence_raw.split('\n') if p.strip()]
+        # 2. 자막 쪼개기: 엔터가 포함되어 있으면 엔터 우선 분리 후, 각 조각이 너무 길면 자연스럽게 재분할
+        if '\n' in clean_raw:
+            raw_lines = [p.strip() for p in clean_raw.split('\n') if p.strip()]
+            phrases = []
+            for line in raw_lines:
+                if len(line) > max_chars_per_phrase:
+                    phrases.extend(split_sentence_naturally(line, max_chars=max_chars_per_phrase))
+                else:
+                    phrases.append(line)
         else:
             # 엔터가 없는 경우, 문맥/호흡 단위 지능형 분할 알고리즘 적용
             phrases = split_sentence_naturally(clean_sentence, max_chars=max_chars_per_phrase)
@@ -570,7 +606,7 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     
     shutil.copytree(src_folder, dst_folder)
     
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=16)
     
     combined_audio = PydubAudio.empty()
     phrase_timings = []
@@ -711,52 +747,109 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
     return project_name
 
-def apply_context_aware_keyframes(v_seg, text, scale_factor, duration_us):
+def apply_context_aware_keyframes(v_seg, text: str, scale_factor: float, duration_us: int, role: str = "normal", video_motion: str = None, is_photo: bool = False):
+    """대본 구조(role)와 소스 유형(video/photo)에 맞춰 프로 편집자 스타일 키프레임 카메라 모션 주입"""
     import pycapcut as cc
-    text = text.replace(" ", "")
     base_s = scale_factor
-    
-    if any(w in text for w in ["갑자기", "충격", "놀라운", "하지만", "그러나", "그런데", "반전", "비밀"]):
-        # 다이나믹 줌인
+
+    # 1. 동영상 소스 (Hailuo AI 생성 영상, 스톡 영상 등):
+    # 이미 자체 카메라 무빙(핸드헬드, 달린, 줌 등)이 있으므로 과도한 1.3배 디지털 줌은 화질 저하 및 'AI 툴' 티를 유발함.
+    if not is_photo:
         try:
+            if role == "hook" and video_motion == "punch_in":
+                # 훅(첫 1~3초)에서만 시선 고정용 미세한 스냅 줌인 (1.0 -> 1.05배)
+                snap_time = min(350000, int(duration_us * 0.3))
+                v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s)
+                v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s)
+                v_seg.add_keyframe(cc.KeyframeProperty.scale_x, snap_time, base_s * 1.05)
+                v_seg.add_keyframe(cc.KeyframeProperty.scale_y, snap_time, base_s * 1.05)
+            # 그 외 바디 비디오 클립은 원본의 자연스러운 고화질 카메라 워킹 100% 보존
+        except Exception as e:
+            print(f"  (비디오 키프레임 적용 알림: {e})")
+        return
+
+    # 2. 정적 사진 소스 (실물 제품 컷, 샤오홍슈 B/A, 상세페이지 그래픽 등):
+    # 사진이 멈춰있지 않도록 고급 다큐멘터리/광고 켄번스(Ken Burns) 부드럽게 적용
+    if not video_motion:
+        if role in ["hook", "transition"]:
+            video_motion = "punch_in"
+        elif role in ["empathy", "agitate"]:
+            video_motion = "slow_push"
+        elif role in ["solution", "usp"]:
+            video_motion = "slow_pull"
+        elif role == "evidence":
+            video_motion = "pan_right"
+        elif role == "cta":
+            video_motion = "pulse"
+        else:
+            video_motion = "slow_push"
+
+    try:
+        if video_motion == "punch_in":
+            # 사진 전용 임팩트 줌: 1.0배 -> 1.08배
+            snap_time = min(400000, int(duration_us * 0.35))
             v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s)
             v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, min(1000000, duration_us), base_s * 1.25)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, min(1000000, duration_us), base_s * 1.25)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s * 1.3)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s * 1.3)
-        except Exception as e: print('KF ERROR:', e)
-    elif any(w in text for w in ["결국", "그래서", "시간이지나", "부드러운", "편안한", "마침내", "자연스럽게"]):
-        # 페이드인 + 느린 줌아웃
-        try:
-            v_seg.add_keyframe(cc.KeyframeProperty.alpha, 0, 0.0)
-            v_seg.add_keyframe(cc.KeyframeProperty.alpha, min(800000, duration_us), 1.0)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.1)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.1)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, snap_time, base_s * 1.06)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, snap_time, base_s * 1.06)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s * 1.08)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s * 1.08)
+
+        elif video_motion == "slow_pull":
+            # 사진 전용 줌아웃 (제품 전체 모습 공개): 1.08배 -> 1.0배
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.08)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.08)
             v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s)
             v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s)
-        except Exception as e: print('KF ERROR:', e)
-    elif any(w in text for w in ["첫째", "둘째", "셋째", "다음으로", "그리고", "또한", "게다가"]):
-        # 크기 1.15배 확대 후 좌에서 우로 무빙
-        try:
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.15)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.15)
-            v_seg.add_keyframe(cc.KeyframeProperty.position_x, 0, -100)
-            v_seg.add_keyframe(cc.KeyframeProperty.position_x, duration_us, 100)
-        except Exception as e: print('KF ERROR:', e)
-    else:
-        # 잔잔한 줌인
-        try:
+
+        elif video_motion == "pan_right":
+            # 사진 전용 좌->우 패닝 (B/A 비교, 수치 데이터)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.06)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.06)
+            v_seg.add_keyframe(cc.KeyframeProperty.position_x, 0, -35)
+            v_seg.add_keyframe(cc.KeyframeProperty.position_x, duration_us, 35)
+
+        elif video_motion == "pan_left":
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s * 1.06)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s * 1.06)
+            v_seg.add_keyframe(cc.KeyframeProperty.position_x, 0, 35)
+            v_seg.add_keyframe(cc.KeyframeProperty.position_x, duration_us, -35)
+
+        elif video_motion == "pulse":
+            # CTA 전용 부드러운 펄스
+            mid_time = int(duration_us * 0.5)
             v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s)
             v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s * 1.1)
-            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s * 1.1)
-        except Exception as e: print('KF ERROR:', e)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, mid_time, base_s * 1.05)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, mid_time, base_s * 1.05)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, base_s * 1.02)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, base_s * 1.02)
+
+        else:
+            # slow_push (기본 켄번스): 부드러운 전진 줌 (1.0배 -> 1.08배)
+            target_scale = base_s * 1.08
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, 0, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, 0, base_s)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_x, duration_us, target_scale)
+            v_seg.add_keyframe(cc.KeyframeProperty.scale_y, duration_us, target_scale)
+
+    except Exception as e:
+        print(f"  (키프레임 모션 적용 오류: {e})")
 
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None, creative_direction=None, manual_style=None):
+def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None, creative_direction=None, manual_style=None, style_preset="6869_cyan", header_config=None):
     if template_folder and template_folder != "none":
         return build_from_template(script_text, voice, el_api_key, template_folder)
+    
+    # creative_direction이 주어지지 않은 경우 대본 구조 기반 자동 연출 생성
+    if creative_direction is None:
+        try:
+            from creative_director import CreativeDirector
+            cd = CreativeDirector()
+            creative_direction = cd._fallback_analysis(script_text)
+            print(f"[CreativeDirector] 대본 구조 자동 분석 완료: {len(creative_direction.get('sentences', []))}개 문장 연출 매핑")
+        except Exception as e:
+            print(f"  (대본 구조 자동 연출 분석 폴백 오류: {e})")
     
     import time
     import uuid
@@ -799,7 +892,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
     temp_dir = os.path.join(os.getcwd(), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
+    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=16)
 
     print(f"\n========================================================")
     print(f"[네이버 클립 프로젝트 생성 시작] {project_name}")
@@ -842,7 +935,6 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         except Exception as e:
             print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
             try:
-                import asyncio
                 asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
             except Exception as e2:
                 raise Exception(f"오디오 생성 완전 실패: {e}")
@@ -854,6 +946,32 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
         audio_timerange = Timerange(current_time_us, sentence_duration_us)
         script_file.add_segment(AudioSegment(audio_mat, audio_timerange), track_name="더빙_트랙")
+
+        # ── 대본 구조(role, video_motion, transition_out) 추출 ──
+        sentence_cd = None
+        if creative_direction and "sentences" in creative_direction:
+            for _s in creative_direction["sentences"]:
+                if _s.get("index") == mapping_idx:
+                    sentence_cd = _s
+                    break
+
+        if sentence_cd:
+            cd_role = sentence_cd.get("role", "normal")
+            video_motion = sentence_cd.get("video_motion")
+            transition_out = sentence_cd.get("transition_out")
+        else:
+            if mapping_idx == 0:
+                cd_role = "hook"
+                video_motion = "punch_in"
+                transition_out = "White_Flash"
+            elif s_idx == len(sentence_structures):
+                cd_role = "cta"
+                video_motion = "pulse"
+                transition_out = "none"
+            else:
+                cd_role = "normal"
+                video_motion = "slow_push"
+                transition_out = "none"
 
         v_file_to_use = None
         is_local_media = False
@@ -871,12 +989,14 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         if v_file_to_use:
             try:
                 v_mat = VideoMaterial(v_file_to_use)
+                is_photo = False
                 
                 if is_local_media:
                     ext = os.path.splitext(v_file_to_use)[1].lower()
                     if ext in ['.jpg', '.jpeg', '.png']:
                         clip_dur = sentence_duration_us
                         start_offset = 0
+                        is_photo = True
                     else:
                         clip_dur = min(v_mat.duration, sentence_duration_us)
                         start_offset = 0
@@ -899,12 +1019,32 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                     scale_factor = 1.0
                     
                 clip_settings = ClipSettings(scale_x=scale_factor, scale_y=scale_factor)
-                
                 v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange, clip_settings=clip_settings)
+
+                # 1. 감성 블러 배경 자동 적용 (사진이거나 세로 9:16이 아닌 소스)
+                aspect_ratio = (v_width / v_height) if (v_width and v_height) else 0.5625
+                if is_photo or aspect_ratio > 0.65:
+                    try:
+                        v_seg.add_background_filling(fill_type='blur', blur=0.0625)
+                    except Exception as be:
+                        pass
+
+                # 2. 대본 구조 맞춤 키프레임 카메라 모션 적용 (켄번스, 펀치줌 등)
                 try:
-                    apply_context_aware_keyframes(v_seg, clean_sentence, scale_factor, duration_us=tgt_timerange.duration)
+                    apply_context_aware_keyframes(
+                        v_seg, clean_sentence, scale_factor,
+                        duration_us=tgt_timerange.duration,
+                        role=cd_role,
+                        video_motion=video_motion,
+                        is_photo=is_photo
+                    )
                 except Exception as e:
                     print(f"  (키프레임 애니메이션 적용 오류: {e})")
+
+                # 3. 대본 구조 기반 컷 전환 트랜지션 적용 (마지막 문장 제외)
+                is_last_sentence = (s_idx == len(sentence_structures))
+                if not is_last_sentence and transition_out and transition_out != "none":
+                    apply_transition_to_segment(v_seg, transition_out, clip_dur)
 
                 script_file.add_segment(v_seg, track_name="메인_비디오_트랙")
             except Exception as ve:
@@ -922,24 +1062,48 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
             phrase_timerange = Timerange(phrase_start_us, phrase_duration_us)
 
-            # 훅 여부: 시간 기준 OR creative_direction role
-            cd_role = None
-            if creative_direction and "sentences" in creative_direction:
-                for _s in creative_direction["sentences"]:
-                    if _s.get("index") == mapping_idx:
-                        cd_role = _s.get("role")
-                        break
-            is_hook = (current_time_us < 3000000) or (cd_role == "hook")
+            # 훅 여부: creative_direction role 또는 첫 문장(mapping_idx == 0)
+            is_hook = (cd_role == "hook") if cd_role else (mapping_idx == 0)
 
-            style = TextStyle(
-                size=18.0 if is_hook else 14.5,
-                color=(1.0, 0.9, 0.0) if is_hook else (1.0, 1.0, 1.0),
-                bold=True,
-                align=1
-            )
-            border = TextBorder(color=(0.0, 0.0, 0.0), width=55.0 if is_hook else 25.0)
-            clip_settings = ClipSettings(transform_x=0.0, transform_y=0.0)
-            active_font = BLACK_HAN_SANS_FONT if is_hook else PRETENDARD_FONT
+            # 프로 편집자 스타일: 화면 중앙(0.0)이 아닌 하단 세이프존(-0.58) 배치, 훅은 살짝 높게(-0.50)
+            sub_y = -0.50 if is_hook else -0.58
+            clip_settings = ClipSettings(transform_x=0.0, transform_y=sub_y)
+
+            # ── 스타일 프리셋에 따른 자막 폰트, 컬러, 테두리, 배경 설정 ──
+            if style_preset == "6869_cyan":
+                # [6869 위닝 레퍼런스 스타일] 피부과 폐업형: 청록색 포인트 + 순백색 + 볼드 블랙 스트로크
+                sub_color = (0.0, 0.82, 1.0) if is_hook else (1.0, 1.0, 1.0)
+                style = TextStyle(size=16.5 if is_hook else 14.5, color=sub_color, bold=True, align=1)
+                border = TextBorder(color=(0.0, 0.0, 0.0), width=34.0 if is_hook else 28.0)
+                background = None
+                active_font = BLACK_HAN_SANS_FONT if is_hook else PRETENDARD_FONT
+            elif style_preset == "6868_yellow":
+                # [6868 위닝 레퍼런스 스타일] 20대 남성 리얼 극복형: 형광 옐로우 포인트 + 순백색 + 볼드 블랙 스트로크
+                sub_color = (1.0, 0.9, 0.0) if is_hook else (1.0, 1.0, 1.0)
+                style = TextStyle(size=16.5 if is_hook else 14.5, color=sub_color, bold=True, align=1)
+                border = TextBorder(color=(0.0, 0.0, 0.0), width=34.0 if is_hook else 28.0)
+                background = None
+                active_font = BLACK_HAN_SANS_FONT if is_hook else PRETENDARD_FONT
+            elif style_preset == "luafee_pink":
+                # [루아페 뷰티 스타일] 핑크 네온 포인트 + 화이트
+                sub_color = (1.0, 0.45, 0.75) if is_hook else (1.0, 1.0, 1.0)
+                style = TextStyle(size=16.5 if is_hook else 14.5, color=sub_color, bold=True, align=1)
+                border = TextBorder(color=(1.0, 0.4, 0.7) if is_hook else (0.0, 0.0, 0.0), width=30.0 if is_hook else 20.0)
+                background = None
+                active_font = PRETENDARD_FONT
+            else:
+                # [modern_capsule] 반투명 라운드 블랙 캡슐 박스
+                sub_color = (1.0, 0.9, 0.0) if is_hook else (1.0, 1.0, 1.0)
+                style = TextStyle(size=16.5 if is_hook else 14.0, color=sub_color, bold=True, align=1)
+                border = TextBorder(color=(0.0, 0.0, 0.0), width=22.0 if is_hook else 16.0)
+                background = TextBackground(
+                    color="#000000",
+                    alpha=0.60 if is_hook else 0.50,
+                    round_radius=0.35,
+                    height=0.16,
+                    width=0.16
+                )
+                active_font = BLACK_HAN_SANS_FONT if is_hook else PRETENDARD_FONT
 
             text_seg = TextSegment(
                 text=phrase,
@@ -947,6 +1111,7 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                 font=active_font,
                 style=style,
                 border=border,
+                background=background,
                 clip_settings=clip_settings
             )
 
@@ -974,22 +1139,20 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                     current_color = (1.0, 0.9, 0.0) if (effective_role == "hook") else (1.0, 1.0, 1.0)
                     text_seg.style = TextStyle(size=ms_size, color=current_color, bold=True, align=1)
 
-                # ── pycapcut enum 기반 애니메이션 ──
+                # ── pycapcut enum 기반 애니메이션 (바디 나레이션은 루프 진동 절대 금지) ──
                 for anim_val, anim_cls in [
                     (ms.get("intro"), TextIntro),
-                    (ms.get("loop"),  TextLoopAnim),
+                    (None if not is_hook else ms.get("loop"),  TextLoopAnim),
                     (ms.get("outro"), TextOutro),
                 ]:
                     if anim_val and anim_val in anim_cls.__members__:
                         try: text_seg.add_animation(anim_cls[anim_val])
                         except Exception: pass
 
-                # ── raw_anim: 로컬 캐시 기반 직접 주입 (놓기 등 enum 없는 효과) ──
-                # 형식: [{"resource_id": "...", "path": "...", "type": "in/loop/out", "name": "..."}]
+                # ── raw_anim: 로컬 캐시 기반 직접 주입 ──
                 raw_anims = ms.get("raw_anims", [])
                 if raw_anims:
-                    text_seg._raw_anims = raw_anims  # 나중에 _inject_raw_anims()에서 처리
-
+                    text_seg._raw_anims = raw_anims
 
             # ── 모드 2: AI 크리에이티브 연출 단독 (템플릿 없을 때) ──────
             elif creative_direction and "sentences" in creative_direction:
@@ -1001,7 +1164,8 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
 
                 if sentence_info:
                     intro_name = sentence_info.get("text_intro")
-                    loop_name  = sentence_info.get("text_loop_anim")
+                    # 전문 편집자 원칙: 바디 나레이션에는 시선 분산되는 루프 애니메이션(진동/펄스 등) 금지
+                    loop_name  = None if not is_hook else sentence_info.get("text_loop_anim")
                     outro_name = sentence_info.get("text_outro")
 
                     if intro_name:
@@ -1025,14 +1189,14 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
                     c_style = sentence_info.get("subtitle_style")
                     if c_style:
                         try:
-                            size = c_style.get("size", 14.5)
-                            color_list = c_style.get("color", [1.0, 1.0, 1.0])
+                            size = c_style.get("size", 16.5 if is_hook else 14.0)
+                            color_list = c_style.get("color", [1.0, 0.9, 0.0] if is_hook else [1.0, 1.0, 1.0])
                             color = tuple(color_list) if isinstance(color_list, list) else color_list
                             bold = c_style.get("bold", True)
                             text_seg.style = TextStyle(size=size, color=color, bold=bold, align=1)
                             border_color_list = c_style.get("border_color", [0.0, 0.0, 0.0])
                             border_color = tuple(border_color_list) if isinstance(border_color_list, list) else border_color_list
-                            border_width = c_style.get("border_width", 25.0)
+                            border_width = min(c_style.get("border_width", 22.0 if is_hook else 16.0), 26.0)
                             text_seg.border = TextBorder(color=border_color, width=border_width)
                         except Exception: pass
 
@@ -1044,6 +1208,75 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
         print(f"  [문장 {s_idx}] 오디오 ({sec_val:.2f}s) 생성 완료 | 자막 싱크(10자): {phrases_str}")
 
         current_time_us += sentence_duration_us
+
+    # ── 상단 고정 헤더 배너 (6869 / 6868 위닝 레퍼런스 스타일) ──────────
+    if header_config is None and style_preset in ["6869_cyan", "6868_yellow"]:
+        if style_preset == "6869_cyan":
+            header_config = {
+                "enabled": True,
+                "line1": "피부과 폐업하게 만든",
+                "line2": "곰보자국 완벽 해결템",
+                "color2": (0.0, 0.82, 1.0),
+                "disclaimer": ""
+            }
+        else:
+            header_config = {
+                "enabled": True,
+                "line1": "푹푹 패인 곰보가",
+                "line2": "완벽히 매끈해졌어요",
+                "color2": (1.0, 0.9, 0.0),
+                "disclaimer": "실구매자 박**님의 후기로 제작되었습니다"
+            }
+
+    if header_config and header_config.get("enabled", True) and current_time_us > 0:
+        header_tr = Timerange(0, current_time_us)
+        line1 = header_config.get("line1", "").strip()
+        line2 = header_config.get("line2", "").strip()
+        color2 = header_config.get("color2", (0.0, 0.82, 1.0))
+        disclaimer = header_config.get("disclaimer", "").strip()
+
+        if line1:
+            script_file.add_track(TrackType.text, track_name="상단_헤더_1")
+            h1_style = TextStyle(size=15.0, color=(1.0, 1.0, 1.0), bold=True, align=1)
+            h1_border = TextBorder(color=(0.0, 0.0, 0.0), width=36.0)
+            h1_clip = ClipSettings(transform_x=0.0, transform_y=0.72)
+            h1_seg = TextSegment(
+                text=line1,
+                timerange=header_tr,
+                font=BLACK_HAN_SANS_FONT,
+                style=h1_style,
+                border=h1_border,
+                clip_settings=h1_clip
+            )
+            script_file.add_segment(h1_seg, track_name="상단_헤더_1")
+
+        if line2:
+            script_file.add_track(TrackType.text, track_name="상단_헤더_2")
+            h2_style = TextStyle(size=17.5, color=color2, bold=True, align=1)
+            h2_border = TextBorder(color=(0.0, 0.0, 0.0), width=40.0)
+            h2_clip = ClipSettings(transform_x=0.0, transform_y=0.63)
+            h2_seg = TextSegment(
+                text=line2,
+                timerange=header_tr,
+                font=BLACK_HAN_SANS_FONT,
+                style=h2_style,
+                border=h2_border,
+                clip_settings=h2_clip
+            )
+            script_file.add_segment(h2_seg, track_name="상단_헤더_2")
+
+        if disclaimer:
+            script_file.add_track(TrackType.text, track_name="상단_안내문구")
+            d_style = TextStyle(size=8.0, color=(0.75, 0.75, 0.75), bold=False, align=2)
+            d_clip = ClipSettings(transform_x=0.28, transform_y=0.82)
+            d_seg = TextSegment(
+                text=disclaimer,
+                timerange=header_tr,
+                font=PRETENDARD_FONT,
+                style=d_style,
+                clip_settings=d_clip
+            )
+            script_file.add_segment(d_seg, track_name="상단_안내문구")
 
     script_file.save()
 

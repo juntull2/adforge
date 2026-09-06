@@ -1219,42 +1219,9 @@ with col_fmt3:
 
 script_text = st.text_area("📝 영상 자막(대본) 전문 (STEP 1에서 생성 시 자동 입력됨 / 직접 붙여넣기 가능)", key="script_text_area", height=220)
 
-# 로컬 미디어 폴더 입력창 추가
-local_media_folder = st.text_input("📁 로컬 미디어 소스 폴더 경로 (선택)", placeholder="예: C:\\Users\\User\\Videos\\Product")
-
+# 로컬 미디어 소스 및 매핑 변수 초기화 (아래 연출 & 매핑 통합 섹션에서 제어)
+local_media_folder = ""
 media_mapping = {}
-if local_media_folder and os.path.isdir(local_media_folder):
-    try:
-        valid_exts = ['.mp4', '.mov', '.jpg', '.jpeg', '.png']
-        local_files = [f for f in os.listdir(local_media_folder) if os.path.splitext(f)[1].lower() in valid_exts]
-        local_files.sort()
-        
-        if local_files:
-            with st.expander("🎬 로컬 미디어 수동 매핑 (선택)", expanded=True):
-                st.info("각 문장 재생 시 배경으로 표시될 로컬 미디어(영상/사진)를 선택하세요.")
-                
-                # 파싱해서 문장 목록 가져오기
-                sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
-                
-                media_options = ["(자동 배치 / 스톡 비디오)"] + local_files
-                
-                for i, struct in enumerate(sentence_structures):
-                    sentence = struct["full_sentence"]
-                    if not sentence.strip():
-                        continue
-                        
-                    selected_file = st.selectbox(
-                        f"문장 {i+1}: {sentence}",
-                        options=media_options,
-                        key=f"media_mapping_{i}"
-                    )
-                    
-                    if selected_file != "(자동 배치 / 스톡 비디오)":
-                        media_mapping[i] = selected_file
-        else:
-            st.warning("입력하신 폴더에 영상이나 이미지 파일(.mp4, .mov, .jpg, .png)이 없습니다.")
-    except Exception as e:
-        st.error(f"폴더를 읽는 중 오류가 발생했습니다: {e}")
 
 
 
@@ -1432,68 +1399,199 @@ with st.expander("📹 레퍼런스 영상 학습 (스타일 프로필 생성)",
 # -------------------------------------------------------------------
 st.markdown("---")
 use_ai_direction = st.checkbox(
-    "🎨 AI 크리에이티브 연출 (옵시디언 마케팅 지식 기반)",
-    value=False,
-    help="옵시디언 볼트의 마케팅 교육 매뉴얼을 기반으로 "
-         "자막 스타일, 애니메이션, 강조 효과를 AI가 자동 결정합니다."
+    "🎬 대본 구조 기반 자동 연출 & Hailuo AI 소스 가이드 (하이브리드 제작)",
+    value=True,
+    help="대본의 구조(훅, 공감, 반전, 해결, CTA)를 분석하여 "
+         "Hailuo AI 고품질 영문 프롬프트, 컷 전환 트랜지션, 켄번스 카메라 모션, 블러 배경, 자막 효과를 자동 적용합니다."
 )
 
 if use_ai_direction and script_text.strip():
+    from creative_director import CreativeDirector
+    active_profile = st.session_state.get("active_style_profile")
+    active_intensity = st.session_state.get("max_intensity", "medium")
+    cd = CreativeDirector(
+        max_intensity=active_intensity,
+        style_profile=active_profile
+    )
+
+    # 세션 상태에 연출 결과가 없거나 대본이 변경된 경우 자동 폴백 분석으로 즉시 초기화
+    cached_script = st.session_state.get("last_analyzed_script", "")
+    if "creative_direction" not in st.session_state or cached_script != script_text.strip():
+        st.session_state["creative_direction"] = cd._fallback_analysis(script_text)
+        st.session_state["last_analyzed_script"] = script_text.strip()
+
     col_preview, col_mode = st.columns([3, 1])
-    
+
     with col_mode:
         direction_mode = st.radio(
             "분석 모드",
-            ["🤖 AI 분석 (LLM)", "⚡ 규칙 기반 (즉시)"],
-            index=1,
-            help="AI 분석은 LLM API를 호출하여 더 정교하게 분석합니다. 규칙 기반은 즉시 결과를 제공합니다."
+            ["⚡ 즉시 분석 (규칙 기반)", "🤖 AI 정밀 분석 (LLM)"],
+            index=0,
+            help="AI 정밀 분석은 LLM API를 호출하여 더 정교하게 분석합니다. 즉시 분석은 대기 없이 바로 생성됩니다."
         )
-    
+
     with col_preview:
-        if st.button("🔍 연출 미리보기", use_container_width=True):
-            from creative_director import CreativeDirector
-            active_profile = st.session_state.get("active_style_profile")
-            active_intensity = st.session_state.get("max_intensity", "medium")
-            cd = CreativeDirector(
-                max_intensity=active_intensity,
-                style_profile=active_profile
-            )
+        if st.button("🔄 대본 재분석 및 Hailuo 프롬프트 갱신", use_container_width=True):
             if active_profile:
                 st.caption(f"📊 프로필 '{st.session_state.get('active_profile_name', '')}' 적용 중 | 강도: {active_intensity}")
-            
+
             if direction_mode.startswith("🤖"):
-                with st.spinner("🎬 옵시디언 마케팅 지식 로딩 + AI 대본 분석 중..."):
+                with st.spinner("🎬 옵시디언 마케팅 지식 로딩 + AI 대본 정밀 분석 중..."):
                     or_api_key = os.environ.get("OPENROUTER_API_KEY", nvidia_api_key)
                     direction = cd.analyze_script(script_text, api_key=or_api_key, model=model_choice)
             else:
                 direction = cd._fallback_analysis(script_text)
-                
+
             st.session_state["creative_direction"] = direction
+            st.session_state["last_analyzed_script"] = script_text.strip()
+            st.rerun()
 
     if "creative_direction" in st.session_state:
         direction = st.session_state["creative_direction"]
+        sentences_list = direction.get("sentences", [])
+
+        # ── 1. 하이브리드 소스 구성 요약 배너 ──
+        hailuo_count = sum(1 for item in sentences_list if item.get("source_type") == "hailuo_ai")
+        photo_count = len(sentences_list) - hailuo_count
+
+        m_col1, m_col2, m_col3 = st.columns([1.5, 1.5, 3.5])
+        m_col1.metric("🤖 Hailuo 영상 권장", f"{hailuo_count}컷", help="스킵 방지 훅, 감정 공감, 클로징 등 생생한 인물/상황 연출")
+        m_col2.metric("📁 보유 사진 권장", f"{photo_count}컷", help="제품 실물, 상세페이지 특허, 샤오홍슈 B/A 등 신뢰도 증빙")
+        m_col3.info(
+            "💡 **Hailuo 웹(대표님 계정) 활용법**:\n"
+            "아래 🤖 권장 씬의 **영문 프롬프트를 복사**하여 Hailuo 웹에서 생성 후, 다운로드한 파일들을 작업 폴더에 넣어주세요."
+        )
+
+        # ── 2. 로컬 미디어 작업 폴더 및 일괄 자동 매칭 ──
+        st.markdown("##### 📁 작업 미디어 폴더 및 1초 자동 매칭")
+        folder_col, match_col = st.columns([3, 1.5])
+        with folder_col:
+            local_media_folder = st.text_input(
+                "작업 폴더 경로 (Hailuo 다운로드 영상 + 보유 사진)",
+                value=st.session_state.get("local_media_folder_path", ""),
+                key="local_media_folder_input",
+                placeholder=r"예: C:\Users\임준모\Downloads 또는 C:\Users\임준모\Videos\Product",
+                help="Hailuo에서 다운받은 영상과 보유 사진들이 함께 있는 폴더 경로를 입력하세요."
+            )
+            st.session_state["local_media_folder_path"] = local_media_folder
+
+        local_files = []
+        if local_media_folder and os.path.isdir(local_media_folder):
+            try:
+                def natural_sort_key(s):
+                    return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+                valid_exts = ['.mp4', '.mov', '.jpg', '.jpeg', '.png']
+                local_files = [f for f in os.listdir(local_media_folder) if os.path.splitext(f)[1].lower() in valid_exts]
+                local_files.sort(key=natural_sort_key)
+            except Exception as e:
+                st.error(f"폴더 읽기 오류: {e}")
+
+        with match_col:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            if local_files:
+                if st.button("⚡ 파일 순서대로 1초 자동 매칭", use_container_width=True, help="폴더 내 파일들을 번호순/이름순으로 씬 1, 씬 2, 씬 3에 즉시 자동 배정합니다."):
+                    for i, s_item in enumerate(sentences_list):
+                        if i < len(local_files):
+                            st.session_state[f"media_mapping_{i}"] = local_files[i]
+                        else:
+                            st.session_state[f"media_mapping_{i}"] = "(자동 배치 / 스톡 비디오)"
+                    st.success(f"✅ {min(len(sentences_list), len(local_files))}개 파일이 순서대로 자동 매칭되었습니다!")
+                    st.rerun()
+            else:
+                st.caption("📂 폴더를 지정하면 자동 매칭 버튼이 활성화됩니다.")
+
+        if local_files:
+            st.caption(f"📂 감지된 파일 ({len(local_files)}개): {', '.join(local_files[:6])}" + (f" 외 {len(local_files)-6}개" if len(local_files) > 6 else ""))
+
+        # ── 3. 씬별 인터랙티브 카드 리스트 ──
         role_emoji = {
             "hook": "🔥", "empathy": "💭", "agitate": "⚡",
             "evidence": "📊", "solution": "💡", "usp": "🏆",
             "cta": "🎯", "transition": "🔄", "normal": "📝"
         }
-        
-        with st.expander("📋 AI 연출 지시서 미리보기", expanded=True):
-            for item in direction.get("sentences", []):
+        motion_label_map = {
+            "punch_in": "⚡ 임팩트 줌인",
+            "slow_push": "🔍 슬로우 줌(몰입)",
+            "slow_pull": "🔭 줌아웃(개방)",
+            "pan_right": "➡️ 우측 패닝",
+            "pan_left": "⬅️ 좌측 패닝",
+            "pulse": "💓 펄스 박동"
+        }
+        trans_label_map = {
+            "White_Flash": "💥 화이트 플래시",
+            "Whip_Tear": "💨 휩(화면 밀기)",
+            "Snap_Zoom": "🔎 스냅 줌",
+            "Slide_Drop": "📉 슬라이드",
+            "Signal_Glitch_2": "⚡ 글리치",
+            "none": "—"
+        }
+
+        with st.expander(f"📋 씬별 Hailuo 프롬프트 & 미디어 소스 매핑 (총 {len(sentences_list)}개 씬)", expanded=True):
+            media_options = ["(자동 배치 / 스톡 비디오)"] + local_files
+
+            for i, item in enumerate(sentences_list):
                 role = item.get("role", "normal")
                 emoji = role_emoji.get(role, "📝")
-                text_preview = item.get("text", "")[:45]
+                text = item.get("text", "")
+                src_type = item.get("source_type", "local_photo")
+                src_guide = item.get("source_guide", "")
+                h_prompt = item.get("hailuo_prompt", "")
+                h_vars = item.get("hook_variations")
                 intro = item.get("text_intro", "없음") or "없음"
                 loop = item.get("text_loop_anim", "없음") or "없음"
-                reasoning = item.get("reasoning", "")
-                psychology = item.get("psychology", "")
-                
-                st.markdown(
-                    f"**{emoji} [{role.upper()}]** {text_preview}  \n"
-                    f"　└ 입장: `{intro}` | 루프: `{loop}`"
-                    + (f" | 💡 _{reasoning}_" if reasoning and "폴백" not in reasoning else "")
-                    + (f" | 🧠 _{psychology}_" if psychology else "")
+                v_motion = item.get("video_motion", "slow_push")
+                v_trans = item.get("transition_out", "none")
+                motion_str = motion_label_map.get(v_motion, v_motion)
+                trans_str = trans_label_map.get(v_trans, v_trans)
+
+                badge_html = (
+                    "<span style='background-color:#4F46E5; color:white; padding:3px 8px; border-radius:10px; font-size:12px; font-weight:600;'>🤖 Hailuo AI 영상 권장</span>"
+                    if src_type == "hailuo_ai" else
+                    "<span style='background-color:#059669; color:white; padding:3px 8px; border-radius:10px; font-size:12px; font-weight:600;'>📁 보유 사진/영상 권장</span>"
                 )
+
+                st.markdown("---")
+                col_head1, col_head2 = st.columns([3, 1.2])
+                with col_head1:
+                    st.markdown(f"**씬 {i+1}. {emoji} [{role.upper()}]** {text}")
+                with col_head2:
+                    st.markdown(badge_html, unsafe_allow_html=True)
+
+                st.caption(f"　└ 🔤 자막: `{intro}` (루프: `{loop}`) | 🎥 카메라: `{motion_str}` | 🔄 전환: `{trans_str}` | {src_guide}")
+
+                # Hailuo 프롬프트 영역 (우측 상단 1-클릭 복사 버튼 내장)
+                if h_prompt:
+                    st.markdown("🎬 **Hailuo 복붙 프롬프트 (우측 상단 📋 복사 버튼 클릭):**")
+                    st.code(h_prompt, language="text")
+
+                # 훅 변형 프롬프트 (A/B 테스트용)
+                if h_vars and isinstance(h_vars, dict):
+                    with st.expander("🎯 훅 A/B 테스트용 변형 프롬프트 3종 (메타 광고 소재 쪼개기용)", expanded=False):
+                        tab_a, tab_b, tab_c = st.tabs(["🔥 버전 A (공감 훅)", "⚡ 버전 B (불안 훅)", "🎯 버전 C (직격 훅)"])
+                        with tab_a:
+                            st.caption("거울을 보며 트러블을 만지는 생생한 공감 훅")
+                            st.code(h_vars.get("var_a", ""), language="text")
+                        with tab_b:
+                            st.caption("화장품을 덧발라 가리려 애쓰는 불안 자극 훅")
+                            st.code(h_vars.get("var_b", ""), language="text")
+                        with tab_c:
+                            st.caption("카메라 정면을 응시하며 직격으로 질문하는 콜드 오픈 훅")
+                            st.code(h_vars.get("var_c", ""), language="text")
+
+                # 해당 씬 미디어 파일 선택
+                current_val = st.session_state.get(f"media_mapping_{i}", "(자동 배치 / 스톡 비디오)")
+                idx_to_use = media_options.index(current_val) if current_val in media_options else 0
+
+                selected_file = st.selectbox(
+                    f"🎬 씬 {i+1}에 적용할 미디어 파일",
+                    options=media_options,
+                    index=idx_to_use,
+                    key=f"media_mapping_{i}",
+                    help="폴더에서 이 씬에 들어갈 Hailuo 다운로드 영상 또는 보유 사진을 선택하세요."
+                )
+
+                if selected_file != "(자동 배치 / 스톡 비디오)":
+                    media_mapping[i] = selected_file
 
 # -------------------------------------------------------------------
 # ✍️ 수동 자막 스타일 설정
@@ -1701,6 +1799,50 @@ selected_capcut_template = st.selectbox(
     help="미리 만들어둔 캡컷 프로젝트를 선택하면 텍스트와 오디오만 새롭게 교체합니다."
 )
 
+# --- 🏆 벤치마킹 레퍼런스 스타일 선택 (6869 / 6868 완벽 복제) ---
+st.markdown("---")
+st.markdown("##### 🏆 벤치마킹 레퍼런스 스타일 선택")
+
+preset_options = {
+    "6869_cyan": "👑 [6869 피부과 의사형] 상단 청록 헤더 + 볼드 하단 자막 (가장 강력 추천)",
+    "6868_yellow": "🌟 [6868 리얼 극복형] 상단 옐로우 헤더 + 실구매자 후기 안내문구",
+    "modern_capsule": "💎 [미니멀 캡슐형] 반투명 블랙 라운드 캡슐 자막 (모던 숏폼 룩)",
+    "luafee_pink": "🌸 [루아페 뷰티형] 핑크 네온 발광 자막 (감성 브이로그)"
+}
+
+selected_style_preset = st.radio(
+    "스타일 프리셋",
+    options=list(preset_options.keys()),
+    format_func=lambda k: preset_options[k],
+    index=0,
+    horizontal=False
+)
+
+# 상단 고정 헤더 배너 커스텀 설정
+header_enabled = (selected_style_preset in ["6869_cyan", "6868_yellow"])
+
+with st.expander("📌 상단 고정 헤더 배너 설정 (영상 상단 고정 카피)", expanded=header_enabled):
+    use_header = st.checkbox("상단 고정 헤더 배너 활성화", value=header_enabled)
+    h_col1, h_col2 = st.columns(2)
+    default_h1 = "피부과 폐업하게 만든" if selected_style_preset == "6869_cyan" else "푹푹 패인 곰보가"
+    default_h2 = "곰보자국 완벽 해결템" if selected_style_preset == "6869_cyan" else "완벽히 매끈해졌어요"
+    with h_col1:
+        header_line1 = st.text_input("헤더 1줄 (화이트)", value=default_h1, key="header_line1")
+    with h_col2:
+        header_line2 = st.text_input("헤더 2줄 (포인트 컬러)", value=default_h2, key="header_line2")
+    
+    header_disclaimer = ""
+    if selected_style_preset == "6868_yellow":
+        header_disclaimer = st.text_input("우측 상단 안내문구 (작은 글씨)", value="실구매자 박**님의 후기로 제작되었습니다", key="header_disclaimer")
+    
+    header_config_to_pass = {
+        "enabled": use_header,
+        "line1": header_line1,
+        "line2": header_line2,
+        "color2": (0.0, 0.82, 1.0) if selected_style_preset == "6869_cyan" else (1.0, 0.9, 0.0),
+        "disclaimer": header_disclaimer
+    }
+
 if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True, type="primary"):
     if not script_text.strip():
         st.error("대본이 비어있습니다!")
@@ -1751,13 +1893,19 @@ if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=
                         media_mapping=media_mapping,
                         creative_direction=cd_data,
                         manual_style=manual_style,
-                        template_folder=selected_capcut_template if selected_capcut_template != "none" else None
+                        template_folder=selected_capcut_template if selected_capcut_template != "none" else None,
+                        style_preset=selected_style_preset,
+                        header_config=header_config_to_pass
                     )
                     st.success(f"성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
-                    if manual_style:
+                    if selected_style_preset == "6869_cyan":
+                        st.info("👑 [6869 피부과 의사형] 위닝 레퍼런스 스타일(상단 청록 헤더 + 볼드 하단 자막)이 완벽히 적용되었습니다! 캡컷에서 확인해 보세요.")
+                    elif selected_style_preset == "6868_yellow":
+                        st.info("🌟 [6868 리얼 극복형] 위닝 레퍼런스 스타일(상단 옐로우 헤더 + 후기 안내문구)이 완벽히 적용되었습니다! 캡컷에서 확인해 보세요.")
+                    elif manual_style:
                         st.info("🎨 AI가 역할을 분류하고 템플릿 스타일을 적용했습니다. 캡컷에서 자막을 확인하세요!")
                     elif cd_data:
-                        st.info("🎨 AI 크리에이티브 연출이 적용되었습니다. 캡컷에서 자막 애니메이션을 확인하세요!")
+                        st.info("🎬 대본 구조 기반 자동 연출(컷 전환 트랜지션 + 켄번스 카메라 모션 + 블러 배경 + 자막 효과)이 완벽히 적용되었습니다. 캡컷에서 확인해 보세요!")
                     else:
                         st.info("PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 확인하실 수 있습니다.")
             except Exception as e:
