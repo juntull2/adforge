@@ -682,6 +682,10 @@ with tab_single:
                     with _cc2:
                         st.metric("집행 기간", _row.get("집행 기간", "-"))
                         st.caption(f"시작: {_row.get('집행 시작일', '-')}")
+                        _m_type = _row.get("소재 유형", "")
+                        if _m_type:
+                            _m_badge = "🎬 영상" if _m_type == "영상" else ("🖼️ 이미지" if _m_type == "이미지" else "📑 캐러셀")
+                            st.caption(f"**유형**: {_m_badge}")
                         if _row.get("게시 플랫폼"):
                             st.caption(f"📱 {_row['게시 플랫폼']}")
                         if _row.get("광고 보기"):
@@ -692,31 +696,68 @@ with tab_single:
             st.markdown("#### 📋 기획 테이블 — 노션 저장용")
             st.caption("아래 표를 확인하고 광고 계정명/진행 여부를 입력한 뒤 노션에 저장하세요.")
 
-            from datetime import date as date_type
+            from datetime import date as date_type, datetime
+            from meta_ad_library import clean_ad_copy
+
             _notion_rows = []
             for _, _row in _df_meta.iterrows():
+                _page_name = str(_row.get("페이지명", "")).strip()
+                _media_type = str(_row.get("소재 유형", "영상")).strip() or "영상"
+                _start_str = str(_row.get("집행 시작일", "")).strip()
+
+                # 게재일(실제 집행 시작일) 파싱
+                _ad_date = date_type.today()
+                if _start_str:
+                    try:
+                        _ad_date = datetime.strptime(_start_str[:10], "%Y-%m-%d").date()
+                    except Exception:
+                        pass
+
+                _raw_copy = _row.get("광고 카피 원문") or _row.get("광고 카피", "")
+                _cleaned_copy = clean_ad_copy(str(_raw_copy), brand=_page_name)
+
+                # 제목 자동 조합: [소재유형] 브랜드명 - 유효카피 or 날짜
+                _media_tag = f"[{_media_type}]"
+                if _cleaned_copy and len(_cleaned_copy) >= 3 and _cleaned_copy.lower() not in ("none", "nan", "null"):
+                    _short_copy = _cleaned_copy[:35] + ("..." if len(_cleaned_copy) > 35 else "")
+                    _default_title = f"{_media_tag} {_page_name} - {_short_copy}" if _page_name else f"{_media_tag} {_short_copy}"
+                elif _page_name:
+                    _date_label = _start_str if _start_str else "레퍼런스"
+                    _default_title = f"{_media_tag} {_page_name} ({_date_label})"
+                else:
+                    _default_title = f"{_media_tag} 광고 레퍼런스"
+
                 _notion_rows.append({
                     "선택": True,
-                    "광고 카피": _row.get("광고 카피", ""),
-                    "레퍼런스 링크": _row.get("광고 보기", ""),
-                    "광고 계정명": _row.get("페이지명", ""),
+                    "제목": _default_title,
+                    "소재 유형": _media_type,
+                    "게재일": _ad_date,
+                    "광고 계정명": _page_name,
                     "진행 여부": "검토중",
-                    "날짜": date_type.today(),
+                    "레퍼런스 링크": _row.get("광고 보기", ""),
+                    "_광고 카피 원문": _cleaned_copy,
                 })
             _notion_df = pd.DataFrame(_notion_rows)
             _edited_df = st.data_editor(
                 _notion_df,
                 column_config={
                     "선택": st.column_config.CheckboxColumn("☑️ 선택", default=True, width="small"),
-                    "광고 카피": st.column_config.TextColumn("📝 광고 카피", width="large"),
-                    "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스 링크", width="medium"),
+                    "제목": st.column_config.TextColumn("🏷️ 제목", width="large"),
+                    "소재 유형": st.column_config.SelectboxColumn(
+                        "🎬 소재 유형",
+                        options=["영상", "이미지", "캐러셀"],
+                        default="영상",
+                        width="small",
+                    ),
+                    "게재일": st.column_config.DateColumn("📅 게재일", width="small", format="YYYY-MM-DD"),
                     "광고 계정명": st.column_config.TextColumn("🏷️ 광고 계정명", width="small"),
                     "진행 여부": st.column_config.SelectboxColumn(
                         "📌 진행 여부",
                         options=["검토중", "진행", "보류", "완료"],
                         width="small",
                     ),
-                    "날짜": st.column_config.DateColumn("📅 날짜", width="small", format="YYYY-MM-DD"),
+                    "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스 링크", width="medium"),
+                    "_광고 카피 원문": None,
                 },
                 width="stretch",
                 hide_index=True,
@@ -774,11 +815,13 @@ with tab_single:
                                 _res = save_ad_reference_to_notion(
                                     token=_notion_token,
                                     database_id=_notion_db_id,
-                                    ad_copy=str(_row.get("광고 카피", "")),
+                                    title=str(_row.get("제목", "")),
+                                    media_type=str(_row.get("소재 유형", "영상")),
+                                    date=str(_row.get("게재일", str(date_type.today()))),
+                                    ad_copy=str(_row.get("_광고 카피 원문", "")),
                                     reference_url=str(_row.get("레퍼런스 링크", "")),
                                     account_name=str(_row.get("광고 계정명", _row.get("브랜드", ""))),
                                     status=str(_row.get("진행 여부", "검토중")),
-                                    date=str(_row.get("날짜", str(date_type.today()))),
                                     keyword=_kw,
                                     page_name=str(_row.get("광고 계정명", "")),
                                 )
@@ -1277,6 +1320,7 @@ with col_v1:
             ("🐟 [Fish Audio] 활기찬 건강 보이스", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
             ("🐟 [Fish Audio] 신규 보이스", "fish_ed763b05d90b470284150bbc49a8d9e1"),
             ("🐟 [Fish Audio] 진우-기쁨-", "fish_a9574d6184714eac96a0a892b719289f"),
+            ("🐟 [Fish Audio] 링 아나운서", "fish_dc90eb64548d4a758642d806bce75a51"),
             ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom"),
             ("---", ""),
             ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),

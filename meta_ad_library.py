@@ -297,6 +297,111 @@ def _filter_by_duration(ads: list, min_days: int) -> list:
 # DataFrame 변환
 # ─────────────────────────────────────────────────────────────────────
 
+def clean_ad_copy(text: str, brand: str = "") -> str:
+    """
+    광고 카피에서 {{product.brand}} 등 템플릿 변수 및 None, 무의미한 문자를 정제합니다.
+    """
+    if not text or str(text).lower() in ("none", "nan", "null"):
+        return ""
+    cleaned = str(text)
+    # {{product.brand}} 등 치환
+    if brand:
+        cleaned = re.sub(r"\{\{\s*product\.brand\s*\}\}", brand, cleaned, flags=re.IGNORECASE)
+    # 남은 {{...}} 템플릿 변수 제거
+    cleaned = re.sub(r"\{\{[^}]+\}\}", "", cleaned)
+    # 줄바꿈 및 다중 공백 정리
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if cleaned.lower() in ("none", "nan", "null", ""):
+        return ""
+    return cleaned
+
+
+def detect_media_type(ad: dict, snapshot: dict) -> str:
+    """
+    Meta Ad Library 데이터로부터 미디어 유형('영상', '이미지', '캐러셀')을 정밀하게 판별합니다.
+    - 영상: 동영상 재생이 가능한 모든 광고 (릴스, 숏폼, 피드 비디오, 비디오 카드 등)
+    - 캐러셀: 2장 이상의 다중 이미지/카드뉴스 슬라이드 광고
+    - 이미지: 단일 이미지, 단일 DCO/DPA 카드, 정지 이미지 배너 광고
+    """
+    if not snapshot and not ad:
+        return "이미지"
+
+    # 1. 명시적 비디오 지표 확인 (영상 확정)
+    videos = snapshot.get("videos") or []
+    if isinstance(videos, list) and len(videos) > 0:
+        return "영상"
+
+    extra_videos = snapshot.get("extra_videos") or []
+    if isinstance(extra_videos, list) and len(extra_videos) > 0:
+        return "영상"
+
+    if snapshot.get("video_hd_url") or snapshot.get("video_sd_url"):
+        return "영상"
+
+    display_fmt = str(snapshot.get("display_format") or "").upper()
+    media_fmt = str(ad.get("media_type") or "").upper()
+    if "VIDEO" in display_fmt or "VIDEO" in media_fmt:
+        return "영상"
+
+    # 2. cards (카드/슬라이드) 내부 미디어 정밀 검사
+    cards = snapshot.get("cards") or []
+    has_card_video = False
+    has_card_image = False
+    card_count = 0
+
+    if isinstance(cards, list) and len(cards) > 0:
+        card_count = len(cards)
+        for card in cards:
+            if not isinstance(card, dict):
+                continue
+            # 카드에 실제 비디오 URL이 있는지 확인
+            if card.get("video_hd_url") or card.get("video_sd_url"):
+                has_card_video = True
+                break
+            # 카드에 이미지 URL이 있는지 확인
+            if (
+                card.get("resized_image_url")
+                or card.get("original_image_url")
+                or card.get("image_url")
+                or card.get("watermarked_resized_image_url")
+            ):
+                has_card_image = True
+
+    # 카드 내에 비디오가 하나라도 있으면 영상
+    if has_card_video:
+        return "영상"
+
+    # 3. 다중 카드(캐러셀 / 카드뉴스) 검사
+    if card_count > 1:
+        return "캐러셀"
+
+    # 4. 이미지(단일 이미지 / 단일 카드 / DCO / DPA) 검사
+    images = snapshot.get("images") or []
+    if isinstance(images, list) and len(images) > 0:
+        return "이미지"
+
+    extra_images = snapshot.get("extra_images") or []
+    if isinstance(extra_images, list) and len(extra_images) > 0:
+        return "이미지"
+
+    if snapshot.get("resized_image_url") or snapshot.get("original_image_url") or snapshot.get("image_url"):
+        return "이미지"
+
+    if has_card_image or card_count == 1:
+        return "이미지"
+
+    if any(k in display_fmt for k in ["IMAGE", "PHOTO", "DCO", "DPA", "CAROUSEL"]):
+        if "CAROUSEL" in display_fmt and card_count > 1:
+            return "캐러셀"
+        return "이미지"
+
+    if "IMAGE" in media_fmt or "PHOTO" in media_fmt:
+        return "이미지"
+
+    # 5. 최종 폴백: 비디오 단서가 전혀 없으면 안전하게 "이미지"
+    return "이미지"
+
+
 def _ads_to_dataframe(ads: list) -> pd.DataFrame:
     """스크래핑 결과 또는 API 결과를 통일된 DataFrame으로 변환합니다."""
     rows = []
@@ -308,8 +413,8 @@ def _ads_to_dataframe(ads: list) -> pd.DataFrame:
 
         body = snapshot.get("body", {})
         body_text = body.get("text", "") if isinstance(body, dict) else str(body)
-        body_text = body_text.replace("\n", " ").strip()
-        body_preview = body_text[:80] + "..." if len(body_text) > 80 else body_text
+        cleaned_body = clean_ad_copy(body_text, brand=page_name)
+        body_preview = cleaned_body[:80] + "..." if len(cleaned_body) > 80 else cleaned_body
 
         cta = snapshot.get("cta_text", "")
 
@@ -323,6 +428,9 @@ def _ads_to_dataframe(ads: list) -> pd.DataFrame:
             start_date = ""
 
         running_days = ad.get("_running_days", 0)
+
+        # 미디어 유형 감지
+        media_type = detect_media_type(ad, snapshot)
 
         # 광고 보기 URL (Meta 광고 라이브러리 직접 링크)
         ad_id = ad.get("ad_archive_id", "")
@@ -340,7 +448,9 @@ def _ads_to_dataframe(ads: list) -> pd.DataFrame:
 
         rows.append({
             "페이지명": page_name,
+            "소재 유형": media_type,
             "광고 카피": body_preview,
+            "광고 카피 원문": cleaned_body,
             "CTA": cta,
             "집행 시작일": start_date,
             "집행 기간": f"{running_days}일째" if running_days > 0 else "알 수 없음",

@@ -61,14 +61,16 @@ def get_database_properties(token: str, database_id: str) -> dict:
 def save_ad_reference_to_notion(
     token: str,
     database_id: str,
-    ad_copy: str,
-    reference_url: str,
+    ad_copy: str = "",
+    reference_url: str = "",
     account_name: str = "",
     status: str = "검토중",
     date: str = "",
     keyword: str = "",
     page_name: str = "",
     brand: str = "",
+    title: str = "",
+    media_type: str = "",
 ) -> dict:
     """
     광고 레퍼런스 데이터를 Notion 데이터베이스에 새 항목으로 저장합니다.
@@ -76,14 +78,16 @@ def save_ad_reference_to_notion(
     Args:
         token: Notion Integration Token
         database_id: 대상 데이터베이스 ID
-        ad_copy: 광고 카피 (Title 컬럼)
+        ad_copy: 광고 카피 원문
         reference_url: 레퍼런스 링크
         account_name: 광고 계정명 (기존 brand도 지원)
         status: 진행 여부 (검토중/진행/보류/완료)
-        date: 날짜 (YYYY-MM-DD)
+        date: 게재일 / 날짜 (YYYY-MM-DD)
         keyword: 검색 키워드 (선택)
         page_name: 광고 페이지명 (선택)
         brand: 이전 호환용 브랜드명
+        title: 페이지 제목 (Title 컬럼용. 없으면 ad_copy 또는 조합형 생성)
+        media_type: 소재 유형 (영상, 이미지, 캐러셀 등)
 
     Returns:
         {"ok": True, "url": 노션페이지URL} or {"ok": False, "error": 메시지}
@@ -100,15 +104,31 @@ def save_ad_reference_to_notion(
 
     properties = {}
 
-    # 1. 광고 카피 (Title 컬럼 감지)
-    title_col = "광고 카피"
+    # 1. Title (제목) 컬럼 감지 및 설정
+    title_col = None
     if db_props:
         for col_name, col_meta in db_props.items():
             if col_meta.get("type") == "title":
                 title_col = col_name
                 break
+    if not title_col:
+        title_col = "제목" if (db_props and "제목" in db_props) else ("광고 카피" if (db_props and "광고 카피" in db_props) else "제목")
+
+    # 제목 결정 (우선순위: title > 정제된 ad_copy > 브랜드/날짜 조합)
+    account_val = account_name if account_name else (page_name if page_name else brand)
+    final_title = title.strip() if title else ""
+    if not final_title:
+        if ad_copy and ad_copy.lower() not in ("none", "nan", "null", ""):
+            final_title = ad_copy[:100]
+        elif account_val:
+            prefix = f"[{media_type}] " if media_type else ""
+            suffix = f" ({date})" if date else " 레퍼런스"
+            final_title = f"{prefix}{account_val}{suffix}"
+        else:
+            final_title = f"[{media_type or '소재'}] 광고 레퍼런스"
+
     properties[title_col] = {
-        "title": [{"text": {"content": ad_copy[:2000] if ad_copy else "광고 레퍼런스"}}]
+        "title": [{"text": {"content": final_title[:2000]}}]
     }
 
     # 2. 레퍼런스 링크 (URL)
@@ -116,15 +136,12 @@ def save_ad_reference_to_notion(
         properties["레퍼런스 링크"] = {"url": reference_url}
 
     # 3. 광고 계정명 / 브랜드 (Rich Text)
-    account_val = account_name if account_name else brand
     if account_val:
         if db_props:
             if "광고 계정명" in db_props:
                 properties["광고 계정명"] = {"rich_text": [{"text": {"content": account_val}}]}
             elif "브랜드" in db_props:
                 properties["브랜드"] = {"rich_text": [{"text": {"content": account_val}}]}
-            else:
-                properties["광고 계정명"] = {"rich_text": [{"text": {"content": account_val}}]}
         else:
             properties["광고 계정명"] = {"rich_text": [{"text": {"content": account_val}}]}
 
@@ -132,28 +149,69 @@ def save_ad_reference_to_notion(
     if status and (not db_props or "진행 여부" in db_props):
         properties["진행 여부"] = {"select": {"name": status}}
 
-    # 5. 날짜 (Date)
-    if date and (not db_props or "날짜" in db_props):
-        properties["날짜"] = {"date": {"start": date}}
+    # 5. 게재일 / 날짜 (Date)
+    if date:
+        date_col = None
+        if db_props:
+            if "게재일" in db_props:
+                date_col = "게재일"
+            elif "날짜" in db_props:
+                date_col = "날짜"
+            else:
+                for c_name, c_meta in db_props.items():
+                    if c_meta.get("type") == "date":
+                        date_col = c_name
+                        break
+        else:
+            date_col = "게재일"
 
-    # 6. 키워드 (Rich Text)
+        if date_col and (not db_props or date_col in db_props):
+            properties[date_col] = {"date": {"start": date}}
+
+    # 6. 소재 유형 (Select)
+    if media_type:
+        type_col = None
+        if db_props:
+            for candidate in ("소재 유형", "소재형태", "유형", "소재구분", "미디어 타입"):
+                if candidate in db_props and db_props[candidate].get("type") == "select":
+                    type_col = candidate
+                    break
+        else:
+            type_col = "소재 유형"
+
+        if type_col and (not db_props or type_col in db_props):
+            properties[type_col] = {"select": {"name": media_type}}
+
+    # 7. 키워드 (Rich Text)
     if keyword and (not db_props or "키워드" in db_props):
         properties["키워드"] = {"rich_text": [{"text": {"content": keyword}}]}
 
-    # 키워드와 페이지명을 content에 추가 (있으면)
+    # 8. 별도 '광고 카피' rich_text 컬럼이 있는 경우
+    if ad_copy and db_props and "광고 카피" in db_props and title_col != "광고 카피":
+        if db_props["광고 카피"].get("type") == "rich_text":
+            properties["광고 카피"] = {"rich_text": [{"text": {"content": ad_copy[:2000]}}]}
+
+    # 본문 콜아웃 블록 (상세 정보 보존)
     children = []
-    if keyword or page_name:
-        info_parts = []
-        if page_name:
-            info_parts.append(f"📌 광고주: {page_name}")
-        if keyword:
-            info_parts.append(f"🔍 검색 키워드: {keyword}")
+    info_parts = []
+    if account_val:
+        info_parts.append(f"📌 광고주: {account_val}")
+    if media_type:
+        info_parts.append(f"🎬 소재 유형: {media_type}")
+    if date:
+        info_parts.append(f"📅 게재일: {date}")
+    if keyword:
+        info_parts.append(f"🔍 검색 키워드: {keyword}")
+    if ad_copy and ad_copy.lower() not in ("none", "nan", "null", ""):
+        info_parts.append(f"📝 광고 카피:\n{ad_copy}")
+
+    if info_parts:
         children.append({
             "object": "block",
             "type": "callout",
             "callout": {
-                "rich_text": [{"type": "text", "text": {"content": "\n".join(info_parts)}}],
-                "icon": {"emoji": "📸"},
+                "rich_text": [{"type": "text", "text": {"content": "\n\n".join(info_parts)}}],
+                "icon": {"emoji": "🎬" if media_type == "영상" else "📸"},
                 "color": "blue_background",
             }
         })
@@ -197,16 +255,19 @@ def batch_save_to_notion(
     today = datetime.now().strftime("%Y-%m-%d")
 
     for item in items:
+        item_date = item.get("date") or item.get("게재일") or today
         result = save_ad_reference_to_notion(
             token=token,
             database_id=database_id,
             ad_copy=item.get("ad_copy", ""),
             reference_url=item.get("reference_url", ""),
             account_name=item.get("account_name", item.get("brand", "")),
-            status=default_status,
-            date=today,
+            status=item.get("status", default_status),
+            date=str(item_date),
             keyword=item.get("keyword", ""),
             page_name=item.get("page_name", ""),
+            title=item.get("title", ""),
+            media_type=item.get("media_type", item.get("소재 유형", "")),
         )
         if result["ok"]:
             saved += 1
