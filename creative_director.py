@@ -491,6 +491,114 @@ class CreativeDirector:
         """특정 역할의 프리셋 반환"""
         return ROLE_PRESETS.get(role, ROLE_PRESETS["normal"])
 
+    # -------------------------------------------------------------------
+    # CreativePlan 연동 — SceneBeat에 자막 스타일 정보를 보강
+    # -------------------------------------------------------------------
+    def enrich_beat_for_plan(self, beat) -> dict:
+        """SceneBeat 하나를 받아 CapCut/CaptionEngine이 사용할 자막 스타일 dict 반환.
+
+        ScriptAnalyzer가 결정한 role을 기반으로, 기존 ROLE_PRESETS + 강도 필터를
+        적용한 자막 스타일 정보를 반환한다.
+
+        기존 pipeline 호환을 유지하면서 CreativePlan과 연결하는 어댑터.
+
+        Args:
+            beat: SceneBeat 인스턴스 (또는 role/emphasis_words 필드를 가진 dict)
+
+        Returns:
+            subtitle_style, text_intro, text_outro, text_loop_anim을 포함한 dict
+        """
+        role = getattr(beat, "role", None) or beat.get("role", "normal")
+        if role not in ROLE_PRESETS:
+            role = "normal"
+
+        presets = self._apply_style_profile_to_presets()
+        preset = presets[role]
+
+        return {
+            "role": role,
+            "subtitle_style": {
+                "size": preset["size"],
+                "color": preset["color"],
+                "bold": preset["bold"],
+                "border_color": preset["border_color"],
+                "border_width": preset["border_width"],
+            },
+            "text_intro": self._filter_animation(preset.get("text_intro"), "intros"),
+            "text_outro": self._filter_animation(preset.get("text_outro"), "outros"),
+            "text_loop_anim": self._filter_animation(preset.get("text_loop_anim"), "loops"),
+        }
+
+    def enrich_beat_simple(self, beat) -> dict:
+        """enrich_beat_for_plan()의 별칭"""
+        return self.enrich_beat_for_plan(beat)
+
+    def extract_emphasis_words(self, text: str, role: str = "normal") -> list:
+        """핵심 강조 단어 추출 — beat당 1~3개.
+
+        규칙:
+        1. 금액/숫자 + 단위 (3cm, 300g, 3파장, 30일, 4.9점 등)
+        2. 감탄사/강조어 (엄청, 드디어, 유일, 최초, 절대 등)
+        3. 제품 핵심 키워드 (원적외선, 무선, 근적외선 등)
+        4. 의문문의 주요 고통 단어
+        5. CTA 액션 단어
+        """
+        import re
+        candidates = []
+
+        # 숫자+단위 패턴 (3cm, 300g, 3파장, 30일, 4.9점 등)
+        num_matches = re.findall(r'\d+(?:\.\d+)?(?:cm|g|kg|파장|일|점|%|배|개)', text)
+        candidates.extend(num_matches[:2])
+
+        # 강조 부사/형용사
+        emphasis_words = [
+            "엄청", "드디어", "이제", "유일", "최초", "특허", "무상", "무선",
+            "초경량", "듀얼", "속근육", "원적외선", "근적외선", "3파장", "100%",
+            "완전", "직접", "바로", "즉시", "단 하나", "혁신"
+        ]
+        for ew in emphasis_words:
+            if ew in text and ew not in candidates:
+                candidates.append(ew)
+                if len(candidates) >= 3:
+                    break
+
+        # 역할별 보조 추출
+        if role == "hook" and "?" in text:
+            nouns = re.findall(r'[가-힣]{2,5}(?:이|은|는|이|가|을|를)', text)
+            for n in nouns[:1]:
+                cleaned = re.sub(r'[이은는이가을를]$', '', n).strip()
+                if cleaned and cleaned not in candidates:
+                    candidates.append(cleaned)
+
+        if role == "cta":
+            cta_kw = ["지금", "확인", "링크", "클릭", "바로", "검색"]
+            for ck in cta_kw:
+                if ck in text and ck not in candidates:
+                    candidates.append(ck)
+                    break
+
+        return candidates[:3]
+
+    def get_caption_style_for_beat(self, role: str) -> str:
+        """CaptionEngine(caption-os)이 사용하는 스타일 이름 반환.
+
+        향후 CaptionEngine이 role-aware 자막을 렌더링할 때 사용.
+        현재는 단순 매핑이지만, STEP 4에서 더 세분화할 수 있는 확장 슬롯.
+        """
+        style_map = {
+            "hook": "bold_yellow",
+            "empathy": "soft_white",
+            "agitate": "orange_glitch",
+            "evidence": "typewriter_green",
+            "solution": "clean_blue",
+            "usp": "highlight_white",
+            "cta": "urgent_red",
+            "transition": "fade_gray",
+            "normal": "default",
+        }
+        return style_map.get(role, "default")
+
+
 
 # -------------------------------------------------------------------
 # CLI 테스트용

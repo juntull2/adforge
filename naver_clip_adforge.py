@@ -410,9 +410,19 @@ def get_or_download_stock_videos(keywords: list, pexels_key: str = "", pixabay_k
 def find_best_video_for_sentence(sentence: str, stock_videos: list, last_used_video: str = "") -> str:
     if not stock_videos:
         return ""
-        
-    # 키워드 매핑 (한국어 대본 단어 -> 파일명 키워드)
+
+    # [AdForge v2] 8차원 시맨틱 AssetMatcher 우선 시도
+    try:
+        from pipeline.asset_matcher import intelligent_find_best_video
+        matched = intelligent_find_best_video(sentence, stock_videos, last_used_video=last_used_video)
+        if matched:
+            return matched
+    except Exception:
+        pass
+
+    # [Fallback] 기존 15개 키워드 매핑 및 랜덤 폴백
     keyword_map = {
+
         "마사지": ["massage"],
         "문지": ["massage"], 
         "비벼": ["massage"],
