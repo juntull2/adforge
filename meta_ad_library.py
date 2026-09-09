@@ -402,6 +402,97 @@ def detect_media_type(ad: dict, snapshot: dict) -> str:
     return "이미지"
 
 
+def _clean_landing_url(url: str) -> str:
+    """페이스북 리다이렉트(l.facebook.com/l.php?u=...) 및 트래킹 파라미터를 정리하여 깨끗한 자사몰 원본 URL 반환"""
+    if not url or not isinstance(url, str):
+        return ""
+    url = url.strip()
+    if "l.facebook.com" in url or "lm.facebook.com" in url:
+        try:
+            from urllib.parse import urlparse, parse_qs, unquote
+            parsed = urlparse(url)
+            qs = parse_qs(parsed.query)
+            if "u" in qs:
+                url = unquote(qs["u"][0])
+        except Exception:
+            pass
+    return url
+
+
+def _extract_landing_url(snapshot: dict) -> str:
+    """광고 스냅샷에서 자사몰 / 랜딩페이지 URL을 추출합니다."""
+    if not snapshot:
+        return ""
+
+    candidates = [
+        snapshot.get("link_url"),
+        snapshot.get("cta_url"),
+    ]
+
+    cards = snapshot.get("cards") or []
+    if isinstance(cards, list):
+        for card in cards:
+            if isinstance(card, dict) and card.get("link_url"):
+                candidates.append(card.get("link_url"))
+            if isinstance(card, dict) and card.get("cta_url"):
+                candidates.append(card.get("cta_url"))
+
+    for c in candidates:
+        if c and isinstance(c, str) and c.startswith("http"):
+            return _clean_landing_url(c)
+
+    # fallback: caption이 URL 형태인 경우
+    caption = snapshot.get("caption")
+    if caption and isinstance(caption, str) and ("http://" in caption or "https://" in caption):
+        return _clean_landing_url(caption)
+
+    return ""
+
+
+def _extract_video_download_url(ad: dict, snapshot: dict) -> str:
+    """광고 데이터에서 원본 비디오 mp4 다운로드 URL을 추출합니다."""
+    if not snapshot and not ad:
+        return ""
+
+    # 1. snapshot 직접 비디오 URL (HD 우선)
+    if snapshot.get("video_hd_url"):
+        return snapshot["video_hd_url"]
+    if snapshot.get("video_sd_url"):
+        return snapshot["video_sd_url"]
+
+    # 2. snapshot.videos 리스트
+    videos = snapshot.get("videos") or []
+    if isinstance(videos, list):
+        for v in videos:
+            if isinstance(v, dict):
+                if v.get("video_hd_url"):
+                    return v["video_hd_url"]
+                if v.get("video_sd_url"):
+                    return v["video_sd_url"]
+
+    # 3. cards 내부 비디오
+    cards = snapshot.get("cards") or []
+    if isinstance(cards, list):
+        for card in cards:
+            if isinstance(card, dict):
+                if card.get("video_hd_url"):
+                    return card["video_hd_url"]
+                if card.get("video_sd_url"):
+                    return card["video_sd_url"]
+
+    # 4. extra_videos
+    extra_videos = snapshot.get("extra_videos") or []
+    if isinstance(extra_videos, list):
+        for v in extra_videos:
+            if isinstance(v, dict):
+                if v.get("video_hd_url"):
+                    return v["video_hd_url"]
+                if v.get("video_sd_url"):
+                    return v["video_sd_url"]
+
+    return ""
+
+
 def _ads_to_dataframe(ads: list) -> pd.DataFrame:
     """스크래핑 결과 또는 API 결과를 통일된 DataFrame으로 변환합니다."""
     rows = []
@@ -446,8 +537,21 @@ def _ads_to_dataframe(ads: list) -> pd.DataFrame:
         else:
             platform_str = str(platforms) if platforms else ""
 
+        landing_url = _extract_landing_url(snapshot)
+        video_download_url = _extract_video_download_url(ad, snapshot)
+
+        page_id = str(ad.get("page_id") or snapshot.get("page_id", "")).strip()
+        if page_id:
+            page_library_url = f"https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=KR&view_all_page_id={page_id}"
+        elif page_name:
+            page_library_url = f"https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=KR&q={quote_plus(page_name)}&search_type=keyword_unordered"
+        else:
+            page_library_url = ""
+
         rows.append({
             "페이지명": page_name,
+            "page_id": page_id,
+            "_page_library_url": page_library_url,
             "소재 유형": media_type,
             "광고 카피": body_preview,
             "광고 카피 원문": cleaned_body,
@@ -456,6 +560,8 @@ def _ads_to_dataframe(ads: list) -> pd.DataFrame:
             "집행 기간": f"{running_days}일째" if running_days > 0 else "알 수 없음",
             "게시 플랫폼": platform_str,
             "광고 보기": snapshot_url,
+            "연결링크": landing_url,
+            "_video_url": video_download_url,
         })
 
     return pd.DataFrame(rows)

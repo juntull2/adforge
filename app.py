@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -670,15 +671,63 @@ with tab_single:
             _mode_icon = "🕷️ 스크래핑" if _meta.get("mode") == "scrape" else "🔌 API"
             st.success(f"{_mode_icon} 방식으로 {_cd}일+ 집행 광고 **{len(_df_meta)}개** 발견!")
 
+            # 상단 선택 컨트롤 바
+            _sel_card_count = sum(1 for _idx in range(len(_df_meta)) if st.session_state.get(f"ad_card_sel_{_kw}_{_idx}", True))
+            _top_c1, _top_c2, _top_c3 = st.columns([2.2, 0.9, 0.9])
+            with _top_c1:
+                st.markdown(f"##### 🎯 검색 결과 목록 (총 {len(_df_meta)}개 중 **{_sel_card_count}개 선택됨**)")
+                st.caption("💡 각 카드 좌측의 체크박스로 노션에 저장할 광고를 바로 선택/해제할 수 있습니다.")
+            with _top_c2:
+                if st.button("☑️ 전체 선택", key=f"btn_sel_all_{_kw}", use_container_width=True):
+                    for _idx in range(len(_df_meta)):
+                        st.session_state[f"ad_card_sel_{_kw}_{_idx}"] = True
+                    if "notion_table_unified" in st.session_state and "edited_rows" in st.session_state["notion_table_unified"]:
+                        st.session_state["notion_table_unified"]["edited_rows"] = {
+                            _idx: {"선택": True} for _idx in range(len(_df_meta))
+                        }
+                    st.rerun()
+            with _top_c3:
+                if st.button("◻️ 전체 해제", key=f"btn_desel_all_{_kw}", use_container_width=True):
+                    for _idx in range(len(_df_meta)):
+                        st.session_state[f"ad_card_sel_{_kw}_{_idx}"] = False
+                    if "notion_table_unified" in st.session_state and "edited_rows" in st.session_state["notion_table_unified"]:
+                        st.session_state["notion_table_unified"]["edited_rows"] = {
+                            _idx: {"선택": False} for _idx in range(len(_df_meta))
+                        }
+                    st.rerun()
+
             for _i, _row in _df_meta.iterrows():
+                _card_key = f"ad_card_sel_{_kw}_{_i}"
+                if _card_key not in st.session_state:
+                    st.session_state[_card_key] = True
+
+                _is_card_sel = st.session_state[_card_key]
+
                 with st.container(border=True):
-                    _cc1, _cc2 = st.columns([3, 1])
+                    _chk_col, _cc1, _cc2 = st.columns([0.45, 2.7, 1.1])
+                    with _chk_col:
+                        st.write("")
+                        _card_checked = st.checkbox(
+                            f"광고 #{_i+1} 선택",
+                            value=_is_card_sel,
+                            key=_card_key,
+                            label_visibility="collapsed",
+                        )
+                        st.markdown(f"**#{_i+1}**")
+                        if _card_checked:
+                            st.caption("✅ 포함")
+                        else:
+                            st.caption("⚪ 제외")
+
                     with _cc1:
                         st.markdown(f"**🏪 {_row['페이지명']}**")
                         if _row.get("광고 카피"):
                             st.caption(_row["광고 카피"])
                         if _row.get("CTA"):
                             st.markdown(f"🔘 *{_row['CTA']}*")
+                        if _row.get("연결링크"):
+                            st.caption(f"🛒 **자사몰**: [{_row['연결링크'][:45]}...]({_row['연결링크']})")
+
                     with _cc2:
                         st.metric("집행 기간", _row.get("집행 기간", "-"))
                         st.caption(f"시작: {_row.get('집행 시작일', '-')}")
@@ -689,18 +738,29 @@ with tab_single:
                         if _row.get("게시 플랫폼"):
                             st.caption(f"📱 {_row['게시 플랫폼']}")
                         if _row.get("광고 보기"):
-                            st.markdown(f"[👁️ 광고 보기 →]({_row['광고 보기']})")
+                            st.markdown(f"[👁️ 메타 광고 보기 →]({_row['광고 보기']})")
 
             # 기획 테이블 + 노션 저장
             st.markdown("---")
             st.markdown("#### 📋 기획 테이블 — 노션 저장용")
-            st.caption("아래 표를 확인하고 광고 계정명/진행 여부를 입력한 뒤 노션에 저장하세요.")
+            st.caption("아래 표를 확인하고 광고 계정명/진행 여부를 입력한 뒤 노션에 저장하세요. (위 카드의 체크박스와 연동됩니다)")
 
             from datetime import date as date_type, datetime
             from meta_ad_library import clean_ad_copy
 
+            # 카드 체크 상태를 data_editor 세션에 동기화
+            if "notion_table_unified" in st.session_state:
+                if "edited_rows" not in st.session_state["notion_table_unified"]:
+                    st.session_state["notion_table_unified"]["edited_rows"] = {}
+                for _k_idx in range(len(_df_meta)):
+                    _c_val = st.session_state.get(f"ad_card_sel_{_kw}_{_k_idx}")
+                    if _c_val is not None:
+                        if _k_idx not in st.session_state["notion_table_unified"]["edited_rows"]:
+                            st.session_state["notion_table_unified"]["edited_rows"][_k_idx] = {}
+                        st.session_state["notion_table_unified"]["edited_rows"][_k_idx]["선택"] = _c_val
+
             _notion_rows = []
-            for _, _row in _df_meta.iterrows():
+            for _idx_r, _row in _df_meta.iterrows():
                 _page_name = str(_row.get("페이지명", "")).strip()
                 _media_type = str(_row.get("소재 유형", "영상")).strip() or "영상"
                 _start_str = str(_row.get("집행 시작일", "")).strip()
@@ -727,15 +787,20 @@ with tab_single:
                 else:
                     _default_title = f"{_media_tag} 광고 레퍼런스"
 
+                _row_is_checked = st.session_state.get(f"ad_card_sel_{_kw}_{_idx_r}", True)
+
                 _notion_rows.append({
-                    "선택": True,
+                    "선택": _row_is_checked,
                     "제목": _default_title,
                     "소재 유형": _media_type,
                     "게재일": _ad_date,
                     "광고 계정명": _page_name,
                     "진행 여부": "검토중",
                     "레퍼런스 링크": _row.get("광고 보기", ""),
+                    "연결링크": _row.get("연결링크", ""),
+                    "_video_url": _row.get("_video_url", ""),
                     "_광고 카피 원문": _cleaned_copy,
+                    "_page_library_url": _row.get("_page_library_url", ""),
                 })
             _notion_df = pd.DataFrame(_notion_rows)
             _edited_df = st.data_editor(
@@ -756,8 +821,11 @@ with tab_single:
                         options=["검토중", "진행", "보류", "완료"],
                         width="small",
                     ),
-                    "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스 링크", width="medium"),
+                    "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스(메타)", width="small"),
+                    "연결링크": st.column_config.LinkColumn("🛒 연결링크(자사몰)", width="medium"),
+                    "_video_url": None,
                     "_광고 카피 원문": None,
+                    "_page_library_url": None,
                 },
                 width="stretch",
                 hide_index=True,
@@ -765,11 +833,52 @@ with tab_single:
                 key="notion_table_unified",
             )
 
-            # 노션 저장
-            _notion_token = os.environ.get("NOTION_TOKEN", "")
-            _notion_db_id = os.environ.get("NOTION_DATABASE_ID", "")
+            # 노션 및 구글 드라이브 설정
+            def _save_notion_config(token: str, db_id: str):
+                _env_path = os.path.join(os.path.dirname(__file__), ".env")
+                _ec = ""
+                if os.path.exists(_env_path):
+                    with open(_env_path, "r", encoding="utf-8") as _ef:
+                        _ec = _ef.read()
+                if re.search(r"^NOTION_TOKEN=.*$", _ec, flags=re.MULTILINE):
+                    _ec = re.sub(r"^NOTION_TOKEN=.*$", f"NOTION_TOKEN={token}", _ec, flags=re.MULTILINE)
+                else:
+                    _ec = _ec.rstrip() + f"\nNOTION_TOKEN={token}\n"
+                if re.search(r"^NOTION_DATABASE_ID=.*$", _ec, flags=re.MULTILINE):
+                    _ec = re.sub(r"^NOTION_DATABASE_ID=.*$", f"NOTION_DATABASE_ID={db_id}", _ec, flags=re.MULTILINE)
+                else:
+                    _ec = _ec.rstrip() + f"\nNOTION_DATABASE_ID={db_id}\n"
+                with open(_env_path, "w", encoding="utf-8") as _ef:
+                    _ef.write(_ec)
+                os.environ["NOTION_TOKEN"] = token
+                os.environ["NOTION_DATABASE_ID"] = db_id
+                load_dotenv(override=True)
+                cached_test_notion_connection.clear()
+
+            def _save_gdrive_config(folder_url: str):
+                _env_path = os.path.join(os.path.dirname(__file__), ".env")
+                _ec = ""
+                if os.path.exists(_env_path):
+                    with open(_env_path, "r", encoding="utf-8") as _ef:
+                        _ec = _ef.read()
+                if re.search(r"^GOOGLE_DRIVE_FOLDER_URL=.*$", _ec, flags=re.MULTILINE):
+                    _ec = re.sub(r"^GOOGLE_DRIVE_FOLDER_URL=.*$", f"GOOGLE_DRIVE_FOLDER_URL={folder_url}", _ec, flags=re.MULTILINE)
+                else:
+                    _ec = _ec.rstrip() + f"\nGOOGLE_DRIVE_FOLDER_URL={folder_url}\n"
+                with open(_env_path, "w", encoding="utf-8") as _ef:
+                    _ef.write(_ec)
+                os.environ["GOOGLE_DRIVE_FOLDER_URL"] = folder_url
+                load_dotenv(override=True)
+
+            from gdrive_sync import test_gdrive_folder_access, download_video_file, upload_video_to_gdrive
+
+            _notion_token = os.environ.get("NOTION_TOKEN", "").strip()
+            _notion_db_id = os.environ.get("NOTION_DATABASE_ID", "").strip()
+            _gdrive_folder = os.environ.get("GOOGLE_DRIVE_FOLDER_URL", "").strip()
+            _gdrive_sa = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON", "service_account.json").strip()
+
             if not _notion_token or not _notion_db_id:
-                with st.expander("⚙️ 노션 연동 설정 필요", expanded=False):
+                with st.expander("⚙️ 노션 연동 설정 필요", expanded=True):
                     st.warning("노션에 저장하려면 아래 정보를 입력하세요.")
                     _nc1, _nc2 = st.columns(2)
                     with _nc1:
@@ -777,64 +886,149 @@ with tab_single:
                     with _nc2:
                         _in_db = st.text_input("Notion Database ID", placeholder="32자리 ID", key="input_notion_db_id")
                     if st.button("💾 설정 저장", key="save_notion_settings"):
-                        if _in_token and _in_db:
-                            _env_path = os.path.join(os.path.dirname(__file__), ".env")
-                            with open(_env_path, "r", encoding="utf-8") as _ef:
-                                _ec = _ef.read()
-                            _ec = re.sub(r"^NOTION_TOKEN=.*$", f"NOTION_TOKEN={_in_token}", _ec, flags=re.MULTILINE)
-                            _ec = re.sub(r"^NOTION_DATABASE_ID=.*$", f"NOTION_DATABASE_ID={_in_db}", _ec, flags=re.MULTILINE)
-                            with open(_env_path, "w", encoding="utf-8") as _ef:
-                                _ef.write(_ec)
-                            load_dotenv(override=True)
-                            cached_test_notion_connection.clear()
-                            st.success("✅ 설정이 저장되었습니다! 페이지를 새로고침하세요.")
+                        if _in_token.strip() and _in_db.strip():
+                            _save_notion_config(_in_token.strip(), _in_db.strip())
+                            st.success("✅ 설정이 저장되었습니다!")
+                            st.rerun()
                         else:
                             st.error("토큰과 DB ID를 모두 입력해주세요.")
             else:
                 from notion_sync import save_ad_reference_to_notion
-                with st.expander("✅ 노션 연결됨", expanded=False):
-                    _conn = cached_test_notion_connection(_notion_token, _notion_db_id)
-                    if _conn["ok"]:
-                        st.success(f"데이터베이스: **{_conn['title']}**")
-                    else:
-                        st.error(f"연결 오류: {_conn['error']}")
+                _conn = cached_test_notion_connection(_notion_token, _notion_db_id)
+
+                # 구글 드라이브 연결 상태 테스트
+                _gd_res = test_gdrive_folder_access(_gdrive_folder, _gdrive_sa) if _gdrive_folder else {"ok": False, "error": "폴더 미설정"}
+
+                with st.expander("⚙️ 노션 & 구글 드라이브 연동 상태", expanded=(not _conn["ok"] or not _gd_res["ok"])):
+                    _st_col1, _st_col2 = st.columns(2)
+                    with _st_col1:
+                        st.markdown("##### 📝 노션 연동")
+                        if _conn["ok"]:
+                            st.success(f"데이터베이스: **{_conn['title']}**")
+                        else:
+                            st.error(f"연결 오류: {_conn['error']}")
+                            st.info("💡 DB 페이지 우측 상단 `···` → `연결(Connections)`에 통합 추가 여부 확인")
+
+                        with st.popover("⚙️ 노션 정보 변경"):
+                            _re_token = st.text_input("토큰", value=_notion_token, type="password", key="re_token")
+                            _re_db = st.text_input("DB ID", value=_notion_db_id, key="re_db")
+                            if st.button("💾 노션 변경 저장", key="re_save_notion"):
+                                if _re_token.strip() and _re_db.strip():
+                                    _save_notion_config(_re_token.strip(), _re_db.strip())
+                                    st.rerun()
+
+                    with _st_col2:
+                        st.markdown("##### ☁️ 구글 드라이브 연동")
+                        if _gd_res["ok"]:
+                            st.success(f"폴더 연결 성공: **{_gd_res.get('folder_name', '확인됨')}**")
+                            st.caption("✅ 저장 시 원본 영상이 구글 드라이브에 자동 업로드되어 노션에 링크됩니다.")
+                        elif _gd_res.get("api_disabled"):
+                            st.error("❌ Google Drive API 활성화 필요")
+                            st.markdown(f"👉 [Google Cloud Console에서 Drive API 사용 설정하기]({_gd_res.get('enable_url')})")
+                            st.caption("위 링크 접속 후 **[사용 설정]** 버튼을 클릭하시면 1분 내 활성화됩니다.")
+                        else:
+                            st.warning(f"⚠️ 구글 드라이브 상태: {_gd_res.get('error', '설정 필요')}")
+                            st.caption("💡 폴더 공유 설정에서 서비스 계정(`nori-213@nori-508115.iam.gserviceaccount.com`)을 **편집자**로 추가해주세요.")
+
+                        with st.popover("⚙️ 구글 드라이브 폴더 변경"):
+                            _re_gdrive = st.text_input("구글 드라이브 폴더 링크", value=_gdrive_folder, key="re_gdrive_input")
+                            if st.button("💾 폴더 링크 저장", key="save_gdrive_folder_btn"):
+                                if _re_gdrive.strip():
+                                    _save_gdrive_config(_re_gdrive.strip())
+                                    st.rerun()
 
                 _sel_rows = _edited_df[_edited_df["선택"] == True]
                 _ns1, _ns2 = st.columns([2, 1])
                 with _ns1:
-                    st.caption(f"☑️ 선택된 {len(_sel_rows)}개 항목을 노션에 저장합니다")
+                    _drive_badge = "☁️ 구글 드라이브 자동 백업 포함" if _gd_res["ok"] else "⚠️ 메타 링크로 저장 (드라이브 미연동)"
+                    st.caption(f"☑️ 선택된 {len(_sel_rows)}개 항목을 노션에 저장합니다. ({_drive_badge})")
                 with _ns2:
                     _save_btn = st.button("📤 노션에 저장하기", type="primary", use_container_width=True, key="save_to_notion_unified")
                 if _save_btn:
-                    with st.spinner("노션에 저장 중..."):
-                        _saved, _failed, _last_err = 0, 0, ""
-                        if len(_sel_rows) == 0:
-                            st.warning("선택된 항목이 없습니다.")
-                        else:
-                            for _, _row in _sel_rows.iterrows():
-                                _res = save_ad_reference_to_notion(
-                                    token=_notion_token,
-                                    database_id=_notion_db_id,
-                                    title=str(_row.get("제목", "")),
-                                    media_type=str(_row.get("소재 유형", "영상")),
-                                    date=str(_row.get("게재일", str(date_type.today()))),
-                                    ad_copy=str(_row.get("_광고 카피 원문", "")),
-                                    reference_url=str(_row.get("레퍼런스 링크", "")),
-                                    account_name=str(_row.get("광고 계정명", _row.get("브랜드", ""))),
-                                    status=str(_row.get("진행 여부", "검토중")),
-                                    keyword=_kw,
-                                    page_name=str(_row.get("광고 계정명", "")),
-                                )
-                                if _res["ok"]:
-                                    _saved += 1
-                                else:
-                                    _failed += 1
-                                    _last_err = _res.get("error", "")
-                    if _failed == 0:
-                        st.success(f"✅ {_saved}개 항목이 노션에 저장되었습니다!")
-                        st.balloons()
+                    if len(_sel_rows) == 0:
+                        st.warning("선택된 항목이 없습니다.")
                     else:
-                        st.warning(f"저장 완료: {_saved}개 성공, {_failed}개 실패")
+                        _progress_bar = st.progress(0, text="노션 저장 준비 중...")
+                        _saved, _failed, _last_err = 0, 0, ""
+                        _gdrive_uploaded = 0
+
+                        for _idx, (_, _row) in enumerate(_sel_rows.iterrows()):
+                            _brand_name = str(_row.get("광고 계정명", _row.get("브랜드", ""))).strip()
+                            _video_src = str(_row.get("_video_url", "")).strip()
+                            _meta_ref_url = str(_row.get("레퍼런스 링크", "")).strip()
+                            _final_ref_url = _meta_ref_url
+
+                            # 구글 드라이브 자동 업로드 처리
+                            if _gd_res["ok"] and _video_src and _video_src.startswith("http"):
+                                _progress_bar.progress(
+                                    int((_idx / len(_sel_rows)) * 100),
+                                    text=f"☁️ [{_idx + 1}/{len(_sel_rows)}] '{_brand_name}' 영상 다운로드 및 구글 드라이브 업로드 중..."
+                                )
+                                _safe_brand = re.sub(r"[^\w\s-]", "", _brand_name).strip().replace(" ", "_")[:20] or "광고"
+                                _ad_date_str = str(_row.get("게재일", str(date_type.today())))
+                                _fname = f"[{_safe_brand}]_{_ad_date_str}_{int(time.time())}_{_idx+1}.mp4"
+                                _local_path = os.path.join(os.path.dirname(__file__), "outputs", "references", _fname)
+
+                                # 1. 영상 다운로드
+                                if download_video_file(_video_src, _local_path):
+                                    # 2. 구글 드라이브 업로드
+                                    _up_res = upload_video_to_gdrive(
+                                        local_path=_local_path,
+                                        file_name=_fname,
+                                        folder_id_or_url=_gdrive_folder,
+                                        credentials_path=_gdrive_sa,
+                                    )
+                                    if _up_res["ok"]:
+                                        _final_ref_url = _up_res["web_view_link"]
+                                        _gdrive_uploaded += 1
+                                    else:
+                                        st.caption(f"⚠️ '{_brand_name}' 드라이브 업로드 실패(메타 링크 대체): {_up_res.get('error')}")
+
+                            _progress_bar.progress(
+                                int(((_idx + 0.5) / len(_sel_rows)) * 100),
+                                text=f"📝 [{_idx + 1}/{len(_sel_rows)}] '{_brand_name}' 노션 데이터베이스 저장 중..."
+                            )
+
+                            # 광고 계정 메타 라이브러리 URL (page_id 및 브랜드 폴백)
+                            _acct_url = str(_row.get("_page_library_url", "")).strip()
+                            if not _acct_url or not _acct_url.startswith("http"):
+                                _pid = str(_row.get("page_id", "")).strip()
+                                if _pid and _pid.isdigit():
+                                    _acct_url = f"https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=KR&view_all_page_id={_pid}"
+                                elif _brand_name:
+                                    from urllib.parse import quote_plus
+                                    _acct_url = f"https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=KR&q={quote_plus(_brand_name)}&search_type=keyword_unordered"
+
+                            _res = save_ad_reference_to_notion(
+                                token=_notion_token,
+                                database_id=_notion_db_id,
+                                title=str(_row.get("제목", "")),
+                                media_type=str(_row.get("소재 유형", "영상")),
+                                date=str(_row.get("게재일", str(date_type.today()))),
+                                ad_copy=str(_row.get("_광고 카피 원문", "")),
+                                reference_url=_final_ref_url,
+                                landing_url=str(_row.get("연결링크", "")),
+                                account_name=_brand_name,
+                                account_url=_acct_url,
+                                status=str(_row.get("진행 여부", "검토중")),
+                                keyword=_kw,
+                                page_name=_brand_name,
+                            )
+                            if _res["ok"]:
+                                _saved += 1
+                            else:
+                                _failed += 1
+                                _last_err = _res.get("error", "")
+
+                        _progress_bar.progress(100, text="저장 완료!")
+                        if _failed == 0:
+                            _gmsg = f" (☁️ {_gdrive_uploaded}개 구글 드라이브 업로드 완료)" if _gdrive_uploaded > 0 else ""
+                            st.success(f"✅ {_saved}개 항목이 노션에 성공적으로 저장되었습니다!{_gmsg}")
+                            st.balloons()
+                        else:
+                            st.warning(f"저장 결과: {_saved}개 성공, {_failed}개 실패")
+                            if _last_err:
+                                st.error(f"실패 원인: {_last_err}")
                         if _last_err:
                             st.error(f"실패 원인: {_last_err}")
 

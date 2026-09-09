@@ -28,7 +28,9 @@ pixabay_api_key.txt
 openrouter_api_key.txt
 client_secrets.json
 token.json
+service_account.json
 .env
+*.db
 
 # Storage & Profiles
 storage/browser_profiles/
