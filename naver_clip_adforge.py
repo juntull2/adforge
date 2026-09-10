@@ -7,14 +7,16 @@ import asyncio
 import edge_tts
 import pycapcut as cc
 
-# Monkey patch pycapcut SegmentAnimations to fix video animation export bug
-_original_export_json = cc.animation.SegmentAnimations.export_json
-def _patched_export_json(self):
-    data = _original_export_json(self)
-    if any(a.export_json().get("material_type") == "video" for a in self.animations):
-        data["type"] = "video_animation"
-    return data
-cc.animation.SegmentAnimations.export_json = _patched_export_json
+# Monkey patch pycapcut SegmentAnimations to fix video animation export bug (non-recursive & idempotent)
+def _clean_segment_animations_export_json(self):
+    anim_type = "video_animation" if any(getattr(a, "material_type", None) == "video" or (hasattr(a, "export_json") and a.export_json().get("material_type") == "video") for a in self.animations) else "sticker_animation"
+    return {
+        "id": self.animation_id,
+        "type": anim_type,
+        "multi_language_current": "none",
+        "animations": [animation.export_json() for animation in self.animations]
+    }
+cc.animation.SegmentAnimations.export_json = _clean_segment_animations_export_json
 
 # pydub import with fallback for Python 3.13+ where audioop was removed
 try:
@@ -77,11 +79,15 @@ _bhs_paths = [
 BLACK_HAN_SANS_PATH = next((p for p in _bhs_paths if os.path.exists(p)), _bhs_paths[0])
 BLACK_HAN_SANS_FONT = CustomFont(BLACK_HAN_SANS_NAME, BLACK_HAN_SANS_PATH)
 
-# TextSegment.export_material Monkey-Patching
-_orig_export_material = TextSegment.export_material
+# TextSegment.export_material Monkey-Patching (Idempotent & reload-safe)
+if not hasattr(TextSegment, "_adforge_orig_export_material"):
+    import pycapcut.text_segment
+    import importlib
+    importlib.reload(pycapcut.text_segment)
+    TextSegment._adforge_orig_export_material = pycapcut.text_segment.TextSegment.export_material
 
 def _custom_export_material(self):
-    ret = _orig_export_material(self)
+    ret = TextSegment._adforge_orig_export_material(self)
     # 이 세그먼트에 설정된 폰트를 동적으로 읽음
     seg_font = getattr(self, 'font', None)
     if seg_font is not None:
@@ -471,73 +477,113 @@ def find_best_video_for_sentence(sentence: str, stock_videos: list, last_used_vi
 # -------------------------------------------------------------------
 # 6. AI TTS + 배경 비디오 소스 + Pretendard 자막 100% 자동 제작
 # -------------------------------------------------------------------
-async def generate_tts_audio(text: str, output_path: str, voice_config="ko-KR-SunHiNeural"):
-    """
-    Microsoft Edge TTS 엔진을 사용하여 텍스트를 음성(mp3)으로 변환
-    """
-    communicate = edge_tts.Communicate(text, voice_config)
-    await communicate.save(output_path)
+# Fish Audio 공식 보이스 카탈로그
+FISH_VOICE_LIST = [
+    ("🐟 [Fish Audio] 진우-기쁨- (남성, 활기찬 톤)", "fish_a9574d6184714eac96a0a892b719289f"),
+    ("🐟 [Fish Audio] 건강한 여성 목소리 (신뢰감)", "fish_0340360282524779a06c68b76d80f773"),
+    ("🐟 [Fish Audio] 3040 건강정보 단호한 아내 (단호, 설득)", "fish_d93d9edfdc7649ce9fa573cfa7be504f"),
+    ("🐟 [Fish Audio] 활기찬 건강 보이스 (밝은 에너지)", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
+    ("🐟 [Fish Audio] 신규 보이스 (자연스러운 톤)", "fish_ed763b05d90b470284150bbc49a8d9e1"),
+    ("🐟 [Fish Audio] 링 아나운서 (또박또박 전달력)", "fish_dc90eb64548d4a758642d806bce75a51"),
+    ("🐟 [Fish Audio] 봉미선 (짱구 엄마) (개성 넘치는 훅)", "fish_b6198ce983784d8db3456c062250cc5a"),
+    ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom")
+]
+
+DEFAULT_FISH_VOICE = "fish_a9574d6184714eac96a0a892b719289f"
+
+def get_fish_api_key() -> str:
+    key = os.environ.get("FISH_API_KEY", "")
+    if not key:
+        key_path = os.path.join(os.getcwd(), "fish_api_key.txt")
+        if os.path.exists(key_path):
+            try:
+                with open(key_path, "r", encoding="utf-8") as f:
+                    key = f.read().strip()
+            except:
+                pass
+    return key
 
 import requests
 
-def generate_elevenlabs_tts(text: str, output_path: str, voice_id: str, api_key: str):
+def generate_fish_audio_tts(text: str, output_path: str, reference_id: str = "", api_key: str = "", speed: float = 1.0):
     """
-    ElevenLabs API를 사용하여 텍스트를 음성(mp3)으로 변환
+    Fish Audio API를 사용하여 텍스트를 음성(mp3)으로 변환 (말하기 속도 prosody.speed 지원)
     """
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
-    
-    headers = {
-        "Accept": "audio/mpeg",
-        "Content-Type": "application/json",
-        "xi-api-key": api_key
-    }
-    
-    data = {
-        "text": text,
-        "model_id": "eleven_multilingual_v2",
-        "voice_settings": {
-            "stability": 0.5,
-            "similarity_boost": 0.75
-        }
-    }
-    
-    response = requests.post(url, json=data, headers=headers)
-    if response.status_code != 200:
-        raise Exception(f"ElevenLabs API Error: {response.status_code} - {response.text}")
+    if not api_key:
+        api_key = get_fish_api_key()
+    if not api_key:
+        raise Exception("Fish Audio API Key가 없습니다. fish_api_key.txt 파일이나 화면에서 입력해주세요.")
         
-    with open(output_path, 'wb') as f:
-        for chunk in response.iter_content(chunk_size=1024):
-            if chunk:
-                f.write(chunk)
-
-def generate_fish_audio_tts(text: str, output_path: str, reference_id: str, api_key: str):
-    """
-    Fish Audio API를 사용하여 텍스트를 음성(mp3)으로 변환
-    """
     url = "https://api.fish.audio/v1/tts"
-    
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "model": "s2.1-pro-free"  # Fish Audio 공식 무료 API 적용
+        "model": "s2.1-pro-free"
     }
     
+    clean_text = re.sub(r'[*#\[\]_=\-]', '', text).strip()
+    if not clean_text:
+        return output_path
+        
+    clamped_speed = max(0.5, min(2.0, float(speed)))
+    
     data = {
-        "text": text,
+        "text": clean_text,
         "format": "mp3",
+        "prosody": {
+            "speed": round(clamped_speed, 2)
+        }
     }
     
     if reference_id:
-        data["reference_id"] = reference_id
-        
-    response = requests.post(url, json=data, headers=headers)
+        clean_ref_id = reference_id.replace("fish_", "")
+        if clean_ref_id and clean_ref_id != "custom" and clean_ref_id != "fish_custom":
+            data["reference_id"] = clean_ref_id
+            
+    response = requests.post(url, json=data, headers=headers, timeout=30)
     if response.status_code != 200:
-        raise Exception(f"Fish Audio API Error: {response.status_code} - {response.text}")
+        raise Exception(f"Fish Audio API Error ({response.status_code}): {response.text}")
         
     with open(output_path, 'wb') as f:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 f.write(chunk)
+                
+    trim_audio_silence(output_path)
+    return output_path
+
+def generate_single_sentence_tts(text: str, output_path: str, voice: str = DEFAULT_FISH_VOICE, speed: float = 1.0, fish_api_key: str = "", max_retries: int = 2) -> str:
+    """
+    단일 문장 단위 Fish Audio TTS 생성 (재시도 및 정제 처리 포함)
+    """
+    clean_text = re.sub(r'[*#\[\]_=\-]', '', text).strip()
+    if not clean_text:
+        return output_path
+
+    if not fish_api_key:
+        fish_api_key = get_fish_api_key()
+
+    if not voice or voice == "default":
+        voice = DEFAULT_FISH_VOICE
+    ref_id = voice.replace("fish_", "") if voice.startswith("fish_") else voice
+
+    last_err = None
+    import time
+    for attempt in range(1, max_retries + 1):
+        try:
+            generate_fish_audio_tts(
+                text=clean_text,
+                output_path=output_path,
+                reference_id=ref_id,
+                api_key=fish_api_key,
+                speed=speed
+            )
+            return output_path
+        except Exception as e:
+            last_err = e
+            time.sleep(0.5)
+
+    raise Exception(f"Fish Audio 음성 생성 실패 ({max_retries}회 재시도): {last_err}")
 
 def get_capcut_projects():
     import os
@@ -560,7 +606,7 @@ def get_capcut_projects():
                     pass
     return sorted(projects, key=lambda x: x[0])
 
-def build_from_template(script_text: str, voice: str, api_key: str, template_folder_name: str):
+def build_from_template(script_text: str, voice: str = DEFAULT_FISH_VOICE, api_key: str = "", template_folder_name: str = "", speech_speed: float = 1.0, voice_overrides: dict = None, precomputed_audio: dict = None, **kwargs):
     import time, shutil, uuid, copy
     from pydub import AudioSegment as PydubAudio
     
@@ -589,27 +635,31 @@ def build_from_template(script_text: str, voice: str, api_key: str, template_fol
     for s_idx, struct in enumerate(sentence_structures, 1):
         full_sentence = struct["full_sentence"]
         phrases = struct["phrases"]
+        mapping_idx = s_idx - 1
         clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', full_sentence).strip()
         if not clean_audio_text:
             continue
             
         mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
-        try:
-            if voice.startswith("el_"):
-                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=voice.replace("el_", ""), api_key=api_key)
-            elif voice.startswith("fish_"):
-                fish_api_key = os.environ.get("FISH_API_KEY", "")
-                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=voice.replace("fish_", ""), api_key=fish_api_key)
-            else:
-                import asyncio
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
-        except Exception as e:
-            print(f"오디오 생성 실패, 무료 TTS로 대체: {e}")
-            try:
-                import asyncio
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
-            except Exception as e2:
-                raise Exception(f"오디오 생성 완전 실패: {e}")
+        
+        # 1. 사전 검수/생성된 캐시 오디오 확인
+        cached_audio = None
+        if precomputed_audio:
+            candidate = precomputed_audio.get(mapping_idx) or precomputed_audio.get(s_idx)
+            if candidate and os.path.exists(candidate) and os.path.getsize(candidate) > 100:
+                cached_audio = candidate
+                
+        if cached_audio:
+            shutil.copy2(cached_audio, mp3_path)
+        else:
+            s_voice = (voice_overrides or {}).get(mapping_idx) or voice or DEFAULT_FISH_VOICE
+            generate_single_sentence_tts(
+                clean_audio_text,
+                mp3_path,
+                voice=s_voice,
+                speed=speech_speed,
+                fish_api_key=api_key
+            )
             
         trim_audio_silence(mp3_path)
         seg = PydubAudio.from_mp3(mp3_path)
@@ -764,12 +814,37 @@ def apply_context_aware_keyframes(v_seg, text, scale_factor, duration_us):
         except Exception as e: print('KF ERROR:', e)
 
 
-def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeural", el_api_key="", template_folder=None, keyword="", pexels_api_key="", pixabay_api_key="", local_media_folder="", media_mapping=None, creative_direction=None, manual_style=None):
+def build_capcut_project_for_naver_clip(
+    script_text: str,
+    voice=DEFAULT_FISH_VOICE,
+    el_api_key="",
+    template_folder=None,
+    keyword="",
+    pexels_api_key="",
+    pixabay_api_key="",
+    local_media_folder="",
+    media_mapping=None,
+    creative_direction=None,
+    manual_style=None,
+    speech_speed: float = 1.0,
+    voice_overrides: dict = None,
+    precomputed_audio: dict = None,
+    **kwargs
+):
     if template_folder and template_folder != "none":
-        return build_from_template(script_text, voice, el_api_key, template_folder)
+        return build_from_template(
+            script_text=script_text,
+            voice=voice,
+            api_key=el_api_key,
+            template_folder_name=template_folder,
+            speech_speed=speech_speed,
+            voice_overrides=voice_overrides,
+            precomputed_audio=precomputed_audio
+        )
     
     import time
     import uuid
+    import shutil
     project_name = f"AutoProject_{int(time.time())}_{uuid.uuid4().hex[:6]}"
     
     SENIOR_VIDEO_CONTEXTS = [
@@ -835,27 +910,24 @@ def build_capcut_project_for_naver_clip(script_text: str, voice="ko-KR-SunHiNeur
             continue
 
         mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
-        try:
-            if voice.startswith("el_"):
-                real_voice_id = voice.replace("el_", "")
-                if not el_api_key:
-                    raise Exception("ElevenLabs API Key가 없습니다.")
-                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
-            elif voice.startswith("fish_"):
-                fish_reference_id = voice.replace("fish_", "")
-                fish_api_key = os.environ.get("FISH_API_KEY", "")
-                if not fish_api_key:
-                    raise Exception("Fish Audio API Key가 없습니다.")
-                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
-            else:
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
-        except Exception as e:
-            print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
-            try:
-                import asyncio
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
-            except Exception as e2:
-                raise Exception(f"오디오 생성 완전 실패: {e}")
+        
+        # 1. 사전 검수/생성된 캐시 오디오 확인
+        cached_audio = None
+        if precomputed_audio:
+            candidate = precomputed_audio.get(mapping_idx) or precomputed_audio.get(s_idx)
+            if candidate and os.path.exists(candidate) and os.path.getsize(candidate) > 100:
+                cached_audio = candidate
+
+        if cached_audio:
+            shutil.copy2(cached_audio, mp3_path)
+        else:
+            s_voice = (voice_overrides or {}).get(mapping_idx) or voice or DEFAULT_FISH_VOICE
+            generate_single_sentence_tts(
+                clean_audio_text,
+                mp3_path,
+                voice=s_voice,
+                speed=speech_speed
+            )
 
         trim_audio_silence(mp3_path)
 
@@ -1195,27 +1267,12 @@ def build_final_video_with_caption_os(script_text, keyword, pexels_api_key, pixa
             continue
 
         mp3_path = os.path.join(temp_audio_dir, f"{project_name}_s{s_idx}.mp3")
-        try:
-            if voice.startswith("el_"):
-                real_voice_id = voice.replace("el_", "")
-                if not el_api_key:
-                    raise Exception("ElevenLabs API Key가 없습니다.")
-                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
-            elif voice.startswith("fish_"):
-                fish_reference_id = voice.replace("fish_", "")
-                fish_api_key = os.environ.get("FISH_API_KEY", "")
-                if not fish_api_key:
-                    raise Exception("Fish Audio API Key가 없습니다.")
-                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
-            else:
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
-        except Exception as e:
-            print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
-            try:
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
-            except Exception as e2:
-                raise Exception(f"오디오 생성 완전 실패: {e2}")
-
+        generate_single_sentence_tts(
+            clean_audio_text,
+            mp3_path,
+            voice=voice or DEFAULT_FISH_VOICE,
+            speed=1.0
+        )
         trim_audio_silence(mp3_path)
         
         audio = PydubAudio.from_file(mp3_path)
@@ -1391,27 +1448,12 @@ def build_capcut_project_with_caption_os_overlay(script_text, keyword, pexels_ap
             continue
 
         mp3_path = os.path.join(temp_audio_dir, f"{project_name}_s{s_idx}.mp3")
-        try:
-            if voice.startswith("el_"):
-                real_voice_id = voice.replace("el_", "")
-                if not el_api_key:
-                    raise Exception("ElevenLabs API Key가 없습니다.")
-                generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
-            elif voice.startswith("fish_"):
-                fish_reference_id = voice.replace("fish_", "")
-                fish_api_key = os.environ.get("FISH_API_KEY", "")
-                if not fish_api_key:
-                    raise Exception("Fish Audio API Key가 없습니다.")
-                generate_fish_audio_tts(clean_audio_text, mp3_path, reference_id=fish_reference_id, api_key=fish_api_key)
-            else:
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=voice))
-        except Exception as e:
-            print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
-            try:
-                asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
-            except Exception as e2:
-                raise Exception(f"오디오 생성 완전 실패: {e2}")
-
+        generate_single_sentence_tts(
+            clean_audio_text,
+            mp3_path,
+            voice=voice or DEFAULT_FISH_VOICE,
+            speed=1.0
+        )
         trim_audio_silence(mp3_path)
         
         audio = PydubAudio.from_file(mp3_path)

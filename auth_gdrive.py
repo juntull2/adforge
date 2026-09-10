@@ -19,15 +19,21 @@ def run_oauth_flow():
         return False
 
     flow = InstalledAppFlow.from_client_secrets_file(client_secrets_path, DRIVE_SCOPES)
-    custom_msg = "\n--- [AUTH_URL] ---\n{url}\n--- [END_AUTH_URL] ---\n"
+    auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
+
+    print(f"\n--- [AUTH_URL] ---\n{auth_url}\n--- [END_AUTH_URL] ---\n", flush=True)
+
+    try:
+        os.system(f'start "" "{auth_url}"')
+    except Exception:
+        pass
 
     creds = flow.run_local_server(
         host="localhost",
         port=8080,
         prompt="consent",
         access_type="offline",
-        authorization_prompt_message=custom_msg,
-        open_browser=True,
+        open_browser=False,
     )
 
     with open(token_path, "w", encoding="utf-8") as f:

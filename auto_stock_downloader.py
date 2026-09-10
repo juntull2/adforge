@@ -85,7 +85,7 @@ def fetch_pexels_portrait_videos(query: str, api_key: str, count: int = 5, outpu
         return []
 
 
-def fetch_and_download_mixkit_stock_videos(query: str = "back pain", count: int = 5, output_dir: str = "stock_videos"):
+def fetch_and_download_mixkit_stock_videos(query: str = "back pain", count: int = 5, output_dir: str = "stock_videos", _depth: int = 0):
     """
     Mixkit 무료 스톡 비디오 다운로더 (Pexels API 키 없을 때 Fallback)
     세로 키워드 우선 탐색 후 일반 720p fallback
@@ -115,9 +115,9 @@ def fetch_and_download_mixkit_stock_videos(query: str = "back pain", count: int 
             target_urls = unique_urls[:count]
             print(f"Found {len(target_urls)} HD stock video files.")
 
-            if len(target_urls) == 0 and query.lower() not in ["fitness", "workout", "background"]:
+            if len(target_urls) == 0 and _depth == 0 and query.lower() not in ["fitness", "workout", "background"]:
                 print("No specific results found in Mixkit. Falling back to generic 'fitness' videos.")
-                return fetch_and_download_mixkit_stock_videos("fitness", count, output_dir)
+                return fetch_and_download_mixkit_stock_videos("fitness", count, output_dir, _depth=_depth + 1)
 
             downloaded_files = []
             for idx, video_url in enumerate(target_urls, 1):
