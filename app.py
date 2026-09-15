@@ -22,6 +22,9 @@ from naver_clip_adforge import (
 
 FISH_VOICE_LIST = getattr(naver_clip_adforge, "FISH_VOICE_LIST", [
     ("🐟 [Fish Audio] 진우-기쁨- (남성, 활기찬 톤)", "fish_a9574d6184714eac96a0a892b719289f"),
+    ("🐟 [Fish Audio] 20대 여성 쇼츠 (인플루언서 스타일)", "fish_54f52a4d2b994612a30306b4a2a95758"),
+    ("🐟 [Fish Audio] 20대 여성 내돈내산 쇼츠 (리뷰 톤)", "fish_46939387dd944a45a399bd92b8de52cb"),
+    ("🐟 [Fish Audio] 해짜 보이스3 (남성 내레이션/설명)", "fish_136a377398bc4f5dba0101259a9b3eea"),
     ("🐟 [Fish Audio] 건강한 여성 목소리 (신뢰감)", "fish_0340360282524779a06c68b76d80f773"),
     ("🐟 [Fish Audio] 3040 건강정보 단호한 아내 (단호, 설득)", "fish_d93d9edfdc7649ce9fa573cfa7be504f"),
     ("🐟 [Fish Audio] 활기찬 건강 보이스 (밝은 에너지)", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
@@ -293,10 +296,13 @@ def cached_datalab_trends(keyword: str):
     from naver_datalab import get_datalab_trends
     return get_datalab_trends(keyword)
 
-@st.cache_data(show_spinner=False, ttl=600)
+@st.cache_data(show_spinner=False, ttl=30)
 def cached_test_notion_connection(token: str, db_id: str):
     from notion_sync import test_notion_connection
-    return test_notion_connection(token, db_id)
+    res = test_notion_connection(token, db_id)
+    if not res.get("ok"):
+        cached_test_notion_connection.clear()
+    return res
 
 # ── 판정 기준 설정 (항상 노출) ─────────────────────────────────
 with st.expander("⚙️ 판정 기준값 설정", expanded=False):
@@ -869,13 +875,15 @@ if "unified_result" in st.session_state:
             _media_type = str(_row.get("소재 유형", "영상")).strip() or "영상"
             _start_str = str(_row.get("집행 시작일", "")).strip()
 
-            # 게재일(실제 집행 시작일) 파싱
+            # 게재일(실제 집행 시작일) 파싱 및 집행일수 계산
             _ad_date = date_type.today()
             if _start_str:
                 try:
                     _ad_date = datetime.strptime(_start_str[:10], "%Y-%m-%d").date()
                 except Exception:
                     pass
+
+            _days_diff = max(0, (date_type.today() - _ad_date).days)
 
             _raw_copy = _row.get("광고 카피 원문") or _row.get("광고 카피", "")
             _cleaned_copy = clean_ad_copy(str(_raw_copy), brand=_page_name)
@@ -898,10 +906,12 @@ if "unified_result" in st.session_state:
                 "제목": _default_title,
                 "소재 유형": _media_type,
                 "게재일": _ad_date,
+                "집행일수": f"{_days_diff}일차",
                 "광고 계정명": _page_name,
                 "진행 여부": "검토중",
                 "레퍼런스 링크": _row.get("광고 보기", ""),
                 "연결링크": _row.get("연결링크", ""),
+                "_days_diff": _days_diff,
                 "_video_url": _row.get("_video_url", ""),
                 "_광고 카피 원문": _cleaned_copy,
                 "_page_library_url": _row.get("_page_library_url", ""),
@@ -919,6 +929,7 @@ if "unified_result" in st.session_state:
                     width="small",
                 ),
                 "게재일": st.column_config.DateColumn("📅 게재일", width="small", format="YYYY-MM-DD"),
+                "집행일수": st.column_config.TextColumn("⏳ 집행일수", width="small", disabled=True, help="오늘 기준 집행 경과 일수"),
                 "광고 계정명": st.column_config.TextColumn("🏷️ 광고 계정명", width="small"),
                 "진행 여부": st.column_config.SelectboxColumn(
                     "📌 진행 여부",
@@ -927,6 +938,7 @@ if "unified_result" in st.session_state:
                 ),
                 "레퍼런스 링크": st.column_config.LinkColumn("🔗 레퍼런스(메타)", width="small"),
                 "연결링크": st.column_config.LinkColumn("🛒 연결링크(자사몰)", width="medium"),
+                "_days_diff": None,
                 "_video_url": None,
                 "_광고 카피 원문": None,
                 "_page_library_url": None,
@@ -1104,12 +1116,25 @@ if "unified_result" in st.session_state:
                                 from urllib.parse import quote_plus
                                 _acct_url = f"https://www.facebook.com/ads/library/?active_status=all&ad_type=all&country=KR&q={quote_plus(_brand_name)}&search_type=keyword_unordered"
 
+                        _ad_date_raw = str(_row.get("게재일", str(date_type.today())))
+                        _days_val = None
+                        try:
+                            _parsed_d = datetime.strptime(_ad_date_raw[:10], "%Y-%m-%d").date()
+                            _days_val = max(0, (date_type.today() - _parsed_d).days)
+                        except Exception:
+                            if "_days_diff" in _row and pd.notna(_row.get("_days_diff")):
+                                try:
+                                    _days_val = int(_row.get("_days_diff"))
+                                except Exception:
+                                    pass
+
                         _res = save_ad_reference_to_notion(
                             token=_notion_token,
                             database_id=_notion_db_id,
                             title=str(_row.get("제목", "")),
                             media_type=str(_row.get("소재 유형", "영상")),
-                            date=str(_row.get("게재일", str(date_type.today()))),
+                            date=_ad_date_raw,
+                            days_elapsed=_days_val,
                             ad_copy=str(_row.get("_광고 카피 원문", "")),
                             reference_url=_final_ref_url,
                             landing_url=str(_row.get("연결링크", "")),

@@ -77,28 +77,58 @@ def get_naver_search_volume(keyword: str, customer_id: str, access_license: str,
         res = std_requests.get(BASE_URL + uri, params=params, headers=headers, timeout=5)
         if res.status_code == 200:
             data = res.json()
-            if data and "keywordList" in data and len(data["keywordList"]) > 0:
-                item = data["keywordList"][0]
-                pc_vol = item.get("monthlyPcQcCnt", 0)
-                mo_vol = item.get("monthlyMobileQcCnt", 0)
-                
-                try: pc_vol = int(pc_vol)
-                except: pc_vol = 10
-                
-                try: mo_vol = int(mo_vol)
-                except: mo_vol = 10
-                
-                return {
-                    "pc": pc_vol,
-                    "mobile": mo_vol,
-                    "total": pc_vol + mo_vol
-                }
+            if data and "keywordList" in data:
+                clean_target = keyword.replace(" ", "").strip()
+                for item in data["keywordList"]:
+                    if item.get("relKeyword") == clean_target:
+                        pc_val = item.get("monthlyPcQcCnt", 0)
+                        mo_val = item.get("monthlyMobileQcCnt", 0)
+                        
+                        def parse_cnt(v):
+                            if isinstance(v, str) and "<" in v:
+                                return 5
+                            try:
+                                return int(v)
+                            except:
+                                return 0
+                                
+                        pc_cnt = parse_cnt(pc_val)
+                        mo_cnt = parse_cnt(mo_val)
+                        return {
+                            "pc": pc_cnt,
+                            "mobile": mo_cnt,
+                            "total": pc_cnt + mo_cnt,
+                            "raw_pc": str(pc_val),
+                            "raw_mobile": str(mo_val),
+                            "exact_match": True,
+                            "comp_idx": item.get("compIdx", "-")
+                        }
         else:
             print(f"Naver Ads API Error: {res.status_code} - {res.text}")
     except Exception as e:
         print(f"API Request Error: {e}")
         
-    return {"pc": 0, "mobile": 0, "total": 0}
+    return {"pc": 0, "mobile": 0, "total": 0, "raw_pc": "< 10", "raw_mobile": "< 10", "exact_match": False, "comp_idx": "-"}
+
+
+def get_brand_and_product_volumes(brand_name: str, product_name: str, customer_id: str, access_license: str, secret_key: str):
+    """
+    브랜드명과 자사몰 주력 제품명을 각각 완전 일치(Exact Match)로 분리 조회하여 반환.
+    """
+    brand_res = get_naver_search_volume(brand_name, customer_id, access_license, secret_key)
+    product_res = get_naver_search_volume(product_name, customer_id, access_license, secret_key) if product_name else None
+    
+    return {
+        "brand": {
+            "name": brand_name,
+            "metrics": brand_res
+        },
+        "product": {
+            "name": product_name,
+            "metrics": product_res
+        } if product_res else None
+    }
+
 
 
 CATEGORY_TOP_BRANDS = {

@@ -7,7 +7,7 @@ import requests
 from datetime import datetime
 
 
-NOTION_API_VERSION = "2022-06-28"
+NOTION_API_VERSION = "2025-09-03"
 NOTION_API_BASE = "https://api.notion.com/v1"
 
 
@@ -19,39 +19,94 @@ def get_notion_headers(token: str) -> dict:
     }
 
 
-def test_notion_connection(token: str, database_id: str) -> dict:
-    """노션 연결 상태를 확인합니다."""
-    db_id = database_id.replace("-", "")
-    url = f"{NOTION_API_BASE}/databases/{db_id}"
-    resp = requests.get(url, headers=get_notion_headers(token), timeout=10)
-    if resp.status_code == 200:
-        data = resp.json()
-        return {"ok": True, "title": _get_db_title(data)}
-    else:
-        return {"ok": False, "error": resp.json().get("message", f"HTTP {resp.status_code}")}
-
-
 def _get_db_title(db_data: dict) -> str:
     title_arr = db_data.get("title", [])
     if title_arr:
         return title_arr[0].get("plain_text", "Untitled")
-    return "Untitled"
+    return db_data.get("name") or "Untitled"
+
+
+def resolve_target_data_source(token: str, database_id: str) -> tuple[str, bool]:
+    """
+    주어진 database_id가 단일 DB인지, 멀티 데이터 소스 DB인지 판별하여
+    실제 작업 대상인 (target_id, is_data_source)을 반환합니다.
+    """
+    clean_id = database_id.replace("-", "").strip()
+    headers = get_notion_headers(token)
+
+    # 1. /databases/{id} 확인
+    db_url = f"{NOTION_API_BASE}/databases/{clean_id}"
+    try:
+        r = requests.get(db_url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            data = r.json()
+            data_sources = data.get("data_sources", [])
+            if data_sources:
+                # 멀티 데이터 소스인 경우 가장 최신(사용자가 추가한 최신 테이블) data_source_id 반환
+                return data_sources[-1]["id"], True
+            return clean_id, False
+    except Exception:
+        pass
+
+    # 2. 만약 입력된 ID 자체가 data_source_id인 경우
+    ds_url = f"{NOTION_API_BASE}/data_sources/{clean_id}"
+    try:
+        r_ds = requests.get(ds_url, headers=headers, timeout=10)
+        if r_ds.status_code == 200:
+            return clean_id, True
+    except Exception:
+        pass
+
+    return clean_id, False
+
+
+def test_notion_connection(token: str, database_id: str) -> dict:
+    """노션 연결 상태를 확인합니다 (멀티 데이터 소스 DB 지원)."""
+    db_id = database_id.replace("-", "").strip()
+    headers = get_notion_headers(token)
+
+    # 1. /databases/{db_id} 호출
+    url = f"{NOTION_API_BASE}/databases/{db_id}"
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            return {"ok": True, "title": _get_db_title(data)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+    # 2. 만약 database_id가 data_source_id인 경우
+    ds_url = f"{NOTION_API_BASE}/data_sources/{db_id}"
+    try:
+        ds_resp = requests.get(ds_url, headers=headers, timeout=10)
+        if ds_resp.status_code == 200:
+            data = ds_resp.json()
+            title_val = data.get("name") or _get_db_title(data)
+            return {"ok": True, "title": title_val}
+    except Exception:
+        pass
+
+    return {"ok": False, "error": resp.json().get("message", f"HTTP {resp.status_code}")}
 
 
 _DB_PROPS_CACHE = {}
 
 
 def get_database_properties(token: str, database_id: str) -> dict:
-    """데이터베이스 프로퍼티(컬럼) 정보를 조회합니다 (캐시 적용)."""
-    db_id = database_id.replace("-", "")
-    if db_id in _DB_PROPS_CACHE:
-        return _DB_PROPS_CACHE[db_id]
-    url = f"{NOTION_API_BASE}/databases/{db_id}"
+    """데이터베이스/데이터소스 프로퍼티(컬럼) 정보를 조회합니다 (캐시 적용)."""
+    clean_id = database_id.replace("-", "").strip()
+    if clean_id in _DB_PROPS_CACHE:
+        return _DB_PROPS_CACHE[clean_id]
+
+    headers = get_notion_headers(token)
+    target_id, is_ds = resolve_target_data_source(token, clean_id)
+
     try:
-        resp = requests.get(url, headers=get_notion_headers(token), timeout=10)
+        url = f"{NOTION_API_BASE}/data_sources/{target_id}" if is_ds else f"{NOTION_API_BASE}/databases/{target_id}"
+        resp = requests.get(url, headers=headers, timeout=10)
         if resp.status_code == 200:
             props = resp.json().get("properties", {})
-            _DB_PROPS_CACHE[db_id] = props
+            _DB_PROPS_CACHE[clean_id] = props
             return props
     except Exception:
         pass
@@ -66,6 +121,7 @@ def save_ad_reference_to_notion(
     account_name: str = "",
     status: str = "검토중",
     date: str = "",
+    days_elapsed: int = None,
     keyword: str = "",
     page_name: str = "",
     brand: str = "",
@@ -85,6 +141,7 @@ def save_ad_reference_to_notion(
         account_name: 광고 계정명 (기존 brand도 지원)
         status: 진행 여부 (검토중/진행/보류/완료)
         date: 게재일 / 날짜 (YYYY-MM-DD)
+        days_elapsed: 집행일수 / 경과일 자연수 (오늘 - 게재일)
         keyword: 검색 키워드 (선택)
         page_name: 광고 페이지명 (선택)
         brand: 이전 호환용 브랜드명
@@ -96,7 +153,7 @@ def save_ad_reference_to_notion(
     Returns:
         {"ok": True, "url": 노션페이지URL} or {"ok": False, "error": 메시지}
     """
-    db_id = database_id.replace("-", "")
+    target_id, is_ds = resolve_target_data_source(token, database_id)
     url = f"{NOTION_API_BASE}/pages"
 
     # 유효하지 않은 URL 문자열 처리
@@ -201,6 +258,13 @@ def save_ad_reference_to_notion(
         properties[status_col] = {"select": {"name": status}}
 
     # 6. 날짜 / 게재일 / 개제일 (Date)
+    if days_elapsed is None and date:
+        try:
+            _ad_dt = datetime.strptime(str(date)[:10], "%Y-%m-%d").date()
+            days_elapsed = max(0, (datetime.now().date() - _ad_dt).days)
+        except Exception:
+            pass
+
     if date:
         date_col = None
         if db_props:
@@ -218,6 +282,25 @@ def save_ad_reference_to_notion(
 
         if date_col and (not db_props or date_col in db_props):
             properties[date_col] = {"date": {"start": date}}
+
+    # 6-1. 집행일수 / 경과일 (Number 또는 Rich Text 컬럼이 존재하는 경우 자동 설정)
+    # (참고: 노션 DB 컬럼이 '수식(Formula)'인 경우 노션이 매일 자동 계산하므로 쓰기 작업을 건너뜁니다)
+    if days_elapsed is not None and db_props:
+        days_col = None
+        days_type = None
+        for cand in ("집행일수", "경과일", "일차", "집행 일수", "경과 일수", "경과일(일)"):
+            if cand in db_props:
+                c_meta = db_props[cand]
+                c_t = c_meta.get("type")
+                if c_t in ("number", "rich_text"):
+                    days_col = cand
+                    days_type = c_t
+                    break
+        if days_col:
+            if days_type == "number":
+                properties[days_col] = {"number": int(days_elapsed)}
+            elif days_type == "rich_text":
+                properties[days_col] = {"rich_text": [{"type": "text", "text": {"content": f"{days_elapsed}일차"}}]}
 
     # 7. 소재 유형 (Select) - 만약 DB에 존재하면 설정
     if media_type and db_props:
@@ -250,7 +333,8 @@ def save_ad_reference_to_notion(
     if media_type:
         info_parts.append(f"🎬 소재 유형: {media_type}")
     if date:
-        info_parts.append(f"📅 날짜: {date}")
+        day_tag = f" ({days_elapsed}일차 집행 중)" if days_elapsed is not None else ""
+        info_parts.append(f"📅 게재일: {date}{day_tag}")
     if landing_url:
         info_parts.append(f"🔗 연결링크(자사몰): {landing_url}")
     if reference_url:
@@ -272,7 +356,7 @@ def save_ad_reference_to_notion(
         })
 
     payload = {
-        "parent": {"database_id": db_id},
+        "parent": {"data_source_id": target_id} if is_ds else {"database_id": target_id},
         "properties": properties,
     }
     if children:
@@ -320,6 +404,7 @@ def batch_save_to_notion(
             account_name=item.get("account_name", item.get("brand", "")),
             status=item.get("status", default_status),
             date=str(item_date),
+            days_elapsed=item.get("days_elapsed") or item.get("집행일수"),
             keyword=item.get("keyword", ""),
             page_name=item.get("page_name", ""),
             title=item.get("title", ""),

@@ -480,6 +480,9 @@ def find_best_video_for_sentence(sentence: str, stock_videos: list, last_used_vi
 # Fish Audio 공식 보이스 카탈로그
 FISH_VOICE_LIST = [
     ("🐟 [Fish Audio] 진우-기쁨- (남성, 활기찬 톤)", "fish_a9574d6184714eac96a0a892b719289f"),
+    ("🐟 [Fish Audio] 20대 여성 쇼츠 (인플루언서 스타일)", "fish_54f52a4d2b994612a30306b4a2a95758"),
+    ("🐟 [Fish Audio] 20대 여성 내돈내산 쇼츠 (리뷰 톤)", "fish_46939387dd944a45a399bd92b8de52cb"),
+    ("🐟 [Fish Audio] 해짜 보이스3 (남성 내레이션/설명)", "fish_136a377398bc4f5dba0101259a9b3eea"),
     ("🐟 [Fish Audio] 건강한 여성 목소리 (신뢰감)", "fish_0340360282524779a06c68b76d80f773"),
     ("🐟 [Fish Audio] 3040 건강정보 단호한 아내 (단호, 설득)", "fish_d93d9edfdc7649ce9fa573cfa7be504f"),
     ("🐟 [Fish Audio] 활기찬 건강 보이스 (밝은 에너지)", "fish_88790aeef3ab48c0a88f9c5676362ed3"),
