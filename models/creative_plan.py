@@ -255,13 +255,16 @@ class CreativePlan:
         기존 형식: {"sentences": [{"index": 0, "text": "...", "role": "hook", ...}]}
         이 어댑터를 통해 새 CreativePlan → 기존 CapCut 파이프라인으로 전달 가능.
         """
-        from creative_director import ROLE_PRESETS
+        ROLE_PRESETS = {
+            "hook": {"size": 18.0, "color": [1.0, 0.9, 0.0], "bold": True, "border_color": [0.0, 0.0, 0.0], "border_width": 55.0},
+            "normal": {"size": 14.5, "color": [1.0, 1.0, 1.0], "bold": True, "border_color": [0.0, 0.0, 0.0], "border_width": 25.0},
+        }
 
         sentences = []
         for beat in self.beats:
             idx = beat.sentence_indices[0] if beat.sentence_indices else 0
             role = beat.role if beat.role in ROLE_PRESETS else "normal"
-            preset = ROLE_PRESETS[role]
+            preset = ROLE_PRESETS.get(role, ROLE_PRESETS["normal"])
 
             sentences.append({
                 "index": idx,

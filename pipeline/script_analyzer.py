@@ -27,7 +27,6 @@ from models.creative_plan import (
     VALID_ROLES, VALID_EMOTIONS, VALID_PACING,
     VALID_SHOTS, VALID_CAMERA_MOTION, VALID_TRANSITIONS
 )
-from creative_director import CreativeDirector
 
 CREATIVE_PLAN_PROMPT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "prompts", "creative_plan.txt"
@@ -38,8 +37,6 @@ class ScriptAnalyzer:
     """대본 → CreativePlan 변환 엔진.
 
     Args:
-        creative_director: 기존 CreativeDirector 인스턴스(선택).
-                           None이면 내부에서 기본값으로 생성.
         api_key:  OpenRouter 또는 Nvidia API 키 (없으면 fallback 모드)
         model:    LLM 모델명
         use_llm:  False로 강제하면 항상 fallback 사용 (테스트·오프라인용)
@@ -47,13 +44,12 @@ class ScriptAnalyzer:
 
     def __init__(
         self,
-        creative_director: Optional[CreativeDirector] = None,
+        creative_director = None,
         api_key: str = "",
         model: str = "",
         use_llm: bool = True,
     ):
-        # 기존 CreativeDirector를 주입받아 재사용. 중복 로직 없음.
-        self.cd = creative_director or CreativeDirector(max_intensity="medium")
+        self.cd = creative_director
         self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
         self.model = model or "nvidia/nemotron-3-super-120b-a12b:free"
         self.use_llm = use_llm
@@ -218,6 +214,15 @@ class ScriptAnalyzer:
     # Fallback 경로 (LLM 없음)
     # ================================================================
 
+    def _guess_role_simple(self, text: str, i: int, n: int) -> str:
+        if self.cd and hasattr(self.cd, "_guess_role_simple"):
+            return self.cd._guess_role_simple(text, i, n)
+        if i == 0:
+            return "hook"
+        if i >= n - 1:
+            return "cta"
+        return "normal"
+
     def _analyze_fallback(self, sentences: List[str]) -> CreativePlan:
         """규칙 기반 fallback — LLM 없이 완전한 CreativePlan 생성.
 
@@ -229,7 +234,7 @@ class ScriptAnalyzer:
 
         for i, sentence in enumerate(sentences):
             # 기존 CreativeDirector의 역할 추정 로직 재사용
-            role = self.cd._guess_role_simple(sentence, i, n)
+            role = self._guess_role_simple(sentence, i, n)
 
             # 한 문장이 시각적으로 두 개로 분리될 만한지 판단
             sub_beats = self._try_split_sentence(sentence, i, role, n)
@@ -287,7 +292,7 @@ class ScriptAnalyzer:
     ) -> SceneBeat:
         """규칙 기반 fallback beat 생성."""
         if role is None:
-            role = self.cd._guess_role_simple(text, sentence_idx, total_sentences)
+            role = self._guess_role_simple(text, sentence_idx, total_sentences)
 
         emotion = self._guess_emotion(text, role)
         visual_intent = self._guess_visual_intent(text, role)

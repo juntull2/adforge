@@ -588,192 +588,6 @@ def generate_single_sentence_tts(text: str, output_path: str, voice: str = DEFAU
 
     raise Exception(f"Fish Audio 음성 생성 실패 ({max_retries}회 재시도): {last_err}")
 
-def get_capcut_projects():
-    import os
-    import json
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if not local_app_data:
-        local_app_data = os.path.expanduser("~\\AppData\\Local")
-    base_path = os.path.join(local_app_data, "CapCut", "User Data", "Projects", "com.lveditor.draft")
-    projects = []
-    if os.path.exists(base_path):
-        for folder in os.listdir(base_path):
-            info_file = os.path.join(base_path, folder, "draft_meta_info.json")
-            if os.path.exists(info_file):
-                try:
-                    with open(info_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                        name = data.get("draft_name", folder)
-                        projects.append((name, folder))
-                except:
-                    pass
-    return sorted(projects, key=lambda x: x[0])
-
-def build_from_template(script_text: str, voice: str = DEFAULT_FISH_VOICE, api_key: str = "", template_folder_name: str = "", speech_speed: float = 1.0, voice_overrides: dict = None, precomputed_audio: dict = None, **kwargs):
-    import time, shutil, uuid, copy
-    from pydub import AudioSegment as PydubAudio
-    
-    project_name = f"AutoProject_{int(time.time())}"
-    temp_dir = os.path.join(os.getcwd(), "temp_audio")
-    os.makedirs(temp_dir, exist_ok=True)
-    
-    local_app_data = os.environ.get("LOCALAPPDATA")
-    if not local_app_data:
-        local_app_data = os.path.expanduser("~\\AppData\\Local")
-    base_path = os.path.join(local_app_data, "CapCut", "User Data", "Projects", "com.lveditor.draft")
-    
-    src_folder = os.path.join(base_path, template_folder_name)
-    dst_folder = os.path.join(base_path, project_name)
-    if not os.path.exists(src_folder):
-        raise Exception(f"템플릿 폴더를 찾을 수 없습니다: {src_folder}")
-    
-    shutil.copytree(src_folder, dst_folder)
-    
-    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
-    
-    combined_audio = PydubAudio.empty()
-    phrase_timings = []
-    current_us = 0
-    
-    for s_idx, struct in enumerate(sentence_structures, 1):
-        full_sentence = struct["full_sentence"]
-        phrases = struct["phrases"]
-        mapping_idx = s_idx - 1
-        clean_audio_text = re.sub(r'[*#\[\]_=\-]', '', full_sentence).strip()
-        if not clean_audio_text:
-            continue
-            
-        mp3_path = os.path.join(temp_dir, f"{project_name}_s{s_idx}.mp3")
-        
-        # 1. 사전 검수/생성된 캐시 오디오 확인
-        cached_audio = None
-        if precomputed_audio:
-            candidate = precomputed_audio.get(mapping_idx) or precomputed_audio.get(s_idx)
-            if candidate and os.path.exists(candidate) and os.path.getsize(candidate) > 100:
-                cached_audio = candidate
-                
-        if cached_audio:
-            shutil.copy2(cached_audio, mp3_path)
-        else:
-            s_voice = (voice_overrides or {}).get(mapping_idx) or voice or DEFAULT_FISH_VOICE
-            generate_single_sentence_tts(
-                clean_audio_text,
-                mp3_path,
-                voice=s_voice,
-                speed=speech_speed,
-                fish_api_key=api_key
-            )
-            
-        trim_audio_silence(mp3_path)
-        seg = PydubAudio.from_mp3(mp3_path)
-        sentence_duration_us = int(len(seg) * 1000)
-        combined_audio += seg
-        
-        phrase_effective_lens = [calculate_effective_speech_length(p) for p in phrases]
-        total_effective_len = sum(phrase_effective_lens) or 1.0
-        phrase_start_us = current_us
-        
-        for p_idx, (phrase, eff_len) in enumerate(zip(phrases, phrase_effective_lens)):
-            if p_idx == len(phrases) - 1:
-                phrase_dur = (current_us + sentence_duration_us) - phrase_start_us
-            else:
-                phrase_dur = int(sentence_duration_us * (eff_len / total_effective_len))
-            
-            phrase_timings.append({
-                "text": phrase,
-                "start": phrase_start_us,
-                "duration": phrase_dur
-            })
-            phrase_start_us += phrase_dur
-            
-        current_us += sentence_duration_us
-        
-    final_audio_path = os.path.join(temp_dir, f"{project_name}_merged.mp3")
-    combined_audio.export(final_audio_path, format="mp3")
-    total_audio_dur_us = current_us
-    
-    meta_file = os.path.join(dst_folder, "draft_meta_info.json")
-    with open(meta_file, 'r', encoding='utf-8') as f:
-        meta = json.load(f)
-    meta["draft_name"] = project_name
-    with open(meta_file, 'w', encoding='utf-8') as f:
-        json.dump(meta, f, ensure_ascii=False)
-        
-    content_file = os.path.join(dst_folder, "draft_content.json")
-    with open(content_file, 'r', encoding='utf-8') as f:
-        content = json.load(f)
-        
-    if "audios" in content["materials"] and len(content["materials"]["audios"]) > 0:
-        main_audio = content["materials"]["audios"][0]
-        local_audio_path = os.path.join(dst_folder, "merged.mp3")
-        shutil.copy2(final_audio_path, local_audio_path)
-        main_audio["path"] = local_audio_path
-        main_audio["duration"] = total_audio_dur_us
-        
-        for track in content["tracks"]:
-            if track["type"] == "audio":
-                for seg in track["segments"]:
-                    if seg["material_id"] == main_audio["id"]:
-                        seg["source_timerange"]["duration"] = total_audio_dur_us
-                        seg["target_timerange"]["duration"] = total_audio_dur_us
-
-    if "videos" in content["materials"] and len(content["materials"]["videos"]) > 0:
-        for track in content.get("tracks", []):
-            if track["type"] == "video" and not track.get("is_sub_video", False):
-                if len(track["segments"]) > 0:
-                    last_seg = track["segments"][-1]
-                    last_seg["target_timerange"]["duration"] = total_audio_dur_us - last_seg["target_timerange"]["start"]
-
-    if "texts" in content["materials"] and len(content["materials"]["texts"]) > 0:
-        text_materials = content["materials"]["texts"]
-        # 템플릿의 1번 텍스트는 후킹(강조), 2번 텍스트는 기본 자막으로 파싱
-        tmpl_text_mat_hook = text_materials[0]
-        tmpl_text_mat_default = text_materials[1] if len(text_materials) > 1 else text_materials[0]
-        
-        tmpl_text_seg_hook = None
-        tmpl_text_seg_default = None
-        text_track = None
-        for track in content.get("tracks", []):
-            if track["type"] == "text":
-                if len(track["segments"]) > 0:
-                    text_track = track
-                    tmpl_text_seg_hook = track["segments"][0]
-                    tmpl_text_seg_default = track["segments"][1] if len(track["segments"]) > 1 else track["segments"][0]
-                    break
-                    
-        if text_track and tmpl_text_seg_hook:
-            text_track["segments"] = []
-            content["materials"]["texts"] = []
-            def _gen_id(): return str(uuid.uuid4()).upper()
-            
-            for idx, pt in enumerate(phrase_timings):
-                is_hook = (idx == 0)
-                base_mat = tmpl_text_mat_hook if is_hook else tmpl_text_mat_default
-                base_seg = tmpl_text_seg_hook if is_hook else tmpl_text_seg_default
-                
-                new_mat = copy.deepcopy(base_mat)
-                new_mat["id"] = _gen_id()
-                try:
-                    c_obj = json.loads(new_mat["content"])
-                    c_obj["text"] = pt["text"]
-                    new_mat["content"] = json.dumps(c_obj, ensure_ascii=False)
-                except:
-                    pass
-                content["materials"]["texts"].append(new_mat)
-                
-                new_seg = copy.deepcopy(base_seg)
-                new_seg["id"] = _gen_id()
-                new_seg["material_id"] = new_mat["id"]
-                new_seg["target_timerange"]["start"] = pt["start"]
-                new_seg["target_timerange"]["duration"] = pt["duration"]
-                text_track["segments"].append(new_seg)
-
-    with open(content_file, 'w', encoding='utf-8') as f:
-        json.dump(content, f, ensure_ascii=False)
-        
-    print(f"\n[완료] 템플릿 기반 초안: '{project_name}'")
-    return project_name
-
 def apply_context_aware_keyframes(v_seg, text, scale_factor, duration_us):
     import pycapcut as cc
     text = text.replace(" ", "")
@@ -821,33 +635,20 @@ def build_capcut_project_for_naver_clip(
     script_text: str,
     voice=DEFAULT_FISH_VOICE,
     el_api_key="",
-    template_folder=None,
     keyword="",
     pexels_api_key="",
     pixabay_api_key="",
     local_media_folder="",
     media_mapping=None,
-    creative_direction=None,
-    manual_style=None,
     speech_speed: float = 1.0,
     voice_overrides: dict = None,
     precomputed_audio: dict = None,
     **kwargs
 ):
-    if template_folder and template_folder != "none":
-        return build_from_template(
-            script_text=script_text,
-            voice=voice,
-            api_key=el_api_key,
-            template_folder_name=template_folder,
-            speech_speed=speech_speed,
-            voice_overrides=voice_overrides,
-            precomputed_audio=precomputed_audio
-        )
-    
     import time
     import uuid
     import shutil
+    import asyncio
     project_name = f"AutoProject_{int(time.time())}_{uuid.uuid4().hex[:6]}"
     
     SENIOR_VIDEO_CONTEXTS = [
@@ -925,12 +726,28 @@ def build_capcut_project_for_naver_clip(
             shutil.copy2(cached_audio, mp3_path)
         else:
             s_voice = (voice_overrides or {}).get(mapping_idx) or voice or DEFAULT_FISH_VOICE
-            generate_single_sentence_tts(
-                clean_audio_text,
-                mp3_path,
-                voice=s_voice,
-                speed=speech_speed
-            )
+            try:
+                if s_voice.startswith("el_"):
+                    real_voice_id = s_voice.replace("el_", "")
+                    if not el_api_key:
+                        raise Exception("ElevenLabs API Key가 없습니다.")
+                    generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
+                elif s_voice.startswith("fish_"):
+                    generate_single_sentence_tts(
+                        clean_audio_text,
+                        mp3_path,
+                        voice=s_voice,
+                        speed=speech_speed,
+                        fish_api_key=os.environ.get("FISH_API_KEY", "")
+                    )
+                else:
+                    asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=s_voice))
+            except Exception as e:
+                print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
+                try:
+                    asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
+                except Exception as e2:
+                    raise Exception(f"오디오 생성 완전 실패: {e}")
 
         trim_audio_silence(mp3_path)
 
@@ -1007,14 +824,8 @@ def build_capcut_project_for_naver_clip(
 
             phrase_timerange = Timerange(phrase_start_us, phrase_duration_us)
 
-            # 훅 여부: 시간 기준 OR creative_direction role
-            cd_role = None
-            if creative_direction and "sentences" in creative_direction:
-                for _s in creative_direction["sentences"]:
-                    if _s.get("index") == mapping_idx:
-                        cd_role = _s.get("role")
-                        break
-            is_hook = (current_time_us < 3000000) or (cd_role == "hook")
+            # 0~3초는 훅(Hook), 이후는 본문 자막 스타일 적용
+            is_hook = (current_time_us < 3000000)
 
             style = TextStyle(
                 size=18.0 if is_hook else 14.5,
@@ -1035,91 +846,11 @@ def build_capcut_project_for_naver_clip(
                 clip_settings=clip_settings
             )
 
-            # ── 역할 결정 ─────────────────────────────────────────────
-            # creative_direction이 있으면 AI가 분류한 role 사용,
-            # 없으면 시간 기준 is_hook으로 fallback
-            effective_role = cd_role or ("hook" if is_hook else "normal")
-
-            # ── 모드 1: 템플릿(manual_style) + AI 역할 분류 ─────────────
-            # manual_style이 있으면 → AI가 분류한 role로 템플릿에서 스타일 조회
-            if manual_style:
-                ms = (manual_style.get(effective_role)
-                      or manual_style.get("normal")
-                      or {})
-
-                # 폰트 오버라이드
-                ms_font_name = ms.get("font_name")
-                ms_font_path = ms.get("font_path")
-                if ms_font_name and ms_font_path:
-                    text_seg.font = CustomFont(ms_font_name, ms_font_path)
-
-                # 크기 오버라이드
-                ms_size = ms.get("size")
-                if ms_size:
-                    current_color = (1.0, 0.9, 0.0) if (effective_role == "hook") else (1.0, 1.0, 1.0)
-                    text_seg.style = TextStyle(size=ms_size, color=current_color, bold=True, align=1)
-
-                # ── pycapcut enum 기반 애니메이션 ──
-                for anim_val, anim_cls in [
-                    (ms.get("intro"), TextIntro),
-                    (ms.get("loop"),  TextLoopAnim),
-                    (ms.get("outro"), TextOutro),
-                ]:
-                    if anim_val and anim_val in anim_cls.__members__:
-                        try: text_seg.add_animation(anim_cls[anim_val])
-                        except Exception: pass
-
-                # ── raw_anim: 로컬 캐시 기반 직접 주입 (놓기 등 enum 없는 효과) ──
-                # 형식: [{"resource_id": "...", "path": "...", "type": "in/loop/out", "name": "..."}]
-                raw_anims = ms.get("raw_anims", [])
-                if raw_anims:
-                    text_seg._raw_anims = raw_anims  # 나중에 _inject_raw_anims()에서 처리
-
-
-            # ── 모드 2: AI 크리에이티브 연출 단독 (템플릿 없을 때) ──────
-            elif creative_direction and "sentences" in creative_direction:
-                sentence_info = None
-                for s in creative_direction["sentences"]:
-                    if s.get("index") == mapping_idx:
-                        sentence_info = s
-                        break
-
-                if sentence_info:
-                    intro_name = sentence_info.get("text_intro")
-                    loop_name  = sentence_info.get("text_loop_anim")
-                    outro_name = sentence_info.get("text_outro")
-
-                    if intro_name:
-                        try:
-                            anim_enum = TextIntro[intro_name] if intro_name in TextIntro.__members__ else None
-                            if anim_enum: text_seg.add_animation(anim_enum)
-                        except Exception: pass
-
-                    if loop_name:
-                        try:
-                            anim_enum = TextLoopAnim[loop_name] if loop_name in TextLoopAnim.__members__ else None
-                            if anim_enum: text_seg.add_animation(anim_enum)
-                        except Exception: pass
-
-                    if outro_name:
-                        try:
-                            anim_enum = TextOutro[outro_name] if outro_name in TextOutro.__members__ else None
-                            if anim_enum: text_seg.add_animation(anim_enum)
-                        except Exception: pass
-
-                    c_style = sentence_info.get("subtitle_style")
-                    if c_style:
-                        try:
-                            size = c_style.get("size", 14.5)
-                            color_list = c_style.get("color", [1.0, 1.0, 1.0])
-                            color = tuple(color_list) if isinstance(color_list, list) else color_list
-                            bold = c_style.get("bold", True)
-                            text_seg.style = TextStyle(size=size, color=color, bold=bold, align=1)
-                            border_color_list = c_style.get("border_color", [0.0, 0.0, 0.0])
-                            border_color = tuple(border_color_list) if isinstance(border_color_list, list) else border_color_list
-                            border_width = c_style.get("border_width", 25.0)
-                            text_seg.border = TextBorder(color=border_color, width=border_width)
-                        except Exception: pass
+            if is_hook:
+                try:
+                    text_seg.add_animation(TextIntro.pop_up)
+                except Exception:
+                    pass
 
             script_file.add_segment(text_seg, track_name="자막_트랙")
             phrase_start_us += phrase_duration_us
@@ -1131,79 +862,6 @@ def build_capcut_project_for_naver_clip(
         current_time_us += sentence_duration_us
 
     script_file.save()
-
-    # ── raw_anim 후처리: draft_content.json 직접 패치 ─────────────────
-    # TextSegment에 _raw_anims가 있으면 sticker_animation으로 주입
-    try:
-        # text_segments 수집 (script_file 내부 트랙에서)
-        segs_with_raw = []
-        for track in script_file.tracks:
-            for seg in getattr(track, 'segments', []):
-                if hasattr(seg, '_raw_anims') and seg._raw_anims:
-                    segs_with_raw.append(seg)
-
-        if segs_with_raw:
-            import uuid
-            content_file = os.path.join(script_file.project_path, "draft_content.json")
-            with open(content_file, encoding='utf-8') as f:
-                draft = json.load(f)
-
-            if 'material_animations' not in draft['materials']:
-                draft['materials']['material_animations'] = []
-
-            # text 트랙에서 material_id 기준으로 segment 찾기
-            text_segs_in_draft = []
-            for track in draft.get('tracks', []):
-                if track.get('type') == 'text':
-                    text_segs_in_draft = track.get('segments', [])
-                    break
-
-            mat_id_map = {s.material_id: s for s in segs_with_raw}
-
-            for draft_seg in text_segs_in_draft:
-                mat_id = draft_seg.get('material_id')
-                src_seg = mat_id_map.get(mat_id)
-                if not src_seg:
-                    continue
-
-                # raw_anim별로 material_animation 생성 및 참조 추가
-                for raw in src_seg._raw_anims:
-                    ma_id = str(uuid.uuid4()).upper()
-                    anim_duration = draft_seg.get('target_timerange', {}).get('duration', 500000)
-                    anim_entry = {
-                        "id": raw.get('id', raw['resource_id']),
-                        "type": raw.get('anim_type', 'in'),
-                        "start": 0,
-                        "duration": 500000 if raw.get('anim_type', 'in') == 'in' else anim_duration,
-                        "path": raw['path'],
-                        "platform": "all",
-                        "resource_id": raw['resource_id'],
-                        "third_resource_id": raw.get('third_resource_id', ''),
-                        "source_platform": raw.get('source_platform', 1),
-                        "name": raw['name'],
-                        "category_id": raw.get('category_id', ''),
-                        "category_name": raw.get('category_name', ''),
-                        "panel": "",
-                        "material_type": "sticker",
-                        "anim_adjust_params": None,
-                        "request_id": raw.get('request_id', ''),
-                    }
-                    ma_block = {
-                        "id": ma_id,
-                        "type": "sticker_animation",
-                        "animations": [anim_entry],
-                        "multi_language_current": "none",
-                    }
-                    draft['materials']['material_animations'].append(ma_block)
-                    if 'extra_material_refs' not in draft_seg:
-                        draft_seg['extra_material_refs'] = []
-                    draft_seg['extra_material_refs'].append(ma_id)
-
-            with open(content_file, 'w', encoding='utf-8') as f:
-                json.dump(draft, f, ensure_ascii=False)
-            print(f"  [raw_anim] {len(segs_with_raw)}개 세그먼트에 직접 애니메이션 주입 완료")
-    except Exception as e:
-        print(f"  [raw_anim 경고] 직접 주입 실패 (무시): {e}")
 
     print(f"\n[완료] [AI더빙 + 비디오 컷 + 잘난체 자막] 100% 자동 완성! 초안: '{project_name}'")
     return project_name
