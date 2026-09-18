@@ -9,9 +9,11 @@ from dotenv import load_dotenv
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
     split_script_by_sentences_and_phrases,
-    split_sentence_naturally
+    split_sentence_naturally,
+    generate_voice_for_text
 )
 from reference_validator_view import render_reference_validator_view
+from capcut_tracker_view import render_capcut_tracker_view
 
 # .env 파일에서 환경 변수 강제 로드
 load_dotenv(override=True)
@@ -111,12 +113,13 @@ with col_model:
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# 상단 3개 탭 구조화
+# 상단 4개 탭 구조화
 # -------------------------------------------------------------------
-tab_keyword, tab_reference, tab_video = st.tabs([
+tab_keyword, tab_reference, tab_video, tab_tracker = st.tabs([
     "📊 키워드 발굴 & 대량 분석",
     "🎯 인스타 광고 레퍼런스 검증",
-    "🎬 캡컷 영상 자동 생성"
+    "🎬 캡컷 영상 자동 생성",
+    "🎨 캡컷 프로젝트 추적 & 스타일 추출"
 ])
 
 # ===================================================================
@@ -475,6 +478,119 @@ with tab_video:
         except Exception as e:
             st.error(f"폴더를 읽는 중 오류가 발생했습니다: {e}")
 
+    # -------------------------------------------------------------------
+    # 🎧 문장별 오디오 검수 & 부분 재생성 (선택)
+    # -------------------------------------------------------------------
+    sentence_structures = []
+    if script_text.strip():
+        sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
+
+    if sentence_structures:
+        with st.expander(f"🎧 문장별 오디오 검수 & 부분 재생성 ({len(sentence_structures)}문장)", expanded=False):
+            st.markdown("전체 오디오를 미리 들어보고, **발음이나 톤이 어색한 문장만 골라서 다시 생성(부분 재생성)**할 수 있습니다.")
+
+            if "precomputed_audio" not in st.session_state:
+                st.session_state["precomputed_audio"] = {}
+            if "voice_overrides" not in st.session_state:
+                st.session_state["voice_overrides"] = {}
+
+            col_all_gen, col_clear = st.columns([3, 1])
+            with col_all_gen:
+                if st.button("🎙️ 전체 문장 오디오 한 번에 미리 생성하기", use_container_width=True, key="btn_gen_all_sentences"):
+                    # 실제 선택된 보이스 결정
+                    v_choice = st.session_state.get("actual_voice_choice_state", "ko-KR-SunHiNeural")
+                    el_key = st.session_state.get("el_api_key_state", "")
+                    fish_key = st.session_state.get("fish_api_key_state", "")
+                    spd = st.session_state.get("speech_speed_state", 1.0)
+                    with st.spinner("전체 문장 TTS 음성 생성 중..."):
+                        temp_preview_dir = os.path.join(os.getcwd(), "temp_audio", "previews")
+                        os.makedirs(temp_preview_dir, exist_ok=True)
+                        for idx, st_item in enumerate(sentence_structures):
+                            s_text = st_item["full_sentence"]
+                            s_v = st.session_state["voice_overrides"].get(idx) or v_choice
+                            out_p = os.path.join(temp_preview_dir, f"preview_s{idx}_{int(time.time())}.mp3")
+                            try:
+                                generate_voice_for_text(
+                                    text=s_text,
+                                    output_path=out_p,
+                                    voice=s_v,
+                                    speed=spd,
+                                    el_api_key=el_key,
+                                    fish_api_key=fish_key
+                                )
+                                st.session_state["precomputed_audio"][idx] = out_p
+                            except Exception as err:
+                                st.error(f"문장 {idx+1} 생성 실패: {err}")
+                        st.success("🎉 모든 문장의 오디오 생성이 완료되었습니다! 아래 플레이어에서 확인하세요.")
+                        st.rerun()
+
+            with col_clear:
+                if st.button("🧹 오디오 캐시 초기화", use_container_width=True, key="btn_clear_audio_cache"):
+                    st.session_state["precomputed_audio"] = {}
+                    st.session_state["voice_overrides"] = {}
+                    st.rerun()
+
+            st.markdown("---")
+            for idx, st_item in enumerate(sentence_structures):
+                s_text = st_item["full_sentence"]
+                audio_path = st.session_state["precomputed_audio"].get(idx)
+
+                with st.container(border=True):
+                    row_col1, row_col2, row_col3 = st.columns([5, 3, 2])
+                    with row_col1:
+                        st.markdown(f"**[문장 {idx+1}]** {s_text}")
+                        if audio_path and os.path.exists(audio_path):
+                            st.audio(audio_path, format="audio/mp3")
+                        else:
+                            st.caption("⏳ 아직 생성되지 않은 문장입니다. (오른쪽 버튼으로 개별 생성 가능)")
+                    with row_col2:
+                        cur_override = st.session_state["voice_overrides"].get(idx, "")
+                        voice_sub_opts = [
+                            ("(기본 설정 성우 사용)", ""),
+                            ("🐟 활기찬 젊은 여성 (차분/설득)", "fish_117e42c2a0af45889eed4a0d564a16d9"),
+                            ("🐟 20대 여성 쇼츠", "fish_54f52a4d2b994612a30306b4a2a95758"),
+                            ("🐟 진우-기쁨-", "fish_a9574d6184714eac96a0a892b719289f"),
+                            ("🐟 봉미선 (짱구엄마)", "fish_b6198ce983784d8db3456c062250cc5a"),
+                            ("👩‍💼 [무료] 선희", "ko-KR-SunHiNeural"),
+                            ("👨‍💼 [무료] 인준", "ko-KR-InJoonNeural")
+                        ]
+                        override_voice = st.selectbox(
+                            f"성우 개별 변경 (문장 {idx+1})",
+                            options=voice_sub_opts,
+                            format_func=lambda x: x[0],
+                            key=f"voice_override_sel_{idx}"
+                        )[1]
+                        if override_voice:
+                            st.session_state["voice_overrides"][idx] = override_voice
+                        elif idx in st.session_state["voice_overrides"]:
+                            del st.session_state["voice_overrides"][idx]
+                    with row_col3:
+                        st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
+                        if st.button(f"🔄 이 문장만 재생성", key=f"btn_regen_{idx}", use_container_width=True):
+                            v_choice = st.session_state.get("actual_voice_choice_state", "ko-KR-SunHiNeural")
+                            el_key = st.session_state.get("el_api_key_state", "")
+                            fish_key = st.session_state.get("fish_api_key_state", "")
+                            spd = st.session_state.get("speech_speed_state", 1.0)
+                            target_voice = st.session_state["voice_overrides"].get(idx) or v_choice
+                            with st.spinner(f"문장 {idx+1} 음성 재생성 중..."):
+                                temp_preview_dir = os.path.join(os.getcwd(), "temp_audio", "previews")
+                                os.makedirs(temp_preview_dir, exist_ok=True)
+                                out_p = os.path.join(temp_preview_dir, f"preview_s{idx}_{int(time.time())}.mp3")
+                                try:
+                                    generate_voice_for_text(
+                                        text=s_text,
+                                        output_path=out_p,
+                                        voice=target_voice,
+                                        speed=spd,
+                                        el_api_key=el_key,
+                                        fish_api_key=fish_key
+                                    )
+                                    st.session_state["precomputed_audio"][idx] = out_p
+                                    st.success(f"문장 {idx+1} 재생성 완료!")
+                                    st.rerun()
+                                except Exception as err:
+                                    st.error(f"재생성 실패: {err}")
+
     # 성우 보이스 선택 및 키 입력
     col_v1, col_v2 = st.columns(2)
 
@@ -490,6 +606,7 @@ with tab_video:
                 ("🌟 [프리미엄] 발랄한 여성 - Bella", "el_EXAVITQu4vr4xnSDxMaL"),
                 ("🌟 [프리미엄] 묵직한 중년 남성 - Antoni", "el_ErXwobaYiN019PkySvjV"),
                 ("---", ""),
+                ("🐟 [Fish Audio] 활기찬 젊은 여성 (차분 & 설득력 있는 톤)", "fish_117e42c2a0af45889eed4a0d564a16d9"),
                 ("🐟 [Fish Audio] 20대 여성 쇼츠 (인플루언서 스타일)", "fish_54f52a4d2b994612a30306b4a2a95758"),
                 ("🐟 [Fish Audio] 20대 여성 내돈내산 쇼츠 (리뷰 톤)", "fish_46939387dd944a45a399bd92b8de52cb"),
                 ("🐟 [Fish Audio] 해짜 보이스3 (남성 내레이션/설명)", "fish_136a377398bc4f5dba0101259a9b3eea"),
@@ -536,6 +653,62 @@ with tab_video:
         else:
             actual_voice_choice = selected_voice
 
+    st.session_state["actual_voice_choice_state"] = actual_voice_choice
+    st.session_state["el_api_key_state"] = el_api_key
+    st.session_state["fish_api_key_state"] = fish_api_key
+
+    # ⚡ TTS 발화 속도(배속) 조절 슬라이더
+    col_speed, col_speed_tip = st.columns([1.5, 2.5])
+    with col_speed:
+        speech_speed = st.slider(
+            "⚡ TTS 말하기 속도 (배속)",
+            min_value=0.7,
+            max_value=1.5,
+            value=1.0,
+            step=0.05,
+            format="%.2fx",
+            key="sb_speech_speed",
+            help="음성의 발화 속도를 조절합니다. 숏폼 영상에서는 1.1x ~ 1.2x 속도가 시청 집중도를 높입니다."
+        )
+        st.session_state["speech_speed_state"] = speech_speed
+    with col_speed_tip:
+        st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
+        st.caption("💡 **속도 가이드:** `1.00x`(기본 속도) | `1.10x ~ 1.20x`(빠른 템포의 바이럴 숏폼 추천)")
+
+    st.markdown("---")
+
+    # 🎨 스타일 프리셋 선택
+    import capcut_tracker
+    saved_presets = capcut_tracker.load_presets()
+    col_preset, col_preset_info = st.columns([2, 2])
+    with col_preset:
+        preset_options = [("기본 AdForge 스타일 (Pretendard + 블랙한산스)", None)]
+        for p in saved_presets:
+            preset_options.append((f"🎨 {p.get('name', '프리셋')} ({p.get('source_project', '')})", p.get("id")))
+
+        selected_preset_tuple = st.selectbox(
+            "🎨 캡컷 효과 & 자막 스타일 프리셋",
+            options=preset_options,
+            format_func=lambda x: x[0],
+            help="사용자의 기존 캡컷 프로젝트에서 추출한 효과, 전환, 자막 스타일을 신규 프로젝트에 그대로 적용합니다."
+        )
+        selected_preset_id = selected_preset_tuple[1]
+
+    with col_preset_info:
+        if selected_preset_id:
+            curr_p = next((p for p in saved_presets if p.get("id") == selected_preset_id), None)
+            if curr_p:
+                eff_names = [e.get("name") for e in curr_p.get("effects", [])[:2]]
+                trans_names = [t.get("name") for t in curr_p.get("transitions", [])[:2]]
+                desc_parts = []
+                if eff_names:
+                    desc_parts.append(f"효과: {', '.join(eff_names)}")
+                if trans_names:
+                    desc_parts.append(f"전환: {', '.join(trans_names)}")
+                st.caption("✨ **적용될 에셋:** " + (" / ".join(desc_parts) if desc_parts else "자막 디자인 적용"))
+        else:
+            st.caption("💡 '🎨 캡컷 프로젝트 추적 & 스타일 추출' 탭에서 내 캡컷 프로젝트의 효과를 프리셋으로 등록할 수 있습니다.")
+
     st.markdown("---")
 
     # 🎬 캡컷 프로젝트 생성 실행
@@ -566,9 +739,21 @@ with tab_video:
                             voice=actual_voice_choice,
                             el_api_key=el_api_key,
                             local_media_folder=local_media_folder,
-                            media_mapping=media_mapping
+                            media_mapping=media_mapping,
+                            speech_speed=speech_speed,
+                            voice_overrides=st.session_state.get("voice_overrides", {}),
+                            precomputed_audio=st.session_state.get("precomputed_audio", {}),
+                            preset_id=selected_preset_id
                         )
                         st.success(f"🎉 성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
+                        if selected_preset_id:
+                            st.info(f"✨ 선택하신 스타일 프리셋의 캡컷 효과 및 전환이 성공적으로 반영되었습니다.")
                         st.info("💡 PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 새로 생성된 프로젝트를 즉시 확인하실 수 있습니다.")
                 except Exception as e:
                     st.error(f"오류 발생: {e}")
+
+# ===================================================================
+# [탭 4] 캡컷 로컬 프로젝트 실시간 추적 및 스타일 추출
+# ===================================================================
+with tab_tracker:
+    render_capcut_tracker_view()

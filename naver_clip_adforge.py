@@ -455,6 +455,7 @@ def find_best_video_for_sentence(sentence: str, stock_videos: list, last_used_vi
 # Fish Audio 공식 보이스 카탈로그
 FISH_VOICE_LIST = [
     ("🐟 [Fish Audio] 진우-기쁨- (남성, 활기찬 톤)", "fish_a9574d6184714eac96a0a892b719289f"),
+    ("🐟 [Fish Audio] 활기찬 젊은 여성 (차분 & 설득력)", "fish_117e42c2a0af45889eed4a0d564a16d9"),
     ("🐟 [Fish Audio] 20대 여성 쇼츠 (인플루언서 스타일)", "fish_54f52a4d2b994612a30306b4a2a95758"),
     ("🐟 [Fish Audio] 20대 여성 내돈내산 쇼츠 (리뷰 톤)", "fish_46939387dd944a45a399bd92b8de52cb"),
     ("🐟 [Fish Audio] 해짜 보이스3 (남성 내레이션/설명)", "fish_136a377398bc4f5dba0101259a9b3eea"),
@@ -565,6 +566,78 @@ def generate_single_sentence_tts(text: str, output_path: str, voice: str = DEFAU
 
     raise Exception(f"Fish Audio 음성 생성 실패 ({max_retries}회 재시도): {last_err}")
 
+def generate_elevenlabs_tts(text: str, output_path: str, voice_id: str, api_key: str, speed: float = 1.0):
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": api_key
+    }
+    clamped_speed = max(0.7, min(1.2, float(speed)))
+    data = {
+        "text": text,
+        "model_id": "eleven_multilingual_v2",
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.75,
+            "speed": clamped_speed
+        }
+    }
+    response = requests.post(url, json=data, headers=headers, timeout=30)
+    if response.status_code != 200:
+        if "speed" in response.text:
+            data["voice_settings"].pop("speed", None)
+            response = requests.post(url, json=data, headers=headers, timeout=30)
+        if response.status_code != 200:
+            raise Exception(f"ElevenLabs API Error ({response.status_code}): {response.text}")
+    with open(output_path, "wb") as f:
+        f.write(response.content)
+    trim_audio_silence(output_path)
+    return output_path
+
+async def generate_tts_audio(text: str, output_path: str, voice_config: str = "ko-KR-SunHiNeural", speed: float = 1.0):
+    """Edge-TTS를 이용한 고음질 무료 음성 생성 (속도 배속 지원)"""
+    rate_percent = int(round((float(speed) - 1.0) * 100))
+    rate_str = f"{rate_percent:+d}%"
+    communicate = edge_tts.Communicate(text, voice_config, rate=rate_str)
+    await communicate.save(output_path)
+    trim_audio_silence(output_path)
+    return output_path
+
+def generate_voice_for_text(
+    text: str,
+    output_path: str,
+    voice: str = DEFAULT_FISH_VOICE,
+    speed: float = 1.0,
+    el_api_key: str = "",
+    fish_api_key: str = "",
+    max_retries: int = 2
+) -> str:
+    """통합 음성 생성 함수 (ElevenLabs, Fish Audio, Edge-TTS 및 속도 조절 지원)"""
+    clean_text = re.sub(r'[*#\[\]_=\-]', '', text).strip()
+    if not clean_text:
+        return output_path
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+    if voice.startswith("el_"):
+        real_voice_id = voice.replace("el_", "")
+        if not el_api_key:
+            raise Exception("ElevenLabs API Key가 입력되지 않았습니다.")
+        return generate_elevenlabs_tts(clean_text, output_path, voice_id=real_voice_id, api_key=el_api_key, speed=speed)
+    elif voice.startswith("fish_"):
+        return generate_single_sentence_tts(
+            clean_text,
+            output_path,
+            voice=voice,
+            speed=speed,
+            fish_api_key=fish_api_key or os.environ.get("FISH_API_KEY", ""),
+            max_retries=max_retries
+        )
+    else:
+        asyncio.run(generate_tts_audio(clean_text, output_path, voice_config=voice, speed=speed))
+        return output_path
+
 def apply_context_aware_keyframes(v_seg, text, scale_factor, duration_us):
     import pycapcut as cc
     text = text.replace(" ", "")
@@ -620,6 +693,7 @@ def build_capcut_project_for_naver_clip(
     speech_speed: float = 1.0,
     voice_overrides: dict = None,
     precomputed_audio: dict = None,
+    preset_id: str = None,
     **kwargs
 ):
     import time
@@ -704,25 +778,18 @@ def build_capcut_project_for_naver_clip(
         else:
             s_voice = (voice_overrides or {}).get(mapping_idx) or voice or DEFAULT_FISH_VOICE
             try:
-                if s_voice.startswith("el_"):
-                    real_voice_id = s_voice.replace("el_", "")
-                    if not el_api_key:
-                        raise Exception("ElevenLabs API Key가 없습니다.")
-                    generate_elevenlabs_tts(clean_audio_text, mp3_path, voice_id=real_voice_id, api_key=el_api_key)
-                elif s_voice.startswith("fish_"):
-                    generate_single_sentence_tts(
-                        clean_audio_text,
-                        mp3_path,
-                        voice=s_voice,
-                        speed=speech_speed,
-                        fish_api_key=os.environ.get("FISH_API_KEY", "")
-                    )
-                else:
-                    asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config=s_voice))
+                generate_voice_for_text(
+                    text=clean_audio_text,
+                    output_path=mp3_path,
+                    voice=s_voice,
+                    speed=speech_speed,
+                    el_api_key=el_api_key,
+                    fish_api_key=os.environ.get("FISH_API_KEY", "")
+                )
             except Exception as e:
                 print(f"  [오디오 생성 실패, 무료 TTS로 대체] {e}")
                 try:
-                    asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural"))
+                    asyncio.run(generate_tts_audio(clean_audio_text, mp3_path, voice_config="ko-KR-SunHiNeural", speed=speech_speed))
                 except Exception as e2:
                     raise Exception(f"오디오 생성 완전 실패: {e}")
 
@@ -839,6 +906,22 @@ def build_capcut_project_for_naver_clip(
         current_time_us += sentence_duration_us
 
     script_file.save()
+
+    # 🎨 스타일 프리셋 적용 (캡컷 효과, 전환, 자막 스타일 등)
+    if preset_id:
+        try:
+            import capcut_tracker
+            presets = capcut_tracker.load_presets()
+            target_preset = next((p for p in presets if p.get("id") == preset_id), None)
+            if target_preset:
+                draft_full_path = os.path.join(draft_folder_path, project_name)
+                success = capcut_tracker.apply_preset_to_draft(draft_full_path, target_preset)
+                if success:
+                    print(f"  [프리셋 적용 성공] '{target_preset.get('name')}' 효과 및 전환이 초안에 주입되었습니다.")
+                else:
+                    print(f"  [프리셋 적용 실패] 초안 파일 수정 중 문제가 발생했습니다.")
+        except Exception as e:
+            print(f"⚠️ 스타일 프리셋 적용 중 오류: {e}")
 
     print(f"\n[완료] [AI더빙 + 비디오 컷 + 잘난체 자막] 100% 자동 완성! 초안: '{project_name}'")
     return project_name
