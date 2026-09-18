@@ -36,7 +36,6 @@ except Exception:
     PydubAudio = None
     detect_nonsilent = None
 
-from auto_stock_downloader import fetch_and_download_mixkit_stock_videos
 from pycapcut import SEC, Timerange, TrackType, TextStyle, TextBorder, TextSegment, AudioMaterial, AudioSegment, VideoMaterial, VideoSegment, ClipSettings
 from pycapcut.metadata.text_intro import TextIntro
 from pycapcut.metadata.text_outro import TextOutro
@@ -382,36 +381,12 @@ def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase
     return sentence_structures
 
 # -------------------------------------------------------------------
-# 5. 스톡 비디오 소스 자동 수급 헬퍼
+# 5. 스톡 비디오 소스 헬퍼
 # -------------------------------------------------------------------
-from auto_stock_downloader import fetch_and_download_mixkit_stock_videos, fetch_pexels_portrait_videos, fetch_pixabay_portrait_videos
-import random
-
-def get_or_download_stock_videos(keywords: list, pexels_key: str = "", pixabay_key: str = "") -> list:
+def get_or_download_stock_videos(keywords: list = None, pexels_key: str = "", pixabay_key: str = "") -> list:
     stock_dir = os.path.join(os.getcwd(), "stock_videos")
     os.makedirs(stock_dir, exist_ok=True)
-    
-    mp4_files = glob.glob(os.path.join(stock_dir, "*.mp4"))
-    if not mp4_files:
-        print("💡 저장된 스톡 비디오가 없어 자동으로 다운로드합니다...")
-        sources = ["mixkit"]
-        if pexels_key:
-            sources.append("pexels")
-        if pixabay_key:
-            sources.append("pixabay")
-            
-        for kw in keywords:
-            chosen_source = random.choice(sources)
-            if chosen_source == "pexels":
-                fetch_pexels_portrait_videos(kw, api_key=pexels_key, count=4, output_dir=stock_dir)
-            elif chosen_source == "pixabay":
-                fetch_pixabay_portrait_videos(kw, api_key=pixabay_key, count=4, output_dir=stock_dir)
-            else:
-                fetch_and_download_mixkit_stock_videos(kw, count=4, output_dir=stock_dir)
-                
-        mp4_files = glob.glob(os.path.join(stock_dir, "*.mp4"))
-        
-    return mp4_files
+    return glob.glob(os.path.join(stock_dir, "*.mp4"))
 
 def find_best_video_for_sentence(sentence: str, stock_videos: list, last_used_video: str = "") -> str:
     if not stock_videos:
@@ -489,6 +464,8 @@ FISH_VOICE_LIST = [
     ("🐟 [Fish Audio] 신규 보이스 (자연스러운 톤)", "fish_ed763b05d90b470284150bbc49a8d9e1"),
     ("🐟 [Fish Audio] 링 아나운서 (또박또박 전달력)", "fish_dc90eb64548d4a758642d806bce75a51"),
     ("🐟 [Fish Audio] 봉미선 (짱구 엄마) (개성 넘치는 훅)", "fish_b6198ce983784d8db3456c062250cc5a"),
+    ("🐟 [Fish Audio] 소심한 개구리", "fish_eaa6afb386c84964b8347eea590f7064"),
+    ("🐟 [Fish Audio] 케로로 나레이션", "fish_da6796ba493b43828ff4107889937fe6"),
     ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom")
 ]
 
