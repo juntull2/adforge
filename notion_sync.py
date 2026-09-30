@@ -3,12 +3,144 @@ Notion API 연동 모듈
 - 광고 레퍼런스 데이터를 Notion 데이터베이스에 저장
 """
 
-import requests
+import time
 from datetime import datetime
 
+import requests
 
-NOTION_API_VERSION = "2025-09-03"
+
+NOTION_API_VERSION = "2026-03-11"
 NOTION_API_BASE = "https://api.notion.com/v1"
+
+
+# ─────────────────────────────────────────────────────────────────
+# 공용 클라이언트 (재시도 · 속도 제한 · 페이지 넘김)
+# ─────────────────────────────────────────────────────────────────
+
+class NotionError(RuntimeError):
+    def __init__(self, status: int, code: str, message: str):
+        super().__init__(f"Notion {status} {code}: {message}")
+        self.status = status
+        self.code = code
+        self.message = message
+
+
+def blank_to_none(value):
+    """노션 API는 빈 문자열을 받지 않으므로 "" 값을 None으로 바꿉니다 (중첩 dict·list 포함)."""
+    if isinstance(value, dict):
+        return {k: blank_to_none(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [blank_to_none(v) for v in value]
+    if isinstance(value, str) and value.strip() == "":
+        return None
+    return value
+
+
+class NotionClient:
+    """
+    노션 API 요청을 한곳에서 처리합니다.
+    - 초당 약 3회로 속도를 맞추고(min_interval), 429·5xx·연결 오류는 Retry-After를 지켜 다시 시도합니다.
+    - paginate()는 has_more/next_cursor를 따라 모든 결과를 모읍니다.
+    """
+
+    RETRY_STATUS = {429, 500, 502, 503, 504}
+
+    def __init__(self, token: str, version: str = NOTION_API_VERSION, min_interval: float = 0.34,
+                 max_retries: int = 4, session=None, sleep=time.sleep, timeout: float = 30):
+        self.token = token
+        self.version = version
+        self.min_interval = min_interval
+        self.max_retries = max_retries
+        self.session = session or requests.Session()
+        self.sleep = sleep
+        self.timeout = timeout
+        self.request_count = 0
+        self._last = 0.0
+
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self.token}",
+            "Content-Type": "application/json",
+            "Notion-Version": self.version,
+        }
+
+    def _throttle(self):
+        gap = time.monotonic() - self._last
+        if gap < self.min_interval:
+            self.sleep(self.min_interval - gap)
+        self._last = time.monotonic()
+
+    def request(self, method: str, path: str, json: dict = None, params: dict = None) -> dict:
+        url = path if path.startswith("http") else f"{NOTION_API_BASE}/{path.lstrip('/')}"
+        attempt = 0
+        while True:
+            self._throttle()
+            self.request_count += 1
+            try:
+                resp = self.session.request(method, url, headers=self._headers(), json=json, params=params,
+                                            timeout=self.timeout)
+            except requests.RequestException as exc:
+                if attempt >= self.max_retries:
+                    raise NotionError(0, "network_error", str(exc)) from exc
+                self.sleep(min(2 ** attempt, 16))
+                attempt += 1
+                continue
+            if resp.status_code in self.RETRY_STATUS and attempt < self.max_retries:
+                try:
+                    wait = float(resp.headers.get("Retry-After", ""))
+                except (TypeError, ValueError):
+                    wait = min(2 ** attempt, 16)
+                self.sleep(max(wait, 0.5))
+                attempt += 1
+                continue
+            try:
+                data = resp.json() if resp.content else {}
+            except ValueError:
+                data = {}
+            if resp.status_code >= 400:
+                raise NotionError(resp.status_code, data.get("code", ""), data.get("message", resp.text[:300]))
+            return data
+
+    def get(self, path: str, params: dict = None) -> dict:
+        return self.request("GET", path, params=params)
+
+    def post(self, path: str, json: dict = None) -> dict:
+        return self.request("POST", path, json=json)
+
+    def patch(self, path: str, json: dict = None) -> dict:
+        return self.request("PATCH", path, json=json)
+
+    def delete(self, path: str) -> dict:
+        return self.request("DELETE", path)
+
+    def paginate(self, method: str, path: str, json: dict = None, params: dict = None, page_size: int = 100) -> list:
+        results, cursor = [], None
+        while True:
+            if method.upper() == "GET":
+                p = dict(params or {}, page_size=page_size)
+                if cursor:
+                    p["start_cursor"] = cursor
+                data = self.request("GET", path, params=p)
+            else:
+                body = dict(json or {}, page_size=page_size)
+                if cursor:
+                    body["start_cursor"] = cursor
+                data = self.request(method, path, json=body)
+            results.extend(data.get("results", []))
+            cursor = data.get("next_cursor")
+            if not data.get("has_more") or not cursor:
+                return results
+
+    def query_data_source(self, data_source_id: str, filter: dict = None, sorts: list = None) -> list:
+        body = {}
+        if filter:
+            body["filter"] = filter
+        if sorts:
+            body["sorts"] = sorts
+        return self.paginate("POST", f"data_sources/{data_source_id}/query", json=body)
+
+    def block_children(self, block_id: str) -> list:
+        return self.paginate("GET", f"blocks/{block_id}/children")
 
 
 def get_notion_headers(token: str) -> dict:

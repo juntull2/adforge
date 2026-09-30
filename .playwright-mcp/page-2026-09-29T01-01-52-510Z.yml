@@ -1,0 +1,202 @@
+- generic [active] [ref=f19e1]:
+  - link "본문으로 바로가기" [ref=f19e2] [cursor=pointer]:
+    - /url: "#content"
+  - generic [ref=f19e3]:
+    - generic [ref=f19e4]:
+      - generic [ref=f19e6]:
+        - link "NAVER" [ref=f19e7] [cursor=pointer]:
+          - /url: https://www.naver.com
+        - heading [level=1] [ref=f19e10]:
+          - link "DataLab" [ref=f19e11] [cursor=pointer]:
+            - /url: /
+      - list [ref=f19e15]:
+        - listitem [ref=f19e16]:
+          - link "데이터랩 홈" [ref=f19e17] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=f19e20]:
+          - link "검색어트렌드" [ref=f19e21] [cursor=pointer]:
+            - /url: /keyword/trendSearch.naver
+        - listitem [ref=f19e24]:
+          - link "쇼핑인사이트" [ref=f19e25] [cursor=pointer]:
+            - /url: /shoppingInsight/sCategory.naver
+        - listitem [ref=f19e28]:
+          - link "지역통계" [ref=f19e29] [cursor=pointer]:
+            - /url: /local/trend.naver
+        - listitem [ref=f19e32]:
+          - link "뉴스댓글통계" [ref=f19e33] [cursor=pointer]:
+            - /url: /commentStat/news.naver
+    - main [ref=f19e36]:
+      - generic [ref=f19e38]:
+        - generic [ref=f19e39]:
+          - heading "검색어트렌드" [level=3] [ref=f19e40]
+          - emphasis [ref=f19e41]: 네이버통합검색에서 특정 검색어가 얼마나 많이 검색되었는지 확인해보세요. 검색어를 기간별/연령별/성별로 조회할 수 있습니다.
+        - group "검색어 트렌드 조회" [ref=f19e46]:
+          - paragraph [ref=f19e48]: "궁금한 주제어를 설정하고, 하위 주제어에 해당하는 검색어를 콤마(,)로 구분입력해 주세요. 입력한 단어의 추이를 하나로 합산하여 해당 주제가 네이버에서 얼마나 검색되는지 조회할 수 있습니다. 예) 주제어 캠핑 : 캠핑, Camping, 캠핑용품, 겨울캠핑, 캠핑장, 글램핑, 오토캠핑, 캠핑카, 텐트, 캠핑요리"
+          - generic [ref=f19e49]:
+            - generic [ref=f19e50]:
+              - strong [ref=f19e51]: 주제어1
+              - generic [ref=f19e52]:
+                - textbox "주제어1" [ref=f19e53]:
+                  - /placeholder: 주제어 1 입력
+                - button "입력 내용 삭제" [ref=f19e54] [cursor=pointer]
+              - generic [ref=f19e57]:
+                - generic [ref=f19e58]: 주제어1 하위 주제어
+                - textbox "주제어 1에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f19e59]
+                - button "입력 내용 삭제" [ref=f19e60] [cursor=pointer]
+            - generic [ref=f19e63]:
+              - strong [ref=f19e64]: 주제어2
+              - generic [ref=f19e65]:
+                - textbox "주제어2" [ref=f19e66]:
+                  - /placeholder: 주제어 2 입력
+                - button "입력 내용 삭제" [ref=f19e67] [cursor=pointer]
+              - generic [ref=f19e70]:
+                - generic [ref=f19e71]: 주제어2 하위 주제어
+                - textbox "주제어 2에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f19e72]
+                - button "입력 내용 삭제" [ref=f19e73] [cursor=pointer]
+            - generic [ref=f19e76]:
+              - strong [ref=f19e77]: 주제어3
+              - generic [ref=f19e78]:
+                - textbox "주제어3" [ref=f19e79]:
+                  - /placeholder: 주제어 3 입력
+                - button "입력 내용 삭제" [ref=f19e80] [cursor=pointer]
+              - generic [ref=f19e83]:
+                - generic [ref=f19e84]: 주제어3 하위 주제어
+                - textbox "주제어 3에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f19e85]
+                - button "입력 내용 삭제" [ref=f19e86] [cursor=pointer]
+            - generic [ref=f19e89]:
+              - strong [ref=f19e90]: 주제어4
+              - generic [ref=f19e91]:
+                - textbox "주제어4" [ref=f19e92]:
+                  - /placeholder: 주제어 4 입력
+                - button "입력 내용 삭제" [ref=f19e93] [cursor=pointer]
+              - generic [ref=f19e96]:
+                - generic [ref=f19e97]: 주제어4 하위 주제어
+                - textbox "주제어 4에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f19e98]
+                - button "입력 내용 삭제" [ref=f19e99] [cursor=pointer]
+            - generic [ref=f19e102]:
+              - strong [ref=f19e103]: 주제어5
+              - generic [ref=f19e104]:
+                - textbox "주제어5" [ref=f19e105]:
+                  - /placeholder: 주제어 5 입력
+                - button "입력 내용 삭제" [ref=f19e106] [cursor=pointer]
+              - generic [ref=f19e109]:
+                - generic [ref=f19e110]: 주제어5 하위 주제어
+                - textbox "주제어 5에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f19e111]
+                - button "입력 내용 삭제" [ref=f19e112] [cursor=pointer]
+            - generic [ref=f19e115]:
+              - strong [ref=f19e116]: 기간
+              - generic [ref=f19e117]:
+                - radio "전체" [ref=f19e118]
+                - generic [ref=f19e119] [cursor=pointer]: 전체
+                - radio "1개월" [ref=f19e120]
+                - generic [ref=f19e121] [cursor=pointer]: 1개월
+                - radio "3개월" [ref=f19e122]
+                - generic [ref=f19e123] [cursor=pointer]: 3개월
+                - radio "1년" [checked] [ref=f19e124]
+                - generic [ref=f19e125] [cursor=pointer]: 1년
+                - radio "직접입력" [ref=f19e126]
+                - generic [ref=f19e127] [cursor=pointer]: 직접입력
+                - link "일간" [ref=f19e129] [cursor=pointer]:
+                  - /url: "#"
+              - generic [ref=f19e130]:
+                - link "2025" [ref=f19e132] [cursor=pointer]:
+                  - /url: "#"
+                - link "09" [ref=f19e134] [cursor=pointer]:
+                  - /url: "#"
+                - link "28" [ref=f19e136] [cursor=pointer]:
+                  - /url: "#"
+                - generic [ref=f19e137]: 부터
+                - link "2026" [ref=f19e140] [cursor=pointer]:
+                  - /url: "#"
+                - link "09" [ref=f19e142] [cursor=pointer]:
+                  - /url: "#"
+                - link "28" [ref=f19e144] [cursor=pointer]:
+                  - /url: "#"
+              - paragraph [ref=f19e145]: 2016년 1월 이후 조회할 수 있습니다.
+            - generic [ref=f19e146]:
+              - strong [ref=f19e147]: 범위
+              - generic [ref=f19e149]:
+                - generic [ref=f19e150]:
+                  - checkbox "전체" [ref=f19e151] [cursor=pointer]
+                  - generic [ref=f19e152] [cursor=pointer]: 전체
+                - generic [ref=f19e153]:
+                  - generic [ref=f19e154]:
+                    - checkbox "모바일" [ref=f19e155] [cursor=pointer]
+                    - generic [ref=f19e156] [cursor=pointer]: 모바일
+                  - generic [ref=f19e157]:
+                    - checkbox "PC" [ref=f19e158] [cursor=pointer]
+                    - generic [ref=f19e159] [cursor=pointer]: PC
+            - generic [ref=f19e160]:
+              - strong [ref=f19e161]: 성별
+              - generic [ref=f19e163]:
+                - generic [ref=f19e164]:
+                  - checkbox "전체" [ref=f19e165] [cursor=pointer]
+                  - generic [ref=f19e166] [cursor=pointer]: 전체
+                - generic [ref=f19e167]:
+                  - generic [ref=f19e168]:
+                    - checkbox "여성" [ref=f19e169] [cursor=pointer]
+                    - generic [ref=f19e170] [cursor=pointer]: 여성
+                  - generic [ref=f19e171]:
+                    - checkbox "남성" [ref=f19e172] [cursor=pointer]
+                    - generic [ref=f19e173] [cursor=pointer]: 남성
+            - generic [ref=f19e174]:
+              - strong [ref=f19e175]: 연령선택
+              - generic [ref=f19e176]:
+                - generic [ref=f19e178]:
+                  - checkbox "전체" [ref=f19e179] [cursor=pointer]
+                  - generic [ref=f19e180] [cursor=pointer]: 전체
+                - generic [ref=f19e181]:
+                  - generic [ref=f19e182]:
+                    - checkbox "~12" [ref=f19e183] [cursor=pointer]
+                    - generic [ref=f19e184] [cursor=pointer]: ~12
+                  - generic [ref=f19e185]:
+                    - checkbox "13~18" [ref=f19e186] [cursor=pointer]
+                    - generic [ref=f19e187] [cursor=pointer]: 13~18
+                  - generic [ref=f19e188]:
+                    - checkbox "19~24" [ref=f19e189] [cursor=pointer]
+                    - generic [ref=f19e190] [cursor=pointer]: 19~24
+                  - generic [ref=f19e191]:
+                    - checkbox "25~29" [ref=f19e192] [cursor=pointer]
+                    - generic [ref=f19e193] [cursor=pointer]: 25~29
+                  - generic [ref=f19e194]:
+                    - checkbox "30~34" [ref=f19e195] [cursor=pointer]
+                    - generic [ref=f19e196] [cursor=pointer]: 30~34
+                  - generic [ref=f19e197]:
+                    - checkbox "35~39" [ref=f19e198] [cursor=pointer]
+                    - generic [ref=f19e199] [cursor=pointer]: 35~39
+                  - generic [ref=f19e200]:
+                    - checkbox "40~44" [ref=f19e201] [cursor=pointer]
+                    - generic [ref=f19e202] [cursor=pointer]: 40~44
+                  - generic [ref=f19e203]:
+                    - checkbox "45~49" [ref=f19e204] [cursor=pointer]
+                    - generic [ref=f19e205] [cursor=pointer]: 45~49
+                  - generic [ref=f19e206]:
+                    - checkbox "50~54" [ref=f19e207] [cursor=pointer]
+                    - generic [ref=f19e208] [cursor=pointer]: 50~54
+                  - generic [ref=f19e209]:
+                    - checkbox "55~59" [ref=f19e210] [cursor=pointer]
+                    - generic [ref=f19e211] [cursor=pointer]: 55~59
+                  - generic [ref=f19e212]:
+                    - checkbox "60~" [ref=f19e213] [cursor=pointer]
+                    - generic [ref=f19e214] [cursor=pointer]: 60~
+          - link "네이버 검색 데이터 조회" [ref=f19e215] [cursor=pointer]:
+            - /url: "#"
+    - generic [ref=f19e217]:
+      - generic [ref=f19e218]:
+        - link "이용약관" [ref=f19e219] [cursor=pointer]:
+          - /url: https://policy.naver.com/rules/service.html
+        - link [ref=f19e220] [cursor=pointer]:
+          - /url: https://policy.naver.com/rules/privacy.html
+          - strong [ref=f19e221]: 개인정보처리방침
+        - link "책임의 한계와 법적고지" [ref=f19e222] [cursor=pointer]:
+          - /url: https://policy.naver.com/rules/disclaimer.html
+        - link "고객센터" [ref=f19e223] [cursor=pointer]:
+          - /url: https://help.naver.com/alias/datalab/main.naver
+      - generic [ref=f19e224]:
+        - link "NAVER" [ref=f19e225] [cursor=pointer]:
+          - /url: https://www.naver.com/
+        - emphasis [ref=f19e227]: Copyright ©
+        - strong [ref=f19e228]:
+          - link "NAVER Corp." [ref=f19e229] [cursor=pointer]:
+            - /url: https://www.navercorp.com/ko/index.nhn
+        - text: All Rights Reserved.

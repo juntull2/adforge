@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import time
@@ -8,11 +9,12 @@ from dotenv import load_dotenv
 
 from naver_clip_adforge import (
     build_capcut_project_for_naver_clip,
+    plan_script_shots,
     split_script_by_sentences_and_phrases,
     split_sentence_naturally,
     generate_voice_for_text
 )
-from reference_validator_view import render_reference_validator_view
+from a_grade_view import render_a_grade_view
 from capcut_tracker_view import render_capcut_tracker_view
 
 # .env 파일에서 환경 변수 강제 로드
@@ -44,7 +46,7 @@ st.markdown('''
 ''', unsafe_allow_html=True)
 
 st.markdown('<div class="main-header">🚀 AdForge :: 4050 숏폼 기획 & 영상 자동화</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">키워드 발굴부터 레퍼런스 검증, 캡컷 프로젝트 생성까지 원스톱!</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-header">키워드 발굴부터 A급 소재 탐색, 캡컷 프로젝트 생성까지 원스톱!</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------------
 # 전역 설정 및 API 키 캐싱
@@ -98,10 +100,14 @@ with col_model:
             "openai/gpt-4o-mini": "🚀 GPT-4o Mini (유료)"
         }
     else:
+        # NVIDIA가 종료한 모델은 410 Gone을 돌려준다. mistral-nemotron은 2026-09-28에 종료됐고
+        # llama-3.1-70b/8b는 NVIDIA 모델 목록에서 빠졌다. 아래는 2026-09-29에 응답을 확인한 모델이다.
         model_opts = {
-            "mistralai/mistral-nemotron": "🥇 Mistral Nemotron (추천/무료)",
-            "meta/llama-3.1-70b-instruct": "💡 Llama 3.1 70B (무료)",
-            "meta/llama-3.1-8b-instruct": "⚡ Llama 3.1 8B (무료)"
+            "moonshotai/kimi-k3": "🌙 Kimi K3 (추천/무료)",
+            "nvidia/nemotron-3-super-120b-a12b": "🌟 Nemotron 3 Super 120B (무료)",
+            "nvidia/nemotron-3-ultra-550b-a55b": "🔥 Nemotron 3 Ultra 550B (무료)",
+            "deepseek-ai/deepseek-v4.1-flash": "🐋 DeepSeek V4.1 Flash (무료)",
+            "openai/gpt-oss-20b": "💡 GPT-OSS 20B (무료)",
         }
 
     model_choice = st.selectbox(
@@ -115,9 +121,9 @@ st.markdown("---")
 # -------------------------------------------------------------------
 # 상단 4개 탭 구조화
 # -------------------------------------------------------------------
-tab_keyword, tab_reference, tab_video, tab_tracker = st.tabs([
+tab_keyword, tab_a_grade, tab_video, tab_tracker = st.tabs([
     "📊 키워드 발굴 & 대량 분석",
-    "🎯 인스타 광고 레퍼런스 검증",
+    "🏆 A급 소재 탐색",
     "🎬 캡컷 영상 자동 생성",
     "🎨 캡컷 프로젝트 추적 & 스타일 추출"
 ])
@@ -167,7 +173,7 @@ with tab_keyword:
 
     selected_keyword = st.session_state.get("selected_keyword", "")
     if df_keywords is not None and not df_keywords.empty:
-        st.markdown("아래 표에서 키워드를 선택하면 **레퍼런스 검증 및 캡컷 제작**에 자동 연동됩니다.")
+        st.markdown("아래 표에서 키워드를 선택하면 **캡컷 제작**에 자동 연동됩니다.")
         
         if "cached_styled_df" not in st.session_state or st.session_state.get("cached_styled_df_len") != len(df_keywords):
             def highlight_clip(val):
@@ -216,9 +222,6 @@ with tab_keyword:
             if selected_keyword and st.session_state.get("_prev_sheet_selected_kw") != selected_keyword:
                 st.session_state["_prev_sheet_selected_kw"] = selected_keyword
                 st.session_state["selected_keyword"] = selected_keyword
-                st.session_state["ig_ad_keyword"] = selected_keyword
-                st.session_state["root_ad_keyword"] = selected_keyword
-                st.session_state["trigger_search_auto"] = True
 
     # ── 실시간 단일 키워드 탭 순위 및 검색량 ──
     st.markdown("---")
@@ -329,10 +332,10 @@ with tab_keyword:
 
 
 # ===================================================================
-# [탭 2] 인스타 광고 레퍼런스 검증기
+# [탭 2] A급 소재 탐색 & 브랜드 연결 계정 추적
 # ===================================================================
-with tab_reference:
-    render_reference_validator_view(selected_keyword=selected_keyword)
+with tab_a_grade:
+    render_a_grade_view()
 
 
 # ===================================================================
@@ -394,7 +397,7 @@ with tab_video:
             url = "https://integrate.api.nvidia.com/v1/chat/completions"
             headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
             body = {
-                "model": model if model else "mistralai/mistral-nemotron",
+                "model": model if model else "moonshotai/kimi-k3",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.2
             }
@@ -446,37 +449,146 @@ with tab_video:
     script_text = st.text_area("📝 영상 자막(대본) 전문", key="script_text_area", height=220, placeholder="영상의 자막으로 사용될 대본을 입력하세요.")
 
     # 로컬 미디어 소스 폴더 입력
-    local_media_folder = st.text_input("📁 로컬 미디어 소스 폴더 경로 (선택)", placeholder=r"예: C:\Users\User\Videos\Product")
+    default_source_folders = [
+        r"C:\Users\5700G\Desktop\윤라영님모델_소스",
+        r"C:\Users\5700G\Desktop\샤오홍슈 소스",
+    ]
+    default_source_folders = [path for path in default_source_folders if os.path.isdir(path)]
+    source_folder_text = st.text_area(
+        "📁 로컬 미디어 소스 폴더 (한 줄에 하나씩)",
+        value="\n".join(default_source_folders),
+        height=90,
+    )
+    local_media_folders = [line.strip().strip('"') for line in source_folder_text.splitlines() if line.strip()]
+    local_media_folder = local_media_folders[0] if local_media_folders else ""
+
+    @st.cache_data(show_spinner=False)
+    def _audio_seconds(path: str, mtime: float) -> float:
+        from pycapcut import AudioMaterial
+        return AudioMaterial(path).duration / 1_000_000
+
+    def _measured_sentence_seconds(sentence_key: tuple) -> dict:
+        """문장별 오디오 검수에서 미리 만든 음성이 있으면 그 실제 길이로 컷을 계획한다."""
+        if st.session_state.get("precomputed_audio_script_key") != sentence_key:
+            return {}
+        measured = {}
+        for idx, path in (st.session_state.get("precomputed_audio") or {}).items():
+            if path and os.path.exists(path):
+                try:
+                    measured[idx] = _audio_seconds(path, os.path.getmtime(path))
+                except Exception:
+                    pass
+        return measured
 
     media_mapping = {}
-    if local_media_folder and os.path.isdir(local_media_folder):
+    shot_source_plan = {}  # {문장 인덱스: [{"text", "weight", "sources": [선택 소스, 대체 후보...]}]}
+    if local_media_folders and all(os.path.isdir(folder) for folder in local_media_folders):
         try:
-            valid_exts = ['.mp4', '.mov', '.jpg', '.jpeg', '.png']
-            local_files = [f for f in os.listdir(local_media_folder) if os.path.splitext(f)[1].lower() in valid_exts]
-            local_files.sort()
-            
-            if local_files:
-                with st.expander("🎬 로컬 미디어 문장별 수동 매핑 (선택)", expanded=False):
-                    st.info("각 문장 재생 시 배경으로 표시될 로컬 미디어(영상/사진)를 선택하세요.")
-                    sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
-                    media_options = ["(자동 배치 / 스톡 비디오)"] + local_files
-                    
-                    for i, struct in enumerate(sentence_structures):
-                        sentence = struct["full_sentence"]
-                        if not sentence.strip():
-                            continue
-                            
-                        selected_file = st.selectbox(
-                            f"문장 {i+1}: {sentence}",
-                            options=media_options,
-                            key=f"media_mapping_{i}"
+            from pipeline.local_media_selector import ROLE_LABELS, build_media_catalog, rank_shot_sources
+            from pipeline.context_media_planner import merge_ai_picks, pick_sources_with_llm
+            from pipeline.shot_planner import MAX_SHOT_SEC
+
+            media_catalog = build_media_catalog(local_media_folders)
+            if media_catalog:
+                auto_media = st.checkbox(
+                    f"대본 문맥에 맞는 로컬 소스 자동 배치 (컷당 최대 {MAX_SHOT_SEC:g}초)", value=True
+                )
+                llm_key = nvidia_api_key or os.environ.get("OPENROUTER_API_KEY", "")
+                llm_model = model_choice if nvidia_api_key else ""
+                use_ai_context = st.checkbox(
+                    "🤖 AI가 대본 전체 문맥을 읽고 컷별 소스 고르기",
+                    value=bool(llm_key),
+                    disabled=not (auto_media and llm_key),
+                    help="대본과 소스의 폴더·파일 이름(PC 전체 경로 제외)을 위에서 선택한 LLM에 보내 문맥에 맞는 소스를 고릅니다. "
+                         "실패하면 파일명 규칙 기반 추천을 씁니다.",
+                )
+                with st.expander("🎬 컷별 소스 추천 및 수정", expanded=True):
+                    st.caption(
+                        f"문장을 의미 단위 컷으로 나누고, 소스 하나가 {MAX_SHOT_SEC:g}초를 넘지 않게 배치합니다. "
+                        "추천은 컷의 단어, 같은 문장과 앞뒤 문장의 흐름, 장면 역할(후킹·문제·결과·구매 유도)을 함께 봅니다. "
+                        f"실제 음성이 길어져 {MAX_SHOT_SEC:g}초를 넘는 컷은 생성할 때 다음 추천 소스로 한 번 더 나눕니다."
+                    )
+                    sentence_key = tuple(
+                        s["full_sentence"] for s in split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
+                    )
+                    script_shots = plan_script_shots(
+                        script_text,
+                        speech_speed=st.session_state.get("sb_speech_speed", 1.0),
+                        measured_seconds=_measured_sentence_seconds(sentence_key),
+                    )
+                    ranking = rank_shot_sources(script_shots, media_catalog) if auto_media else []
+
+                    if auto_media and use_ai_context and llm_key and script_shots:
+                        ai_request_key = (
+                            tuple((s["sentence"], tuple(shot["text"] for shot in s["shots"])) for s in script_shots),
+                            tuple(item.path for item in media_catalog),
+                            llm_model,
                         )
-                        if selected_file != "(자동 배치 / 스톡 비디오)":
-                            media_mapping[i] = selected_file
+                        refresh_ai = st.button("🔄 AI 문맥 분석 다시 하기", key="btn_ai_shot_refresh")
+                        if refresh_ai or st.session_state.get("ai_shot_request_key") != ai_request_key:
+                            with st.spinner("🤖 AI가 대본 문맥을 읽고 컷별 소스를 고르는 중..."):
+                                try:
+                                    picks, used_model = pick_sources_with_llm(
+                                        script_shots, media_catalog, llm_key, llm_model
+                                    )
+                                    st.session_state["ai_shot_picks"] = picks
+                                    st.session_state["ai_shot_model"] = used_model
+                                    st.session_state["ai_shot_error"] = ""
+                                except Exception as err:
+                                    st.session_state["ai_shot_picks"] = {}
+                                    st.session_state["ai_shot_model"] = ""
+                                    st.session_state["ai_shot_error"] = str(err)[:300]
+                            st.session_state["ai_shot_request_key"] = ai_request_key
+                        ai_picks = st.session_state.get("ai_shot_picks") or {}
+                        used_model = st.session_state.get("ai_shot_model", "")
+                        if st.session_state.get("ai_shot_error"):
+                            st.warning(f"AI 문맥 분석에 실패해 규칙 기반 추천을 씁니다: {st.session_state['ai_shot_error']}")
+                        else:
+                            total_cuts = sum(len(s["shots"]) for s in script_shots)
+                            fallback_note = (f" 선택한 모델이 응답하지 않아 {used_model}로 분석했습니다."
+                                             if llm_model and used_model and used_model != llm_model else "")
+                            st.caption(f"AI({used_model})가 전체 {total_cuts}컷 중 {len(ai_picks)}컷의 소스를 골랐습니다."
+                                       f"{fallback_note}")
+                        ranking = merge_ai_picks(ranking, ai_picks, script_shots)
+
+                    media_labels = {item.path: item.label for item in media_catalog}
+                    media_options = ["(소스 없음)"] + [item.path for item in media_catalog]
+                    option_index = {path: idx for idx, path in enumerate(media_options)}
+                    for s_plan in script_shots:
+                        s_idx = s_plan["index"]
+                        timing = "실측" if s_plan["measured"] else "예상"
+                        st.markdown(
+                            f"**문장 {s_idx + 1}** · {ROLE_LABELS.get(s_plan['role'], s_plan['role'])} · "
+                            f"{timing} {s_plan['duration_sec']:.1f}초 → 컷 {len(s_plan['shots'])}개"
+                        )
+                        for k, shot in enumerate(s_plan["shots"]):
+                            candidates = ranking[s_idx][k] if s_idx < len(ranking) and k < len(ranking[s_idx]) else []
+                            recommended = candidates[0]["path"] if candidates else None
+                            widget_digest = hashlib.md5(f"{shot['text']}|{recommended}".encode("utf-8")).hexdigest()[:10]
+                            selected_file = st.selectbox(
+                                f"컷 {k + 1} · 약 {shot['duration_sec']:.1f}초 · {shot['text']}",
+                                options=media_options,
+                                index=option_index.get(recommended, 0),
+                                format_func=lambda path: media_labels.get(path, path),
+                                key=f"shot_src_{s_idx}_{k}_{widget_digest}",
+                            )
+                            notes = [f"추천 근거: {candidates[0]['reason']}"] if candidates else ["추천 소스 없음"]
+                            if shot["duration_sec"] > MAX_SHOT_SEC:
+                                notes.append(f"{MAX_SHOT_SEC:g}초를 넘으면 다음 추천 소스로 컷을 나눕니다")
+                            st.caption(" · ".join(notes))
+                            if selected_file == "(소스 없음)":
+                                sources = []
+                            else:
+                                sources = [selected_file] + [c["path"] for c in candidates if c["path"] != selected_file]
+                            shot_source_plan.setdefault(s_idx, []).append(
+                                {"text": shot["text"], "weight": shot["weight"], "sources": sources}
+                            )
             else:
                 st.warning("입력하신 폴더에 영상이나 이미지 파일(.mp4, .mov, .jpg, .png)이 없습니다.")
         except Exception as e:
             st.error(f"폴더를 읽는 중 오류가 발생했습니다: {e}")
+    elif local_media_folders:
+        st.warning("소스 폴더 경로 중 존재하지 않는 항목이 있습니다.")
 
     # -------------------------------------------------------------------
     # 🎧 문장별 오디오 검수 & 부분 재생성 (선택)
@@ -486,6 +598,10 @@ with tab_video:
         sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=18)
 
     if sentence_structures:
+        audio_script_key = tuple(item["full_sentence"] for item in sentence_structures)
+        if st.session_state.get("precomputed_audio_script_key") != audio_script_key:
+            st.session_state["precomputed_audio"] = {}
+            st.session_state["precomputed_audio_script_key"] = audio_script_key
         with st.expander(f"🎧 문장별 오디오 검수 & 부분 재생성 ({len(sentence_structures)}문장)", expanded=False):
             st.markdown("전체 오디오를 미리 들어보고, **발음이나 톤이 어색한 문장만 골라서 다시 생성(부분 재생성)**할 수 있습니다.")
 
@@ -619,6 +735,8 @@ with tab_video:
                 ("🐟 [Fish Audio] 봉미선 (짱구 엄마) (개성 넘치는 훅)", "fish_b6198ce983784d8db3456c062250cc5a"),
                 ("🐟 [Fish Audio] 소심한 개구리", "fish_eaa6afb386c84964b8347eea590f7064"),
                 ("🐟 [Fish Audio] 케로로 나레이션", "fish_da6796ba493b43828ff4107889937fe6"),
+                ("🐟 [Fish Audio] 라영님", "fish_acd596a6cb6a43d6bf4b2a5585743c2c"),
+                ("🐟 [Fish Audio] 맑고 생기 있는 여성", "fish_ff61737dc0614062ba8bc5d0abb63b3a"),
                 ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom"),
                 ("---", ""),
                 ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),
@@ -679,10 +797,49 @@ with tab_video:
 
     # 🎨 스타일 프리셋 선택
     import capcut_tracker
+    from pipeline.capcut_font_catalog import available_user_fonts
+
+    installed_fonts = available_user_fonts()
+    font_options = list(installed_fonts) or ["Pretendard"]
+    font_col1, font_col2 = st.columns(2)
+    with font_col1:
+        hook_font_name = st.selectbox(
+            "훅 자막 폰트", font_options,
+            index=font_options.index("양굵은구조폰트") if "양굵은구조폰트" in font_options else 0,
+        )
+    with font_col2:
+        body_font_name = st.selectbox(
+            "본문 자막 폰트", font_options,
+            index=font_options.index("메모먼트꾹꾹체") if "메모먼트꾹꾹체" in font_options else 0,
+        )
+    result_col, cta_col = st.columns(2)
+    with result_col:
+        result_font_name = st.selectbox(
+            "결과·만족 자막 폰트", font_options,
+            index=font_options.index("상상토끼 꽃집막내딸") if "상상토끼 꽃집막내딸" in font_options else 0,
+        )
+    with cta_col:
+        cta_font_name = st.selectbox(
+            "구매 안내 자막 폰트", font_options,
+            index=font_options.index("김씨와일드각체") if "김씨와일드각체" in font_options else 0,
+        )
+    st.caption("기본 위치: X 0, Y -200. 속초바다 돋움체는 오른쪽으로 8° 기울입니다.")
+    reference_sfx_project = os.path.join(
+        os.environ.get("LOCALAPPDATA") or os.path.expanduser("~\\AppData\\Local"),
+        "CapCut", "User Data", "Projects", "com.lveditor.draft", "0928 (3)",
+    )
+    use_reference_sfx = st.checkbox(
+        "0928 (3)의 CapCut 내장 효과음 배치",
+        value=os.path.isfile(os.path.join(reference_sfx_project, "draft_content.json")),
+        help="훅·문제·결과·구매 안내에 샘플 프로젝트의 내장 효과음을 최대 4개 배치합니다.",
+    )
+    if "상상토끼 꽃집막내딸" not in installed_fonts:
+        st.caption("상상토끼 꽃집막내딸 폰트 파일은 현재 PC에서 찾지 못해 선택 목록에서 제외했습니다.")
+
     saved_presets = capcut_tracker.load_presets()
     col_preset, col_preset_info = st.columns([2, 2])
     with col_preset:
-        preset_options = [("기본 AdForge 스타일 (Pretendard + 블랙한산스)", None)]
+        preset_options = [("기본 AdForge 스타일 (선택한 폰트 + 기본 효과)", None)]
         for p in saved_presets:
             preset_options.append((f"🎨 {p.get('name', '프리셋')} ({p.get('source_project', '')})", p.get("id")))
 
@@ -705,14 +862,16 @@ with tab_video:
                     desc_parts.append(f"효과: {', '.join(eff_names)}")
                 if trans_names:
                     desc_parts.append(f"전환: {', '.join(trans_names)}")
+                if curr_p.get("animations"):
+                    desc_parts.append("자막 애니메이션")
                 st.caption("✨ **적용될 에셋:** " + (" / ".join(desc_parts) if desc_parts else "자막 디자인 적용"))
         else:
-            st.caption("💡 '🎨 캡컷 프로젝트 추적 & 스타일 추출' 탭에서 내 캡컷 프로젝트의 효과를 프리셋으로 등록할 수 있습니다.")
+            st.caption("기본 스타일은 CapCut 내장 전환·영상 효과·자막 애니메이션을 장면별로 배치합니다.")
 
     st.markdown("---")
 
     # 🎬 캡컷 프로젝트 생성 실행
-    if st.button("🎬 캡컷 프로젝트 1초 자동 생성", use_container_width=True, type="primary"):
+    if st.button("🎬 캡컷 편집 초안 생성", use_container_width=True, type="primary"):
         if not script_text.strip():
             st.error("대본이 비어있습니다!")
         else:
@@ -740,14 +899,38 @@ with tab_video:
                             el_api_key=el_api_key,
                             local_media_folder=local_media_folder,
                             media_mapping=media_mapping,
+                            shot_plan=shot_source_plan,
                             speech_speed=speech_speed,
                             voice_overrides=st.session_state.get("voice_overrides", {}),
                             precomputed_audio=st.session_state.get("precomputed_audio", {}),
-                            preset_id=selected_preset_id
+                            preset_id=selected_preset_id,
+                            hook_font_name=hook_font_name,
+                            body_font_name=body_font_name,
+                            result_font_name=result_font_name,
+                            cta_font_name=cta_font_name,
+                            reference_sfx_project=reference_sfx_project if use_reference_sfx else "",
                         )
                         st.success(f"🎉 성공적으로 캡컷 프로젝트 '{project_name}' 초안을 생성했습니다!")
+                        from pipeline.capcut_draft_audit import audit_draft
+
+                        draft_root = os.path.join(
+                            os.environ.get("LOCALAPPDATA") or os.path.expanduser("~\\AppData\\Local"),
+                            "CapCut", "User Data", "Projects", "com.lveditor.draft", project_name,
+                        )
+                        audit = audit_draft(draft_root)
+                        clips = audit["clips"]
+                        effects = audit["effects"]
+                        st.caption(
+                            f"타임라인 연결 확인: 영상 {clips['video']}개 · 음성 {clips['audio']}개 · "
+                            f"내장 효과음 {clips['sfx']}개 · 자막 {clips['text']}개 · 전환 {effects['transitions']}개 · "
+                            f"영상 효과 {effects['video_effects']}개 · "
+                            f"자막 애니메이션 {effects['material_animations']}개 · "
+                            f"가장 긴 컷 {audit['longest_video_clip_sec']:.2f}초"
+                        )
+                        if clips["video"] == 0:
+                            st.warning("영상 소스가 배치되지 않았습니다. 컷별 소스 선택을 확인해주세요.")
                         if selected_preset_id:
-                            st.info(f"✨ 선택하신 스타일 프리셋의 캡컷 효과 및 전환이 성공적으로 반영되었습니다.")
+                            st.info("선택한 프리셋의 자막 스타일·일부 효과·전환 적용을 시도했습니다. CapCut에서 실제 표시를 확인해주세요.")
                         st.info("💡 PC의 캡컷(CapCut) 프로그램을 열면 임시 보관함에서 새로 생성된 프로젝트를 즉시 확인하실 수 있습니다.")
                 except Exception as e:
                     st.error(f"오류 발생: {e}")

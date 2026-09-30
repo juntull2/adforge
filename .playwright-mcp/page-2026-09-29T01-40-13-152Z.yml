@@ -1,0 +1,280 @@
+- generic [ref=f48e1]:
+  - banner [ref=f48e2]:
+    - generic [ref=f48e4]:
+      - link [ref=f48e5] [cursor=pointer]:
+        - /url: /keyword
+        - heading "키워드마스터" [level=1] [ref=f48e6]
+      - generic [ref=f48e7]: 유효키워드 검색
+  - list:        
+  - main [ref=f48e8]:
+    - complementary [ref=f48e9]:
+      - navigation [ref=f48e11]:
+        - generic [ref=f48e12]:
+          - list [ref=f48e13]:
+            - listitem [ref=f48e14]: 블로그 분석
+            - listitem [ref=f48e15]:
+              - link " 웨어이즈포스트" [ref=f48e16] [cursor=pointer]:
+                - /url: /
+                - generic [ref=f48e17]: 
+                - text: 웨어이즈포스트
+            - listitem [ref=f48e19]:
+              - link " 블로그 지수" [ref=f48e20] [cursor=pointer]:
+                - /url: /level
+                - generic [ref=f48e21]: 
+                - text: 블로그 지수
+            - listitem [ref=f48e23]:
+              - link " 형태소 분석기" [ref=f48e24] [cursor=pointer]:
+                - /url: /morpheme
+                - generic [ref=f48e25]: 
+                - text: 형태소 분석기
+            - listitem [ref=f48e27]:
+              - link " 블로그 글 분석 NEW" [ref=f48e28] [cursor=pointer]:
+                - /url: https://chromewebstore.google.com/detail/ekpfikhjkdkcekoapoddppnlipichfci?utm_source=item-share-cb
+                - generic [ref=f48e29]: 
+                - text: 블로그 글 분석
+                - generic [ref=f48e31]: NEW
+            - listitem [ref=f48e32]: 키워드 도구
+            - listitem [ref=f48e33]:
+              - link " 키워드마스터" [ref=f48e34] [cursor=pointer]:
+                - /url: /keyword
+                - generic [ref=f48e35]: 
+                - text: 키워드마스터
+            - listitem [ref=f48e37]:
+              - link " 무한 키워드" [ref=f48e38] [cursor=pointer]:
+                - /url: /muhan
+                - generic [ref=f48e39]: 
+                - text: 무한 키워드
+            - listitem [ref=f48e41]:
+              - link " 세부키워드 조합기" [ref=f48e42] [cursor=pointer]:
+                - /url: /mix
+                - generic [ref=f48e43]: 
+                - text: 세부키워드 조합기
+            - listitem [ref=f48e45]:
+              - link " 실시간 검색어" [ref=f48e46] [cursor=pointer]:
+                - /url: /hot
+                - generic [ref=f48e47]: 
+                - text: 실시간 검색어
+          - link " AI 글쓰기 자동화 블로그 AI 자동화  N블로그 글 자동화  사람처럼 쓰는 AI 글쓰기  사진만 넣으면 리뷰글 자동생성  여행커넥트 · 쇼핑커넥트 자동화 더 알아보기 →" [ref=f48e50] [cursor=pointer]:
+            - /url: https://shotposting.com/?utm_source=whereispost&utm_medium=sidebar&utm_campaign=banner&utm_content=sidebar
+            - generic [ref=f48e51]:
+              - generic [ref=f48e52]: 
+              - text: AI 글쓰기 자동화
+            - generic [ref=f48e53]: 블로그 AI 자동화
+            - generic [ref=f48e54]:
+              - generic [ref=f48e55]:
+                - generic [ref=f48e56]: 
+                - text: N블로그 글 자동화
+              - generic [ref=f48e57]:
+                - generic [ref=f48e58]: 
+                - text: 사람처럼 쓰는 AI 글쓰기
+              - generic [ref=f48e59]:
+                - generic [ref=f48e60]: 
+                - text: 사진만 넣으면 리뷰글 자동생성
+              - generic [ref=f48e61]:
+                - generic [ref=f48e62]: 
+                - text: 여행커넥트 · 쇼핑커넥트 자동화
+            - generic [ref=f48e63]:
+              - text: 더 알아보기
+              - generic [ref=f48e64]: →
+          - link " 블로그 분석 도구 블로그매트릭스 지수·키워드·경쟁 분석까지 한 번에 해결하는 분석 도구 지금 분석 시작 →" [ref=f48e66] [cursor=pointer]:
+            - /url: https://blogmatrix.co.kr/
+            - generic [ref=f48e67]:
+              - generic [ref=f48e68]: 
+              - text: 블로그 분석 도구
+            - generic [ref=f48e69]: 블로그매트릭스
+            - generic [ref=f48e70]: 지수·키워드·경쟁 분석까지 한 번에 해결하는 분석 도구
+            - generic [ref=f48e71]:
+              - text: 지금 분석 시작
+              - generic [ref=f48e72]: →
+          - link " 키워드 발굴 황금키워드마스터 검색량·경쟁도로 찾는 알짜 키워드 발굴 도구 황금키워드 찾기 →" [ref=f48e74] [cursor=pointer]:
+            - /url: https://keywordmaster.org/
+            - generic [ref=f48e75]:
+              - generic [ref=f48e76]: 
+              - text: 키워드 발굴
+            - generic [ref=f48e77]: 황금키워드마스터
+            - generic [ref=f48e78]: 검색량·경쟁도로 찾는 알짜 키워드 발굴 도구
+            - generic [ref=f48e79]:
+              - text: 황금키워드 찾기
+              - generic [ref=f48e80]: →
+    - generic [ref=f48e81]:
+      - generic [ref=f48e82]:
+        - alert [ref=f48e83]:
+          - generic [ref=f48e84]:
+            - text: ⚡ 키워드 하나씩 조회가 번거로우시다면 이제 자동으로 추출해 보세요! ☞
+            - link "프리미엄 무한 키워드" [ref=f48e85] [cursor=pointer]:
+              - /url: https://muhankey.com
+        - generic [ref=f48e91]:
+          - textbox "키워드" [ref=f48e92]: 노일리
+          - button "검색" [ref=f48e93]
+        - insertion [ref=f48e97]:
+          - iframe [ref=f48e99]:
+            - generic [ref=f57e1]:
+              - generic [ref=f57e6]:
+                - link [ref=f57e7] [cursor=pointer]:
+                  - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=9&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+                - generic [ref=f57e10]:
+                  - generic [ref=f57e13]:
+                    - link "프로의 창작을 위한 도구" [ref=f57e17] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=0&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+                    - link "김충재도 역시 어도비. Creative Cloud로 프로의 작업물을 제작해보세요." [ref=f57e21] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=7&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+                      - text: 김충재도 역시 어도비. Creative Cloud로 프로의작업물을 제작해보세요.
+                  - generic [ref=f57e24]:
+                    - link:
+                      - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=8&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+                    - link "Adobe Korea" [ref=f57e26] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=1&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+                    - link "자세히 알아보기" [ref=f57e28] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=8&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+                    - link [ref=f57e29] [cursor=pointer]:
+                      - /url: https://adclick.g.doubleclick.net/aclk?sa=l&ai=CUGN98Ba7aoLEKfaV4dkP7Yi_kQOYh_LziQHk7ZuK_BXa2R4QASC0vugcYJuD6YScKaABiZHcwALIAQmpAulzD1meSgk-qAMByAPLBKoE2wFP0AoRcZKMCizBNMjX01T8GQEroT4Bxj1u65fxEeqJd54RmsLfkT7LSogr_GVj6CITM5lBrHX0fhmdz5Cdrpnh12qZf_gTgg4Hnnrcj_O4_oL37Ybe8IBcQDwXyiu6crsYJsOlaKlKZAGZcy6yxMlBz_IwQGdtwlqFmsTAZjMJDnZAg9vlgl7bgQWXMaRs-NAwmO-QA8r5HZmTDJTSYqnkx8BJHB2-43K-KtslTMqNvolL_n8sDU2SU_CT2ZsogVIJfkKKddQcTGET-fJLbsT-fDqC58xonbsmVZ7ABL3rh5zfBYgFgeStt1qgBi6AB9_uo78BqAenzLECqAfi2LECqAeo7bECqAemvhuoB8zOsQKoB_PRG6gHltgbqAeqm7ECqAf-6LECqAeOzhuoB5PYG6gH8OAbqAfulrECqAf-nrECqAevvrECqAef4bECqAem67ECqAfVyRuoB9m2sQKoB5oGqAf_nrECqAffn7ECqAf4wrECqAf7wrEC2AcA0ggyCIBhEAEYHzIIioKAgICAgAg6D4BAgMCAgICAqIACqIOAEEi9_cE6WIzNppbUkpcDYAGxCTVFNH0v-dLVgAoBmAsByAsBgAwBogwDkAEBqg0CS1LIDQHqDRMIkf-nltSSlwMV9ko4BR1txC8y8A0CiA4J2BMKiBQC0BUBmBYByhYCCgD4FgGAFwGyFxAYASoKNjUyNjcxODA5NFAGuhcCOAGqGBcJAAAAAHCH-EASCjY1MjY3MTgwOTQYAbIYCRIC6FgYLiIBANAYAcIZAggB&ae=1&gclid=EAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE&num=1&cid=CAQS9AEAQM4h3K_Bj0MOjF9AaNFZo3o4_eMlnvg9mWSagzcgdqq49JjVl6HGY3vIZ3AUwtut0vxd099yNP4N2_iej1qtCcQ4IYVJOb87cQBQbCFc75d0Exkmfl6gfbCMeG2ylCTCXTdRjUIoI4XHV8cO1_aFDpzZaKNBF3ei-HVJbaA12a4K77dtbtA3xsZna0HAnbFHaZvsRkSs7aO9fwlDvh32JG9NsNX28Iymj7xDNt-OixZOtttj6WI453f3JH4Mw_hWuiWLVsrwW3I1rAQXQult59107HasBLvrZc8B2DyfgyujmaSQOy3aHn1_4rUKhaR_sCPHGAE&sig=AOD64_2w5S016nENlGFJNbjxmt_nGJb4SA&client=ca-pub-3288286514204725&rf=1&nb=8&adurl=https://www.adobe.com/kr/creativecloud/roc/design/all-in-one.html%3Fsdid%3D91BF4JSB%26mv%3Ddisplay%26mv2%3Ddisplay%26gad_source%3D5%26gad_campaignid%3D24275284481%26gclid%3DEAIaIQobChMIgvynltSSlwMV9ko4BR1txC8yEAEYASAAEgKbq_D_BwE
+              - generic [ref=f57e39] [cursor=pointer]
+              - button [ref=f57e44] [cursor=pointer]
+              - iframe
+        - table [ref=f48e101]:
+          - rowgroup [ref=f48e102]:
+            - row [ref=f48e103]:
+              - columnheader "-" [ref=f48e104]
+              - columnheader "키워드" [ref=f48e105]
+              - columnheader "PC" [ref=f48e106]
+              - columnheader "모바일" [ref=f48e107]
+              - columnheader "총합" [ref=f48e108]
+              - columnheader "문서" [ref=f48e109]
+              - columnheader "비율" [ref=f48e110]
+              - columnheader "순위 ▼" [ref=f48e111]
+          - rowgroup
+        - heading "키워드마스터란?" [level=2] [ref=f48e112]
+        - generic [ref=f48e113]:
+          - heading "키워드마스터 소개" [level=3] [ref=f48e114]
+          - paragraph [ref=f48e115]:
+            - strong [ref=f48e116]: 키워드마스터
+            - text: 는
+            - link "웨어이즈포스트" [ref=f48e117] [cursor=pointer]:
+              - /url: https://whereispost.com
+            - text: 와 함께 운영해온 블로그 키워드 분석 도구입니다. whereispost.com/keyword 에서만 공식적으로 서비스 하고 있으며, 네이버 키워드 검색량(PC/모바일), 블로그 포스트 수, 경쟁도(비율), 블로그 검색 노출 순위를 한 번에 조회할 수 있습니다.
+            - link "블로그 관리 솔루션" [ref=f48e118] [cursor=pointer]
+          - paragraph [ref=f48e122]:
+            - text: 온라인 부업 및 사업에 필수적인 검색량을 빠르게 확인할 수 있고,
+            - link "형태소 분석기" [ref=f48e123] [cursor=pointer]:
+              - /url: /morpheme
+            - text: 로 키워드 빈도수와 감정분석도 가능합니다.
+            - link "세부키워드 조합기" [ref=f48e124] [cursor=pointer]:
+              - /url: /mix
+            - text: 로 롱테일 키워드 생성도 지원합니다.
+        - generic [ref=f48e125]:
+          - heading "키워드마스터 주요 기능" [level=3] [ref=f48e126]
+          - list [ref=f48e127]:
+            - listitem [ref=f48e128]:
+              - strong [ref=f48e129]: 키워드 검색량 조회
+              - text: — 네이버 PC/모바일 월간 검색량을 확인
+            - listitem [ref=f48e130]:
+              - strong [ref=f48e131]: 블로그 경쟁도 분석
+              - text: — 검색량 대비 문서 수 비율로 키워드 난이도 파악
+            - listitem [ref=f48e132]:
+              - strong [ref=f48e133]: 블로그 노출 순위
+              - text: — 네이버(N), 티스토리(T), 다음(D), 기타(E) 블로그 순위 확인
+            - listitem [ref=f48e134]:
+              - strong [ref=f48e135]: 관련키워드 추천
+              - text: — 네이버, 다음, 구글 자동완성 기반 연관 키워드 제공
+            - listitem [ref=f48e136]:
+              - strong [ref=f48e137]: 엑셀 다운로드
+              - text: — 조회 결과를 CSV로 내보내기
+        - generic [ref=f48e138]:
+          - heading "키워드마스터 사용법" [level=3] [ref=f48e139]
+          - insertion [ref=f48e141]:
+            - generic [ref=f48e144]:
+              - heading "도움말과 관련된 주제 중 관심이 있을 만한 항목입니다." [level=2] [ref=f48e146]: 자세히 알아보기
+              - link "비즈니스, 생산성 소프트웨어" [ref=f48e147] [cursor=pointer]
+              - link "건축도구 및 공구" [ref=f48e152] [cursor=pointer]
+              - link "데이터 관리" [ref=f48e157] [cursor=pointer]
+          - paragraph [ref=f48e162]:
+            - text: 검색창에 키워드를 입력하면 검색량(최근 30일 기준), 블로그 포스트 수, 경쟁 비율, 블로그 상위 노출 순위가 표시됩니다.
+            - link "수학" [ref=f48e163] [cursor=pointer]
+          - paragraph [ref=f48e167]: 블로그순위는 해당 키워드가 상단에 노출된 순서로 네이버(N), 티스토리(T), 다음(D), 기타(E)로 구분됩니다.
+        - region [ref=f48e168]:
+          - heading "검색량과 문서수로 키워드 비교하기" [level=2] [ref=f48e169]
+          - paragraph [ref=f48e170]: 키워드마스터는 글을 쓰기 전에 독자의 검색 수요와 이미 발행된 블로그 문서수를 함께 살펴보는 도구입니다. 하나의 수치만으로 주제를 결정하기보다, 같은 주제의 세부 키워드를 여러 개 조회해 비교하는 데 활용해 보세요.
+          - heading "결과표의 숫자는 무엇을 뜻하나요?" [level=3] [ref=f48e171]
+          - list [ref=f48e172]:
+            - listitem [ref=f48e173]:
+              - strong [ref=f48e174]: PC·모바일 검색량
+              - text: ": 기기별 월간 검색량 지표입니다. 현재 접속자 수나 오늘 하루의 검색 횟수와는 다릅니다."
+            - listitem [ref=f48e175]:
+              - strong [ref=f48e176]: 총검색량
+              - text: ": PC와 모바일 검색량을 더한 값입니다. 실제 블로그 방문자 수나 예상 수익을 뜻하지 않습니다."
+            - listitem [ref=f48e177]:
+              - strong [ref=f48e178]: 문서수
+              - text: ": 해당 키워드로 조회된 블로그 검색 문서수입니다. 월간 검색량과 집계 범위가 다르므로 비교를 위한 참고 지표로 사용하세요."
+            - listitem [ref=f48e179]:
+              - strong [ref=f48e180]: 비율
+              - text: ": 문서수를 총검색량으로 나눈 값입니다. 같은 조건에서는 비율이 낮을수록 검색량에 비해 문서수가 적다는 뜻입니다."
+          - heading "비율 계산 예시" [level=3] [ref=f48e181]
+          - paragraph [ref=f48e182]:
+            - text: 가상의 키워드 A가 PC 검색량 200, 모바일 검색량 800, 문서수 100이라면 총검색량은 1,000이고 비율은
+            - strong [ref=f48e183]: 100 ÷ 1,000 = 0.1
+            - text: 입니다. 이는 계산 방법을 설명하기 위한 예시이며 실제 조회 결과가 아닙니다. 비율이 0.1이라고 해서 상위 노출 확률이 10%라는 뜻도 아닙니다.
+          - heading "주제를 좁혀 비교하는 순서" [level=3] [ref=f48e184]
+          - list [ref=f48e185]:
+            - listitem [ref=f48e186]: 작성하려는 주제의 기본 키워드를 입력합니다. 예를 들어 ‘캠핑 의자’처럼 독자가 검색할 표현에서 시작합니다.
+            - listitem [ref=f48e187]: 관련키워드에서 ‘경량 캠핑 의자’, ‘캠핑 의자 세탁’처럼 용도나 궁금증이 구체적인 표현을 골라 추가 조회합니다. 제시한 표현은 사용법 예시이며 특정 검색량을 보장하지 않습니다.
+            - listitem [ref=f48e188]: 검색량·문서수·비율을 비교하고, 실제 검색 결과에서 독자가 원하는 정보와 기존 글의 내용을 확인합니다.
+            - listitem [ref=f48e189]: 직접 설명하거나 경험을 담을 수 있는 주제를 선택하고, 비교한 결과는 CSV로 저장해 관리합니다.
+          - heading "조회 결과의 한계" [level=3] [ref=f48e190]
+          - paragraph [ref=f48e191]:
+            - text: 검색량은 월간 지표이며 조회 시점과 데이터 갱신에 따라 달라질 수 있습니다. 적은 검색량은 제공 데이터의 표시 기준 때문에 실제 횟수와 차이가 날 수 있습니다. 문서수와 표시 순위도 변동되므로 낮은 비율만으로 상위 노출, 유입 또는 수익을 보장할 수 없습니다. 검색 의도, 계절성, 기존 글의 충실도도 함께 살펴보세요.
+            - link "웹 포털" [ref=f48e192] [cursor=pointer]
+          - paragraph [ref=f48e196]:
+            - text: 글을 발행한 뒤에는
+            - link "웨어이즈포스트의 블로그 노출 확인" [ref=f48e197] [cursor=pointer]:
+              - /url: /
+            - text: 으로 상태를 점검하고, 주제의 표현을 더 살펴보고 싶다면
+            - link "세부키워드 조합기" [ref=f48e198] [cursor=pointer]:
+              - /url: /mix
+            - text: 를 활용할 수 있습니다.
+        - generic [ref=f48e199]:
+          - heading "키워드마스터 패치내역" [level=3] [ref=f48e200]
+          - paragraph [ref=f48e201]: "2018-02-10: 키워드마스터 서비스 오픈, 블로그순위 마우스오버 기능"
+          - paragraph [ref=f48e202]: "2018-02-21: 키워드 결과 목록 삭제 버튼, 연관키워드 출력방식 조정"
+          - paragraph [ref=f48e203]: "2018-07-10: 서버이전 및 레이아웃 수정"
+          - paragraph [ref=f48e204]: "2019-01-11: 엑셀 다운로드 항목 최대 100개로 제한"
+          - paragraph [ref=f48e205]: "2019-02-09: 키워드 조회 결과 최신순으로 배치"
+          - paragraph [ref=f48e206]: "2020-09-11: 호출 증가로 인한 안정화"
+          - paragraph [ref=f48e207]: "2020-11-03: 관련키워드 태그 만들기 추가"
+          - paragraph [ref=f48e208]: "2020-12-22: 보안인증연결(SSL) 적용"
+          - paragraph [ref=f48e209]: "2022-06-11: 서버이전 및 판매량 분석 도구 추가"
+          - paragraph [ref=f48e210]: "2023-02-07: 더욱 풍부해진 관련키워드 제공"
+          - paragraph [ref=f48e211]: "2024-06-23: 시스템 안정성 강화"
+          - paragraph [ref=f48e212]:
+            - text: "2026-03-31: 키워드마스터"
+            - link "검색 엔진" [ref=f48e213] [cursor=pointer]:
+              - /url: "#"
+            - text: 개선
+          - paragraph [ref=f48e216]: "2026-06-15: 띄어쓰기 포함 키워드 검색 속도 개선, 연관키워드 클릭 시 화면 새로고침 문제 수정"
+      - generic [ref=f48e218]:
+        - generic [ref=f48e220]:
+          - link "블로그 노출 확인" [ref=f48e221] [cursor=pointer]:
+            - /url: /
+          - text: ·
+          - link "블로그 지수" [ref=f48e222] [cursor=pointer]:
+            - /url: /level
+          - text: ·
+          - link "형태소 분석기" [ref=f48e223] [cursor=pointer]:
+            - /url: /morpheme
+          - text: ·
+          - link "세부키워드 조합기" [ref=f48e224] [cursor=pointer]:
+            - /url: /mix
+        - paragraph [ref=f48e225]:
+          - text: Copyright ⓒ 2018
+          - link "whereispost.com" [ref=f48e226] [cursor=pointer]:
+            - /url: //whereispost.com
+          - text: Inc. All rights reserved.
+  - dialog "더 많은 콘텐츠를 잠금 해제하세요" [active] [ref=f48e230]:
+    - generic [ref=f48e231]:
+      - img "키워드마스터에 오신 것을 환영합니다" [ref=f48e234]
+      - generic [ref=f48e235]:
+        - heading "더 많은 콘텐츠를 잠금 해제하세요" [level=1] [ref=f48e236]
+        - paragraph [ref=f48e238]: 사이트의 기능을 계속 사용하려면 아래를 확인해 보세요
+      - button "짧은 광고 보기 8시간 동안 사이트 전체에 액세스할 수 있습니다." [ref=f48e240] [cursor=pointer]:
+        - generic [ref=f48e241]:
+          - generic [ref=f48e242]: 짧은 광고 보기
+          - generic [ref=f48e243]: 8시간 동안 사이트 전체에 액세스할 수 있습니다.

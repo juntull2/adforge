@@ -1,0 +1,1990 @@
+- generic [ref=f128e12]:
+  - generic [ref=f128e15]:
+    - link "Meta 광고 라이브러리" [ref=f128e18] [cursor=pointer]:
+      - /url: /ads/library/?source=fb-logo
+    - generic [ref=f128e21]: 광고 라이브러리
+    - menuitem "광고 라이브러리 보고서" [ref=f128e24] [cursor=pointer]
+    - menuitem "광고 라이브러리 API" [ref=f128e27] [cursor=pointer]
+    - menuitem "브랜디드 콘텐츠" [ref=f128e30] [cursor=pointer]
+    - menuitem "Open navigation panel" [ref=f128e33] [cursor=pointer]
+  - generic [ref=f128e40]:
+    - combobox "대한민국" [ref=f128e44] [cursor=pointer]
+    - combobox "모든 광고" [ref=f128e57] [cursor=pointer]
+    - generic [ref=f128e77]:
+      - generic [ref=f128e78]: 키워드 또는 광고주로 검색
+      - generic [ref=f128e89]:
+        - searchbox "키워드 또는 광고주로 검색" [ref=f128e95]: 메디온
+        - button "지우기" [ref=f128e97] [cursor=pointer]
+  - dialog [ref=f128e99]:
+    - generic [ref=f128e100]:
+      - link [ref=f128e101] [cursor=pointer]:
+        - /url: /
+        - heading [level=4] [ref=f128e102]: 로그인
+      - menuitem [ref=f128e103] [cursor=pointer]
+    - generic [ref=f128e105]:
+      - generic [ref=f128e106]:
+        - heading [level=4] [ref=f128e108]: 광고 라이브러리
+        - menuitem [ref=f128e110] [cursor=pointer]:
+          - heading [level=4] [ref=f128e112]: 광고 라이브러리 보고서
+        - menuitem [ref=f128e114] [cursor=pointer]:
+          - heading [level=4] [ref=f128e116]: 광고 라이브러리 API
+        - menuitem [ref=f128e118] [cursor=pointer]:
+          - heading [level=4] [ref=f128e120]: 브랜디드 콘텐츠
+      - separator [ref=f128e121]
+      - generic [ref=f128e122]:
+        - menuitem [ref=f128e124] [cursor=pointer]:
+          - heading [level=4] [ref=f128e126]: 시스템 상태
+        - menuitem [ref=f128e128] [cursor=pointer]:
+          - heading [level=4] [ref=f128e130]: 이메일 업데이트 구독
+        - menuitem [ref=f128e132] [cursor=pointer]:
+          - heading [level=4] [ref=f128e134]: FAQ
+        - menuitem [ref=f128e136] [cursor=pointer]:
+          - heading [level=4] [ref=f128e138]: 광고 및 데이터 사용 정보
+        - menuitem [ref=f128e140] [cursor=pointer]:
+          - heading [level=4] [ref=f128e142]: 개인 정보 보호
+        - menuitem [ref=f128e144] [cursor=pointer]:
+          - heading [level=4] [ref=f128e146]: 이용 약관
+        - menuitem [ref=f128e148] [cursor=pointer]:
+          - heading [level=4] [ref=f128e150]: 쿠키
+  - generic [ref=f128e151]:
+    - generic [ref=f128e185]:
+      - generic [ref=f128e191]:
+        - heading "결과 ~200개" [level=3] [ref=f128e193]
+        - generic [ref=f128e195]:
+          - text: 이 결과에는
+          - strong [ref=f128e196]: 키워드 검색어
+          - text: 와 일치하는 광고가 포함됩니다.
+      - generic [ref=f128e197]:
+        - generic [ref=f128e206]:
+          - generic [ref=f128e207]:
+            - button "필터" [ref=f128e208] [cursor=pointer]
+            - generic [ref=f128e215]:
+              - generic [ref=f128e216]: 정렬
+              - combobox "정렬" [ref=f128e226] [cursor=pointer]:
+                - generic [ref=f128e227]: 정렬 기준
+          - generic [ref=f128e236]:
+            - generic [ref=f128e238]:
+              - generic [ref=f128e239]:
+                - strong [ref=f128e240]: 활동 상태
+                - text: ": 게재 중인 광고"
+              - button "삭제" [ref=f128e241] [cursor=pointer]
+            - generic [ref=f128e248]:
+              - generic [ref=f128e249]:
+                - strong [ref=f128e250]: 미디어 유형
+                - text: ": 동영상"
+              - button "삭제" [ref=f128e251] [cursor=pointer]
+            - button [ref=f128e258] [cursor=pointer]:
+              - strong [ref=f128e263]: 모두 지우기
+        - generic [ref=f128e265]:
+          - generic [ref=f128e267]:
+            - generic [ref=f128e269]:
+              - generic [ref=f128e270]:
+                - generic [ref=f128e271]: 활성
+                - generic [ref=f128e278]: "라이브러리 ID: 1029372013174766"
+                - generic [ref=f128e281]: 2026. 7. 20.에 게재 시작함
+                - generic [ref=f128e283]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e316] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e322] [cursor=pointer]
+            - separator [ref=f128e327]
+            - generic [ref=f128e332]:
+              - generic [ref=f128e334]:
+                - img "메디온 medion" [ref=f128e335]
+                - generic [ref=f128e337]:
+                  - link "메디온 medion" [ref=f128e338] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e342]:
+                    - strong [ref=f128e344]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e345]:
+                - button "본 조교는 실망했다.. ★칸디다99%삭제 여청제 본품 2개에 햄깅이까지 주는데 안살꼬얌~?★" [ref=f128e348]
+                - group "Video player" [ref=f128e361]:
+                  - button "동영상 재생" [ref=f128e363] [cursor=pointer]
+                  - generic [ref=f128e365]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:52
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e367] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FcTPThfPubIWY0u&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e368]:
+                    - generic [ref=f128e369]:
+                      - button "OY.RUN" [ref=f128e371]
+                      - button "메디온 medion" [ref=f128e374]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "지금 구매하기" [ref=f128e377]
+          - generic [ref=f128e383]:
+            - generic [ref=f128e385]:
+              - generic [ref=f128e386]:
+                - generic [ref=f128e387]: 활성
+                - generic [ref=f128e394]: "라이브러리 ID: 847560871276334"
+                - generic [ref=f128e397]: 2025. 10. 12.에 게재 시작함
+                - generic [ref=f128e399]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e432] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e438] [cursor=pointer]
+            - separator [ref=f128e443]
+            - generic [ref=f128e448]:
+              - generic [ref=f128e450]:
+                - img "메디온 medion" [ref=f128e451]
+                - generic [ref=f128e453]:
+                  - generic [ref=f128e454]:
+                    - link "eunbeeing1216" [ref=f128e455] [cursor=pointer]:
+                      - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2F_u%2Feunbeeing1216&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e456] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e460]:
+                    - strong [ref=f128e462]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e463]:
+                - button [ref=f128e466]:
+                  - generic [ref=f128e467]: "📍구매창에 할인코드 'PURE' 입력하면 10% 할인🤔 여성 2명 중 1명이 겪는 질염, 어떻게 관리해야할까?단순 세정으로는 불가능하다는 거 알고 계시나요?유해균 억제 + 유익균 증식이 동시에 필요해요.👉특허 질유산균 + 자연추출물 조합으로 빠른 효과👉칸디다균 99.9% 감소2주 정도만 사용해도 질염 고민이 싹 사라질거에요😉@medion_official#메디온 #메디온이너케어젤 #이선빈이너케어젤 #이너케어젤추천 #광고 #여성청결제"
+                - group "Video player" [ref=f128e480]:
+                  - button "동영상 재생" [ref=f128e482] [cursor=pointer]
+                  - generic [ref=f128e484]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:37
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e486] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D85%26cafe_mkt%3Due_ig_fa24_v1613&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e487]:
+                    - generic [ref=f128e488]:
+                      - button "THEMEDION.COM" [ref=f128e490]
+                      - button "eunbeeing1216" [ref=f128e493]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e496]
+          - generic [ref=f128e502]:
+            - generic [ref=f128e504]:
+              - generic [ref=f128e505]:
+                - generic [ref=f128e506]: 활성
+                - generic [ref=f128e513]: "라이브러리 ID: 1145876253576972"
+                - generic [ref=f128e516]: 2025. 10. 4.에 게재 시작함
+                - generic [ref=f128e518]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e551] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e557] [cursor=pointer]
+            - separator [ref=f128e562]
+            - generic [ref=f128e567]:
+              - generic [ref=f128e569]:
+                - img "메디온 medion" [ref=f128e570]
+                - generic [ref=f128e572]:
+                  - generic [ref=f128e573]:
+                    - link "danbiq" [ref=f128e574] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100069451099545/
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e575] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e579]:
+                    - strong [ref=f128e581]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e582]:
+                - button [ref=f128e585]:
+                  - generic [ref=f128e586]: 📍구매창에 할인코드 ‘PURE’ 입력하면 10% 할인화해 1등 이노시톨, 정말 효과가 있을까 🤔생리 불순과 자꾸 찌는 살 때문에 고민하던 저, 알고 보니 호르몬이 문제였는데요 😔 해결책은 미오이노시톨과 디카이로 이노시톨이 40:1 황금 비율로 배합된 제품이라고 해요. 여기에 특허 질유산균과 자연 추출물이 더해져 효과를 더 빠르게 볼 수 있다고 하더라고요? 상큼한 레몬맛 분말 스틱으로 하루 한 포, 간편하게 섭취했어요. 한 달 만에 생리주기가 규칙적으로 변했고 호르몬 조절 덕분에 안 빠지던 군살도 정리돼서 체중 감량까지, 기대 이상의 변화,, 지금 할인코드 [PURE]로 10% 할인 받고 100% 환불 보장까지 있으니 망설이지 말고 시작해 보세요 💟
+                - group "Video player" [ref=f128e598]:
+                  - button "동영상 재생" [ref=f128e600] [cursor=pointer]
+                  - generic [ref=f128e602]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:30
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e604] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D91%26cafe_mkt%3Due_is_fa25_v2117&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e605]:
+                    - generic [ref=f128e606]:
+                      - button "THEMEDION.COM" [ref=f128e608]
+                      - button "danbiq" [ref=f128e611]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e614]
+          - generic [ref=f128e620]:
+            - generic [ref=f128e622]:
+              - generic [ref=f128e623]:
+                - generic [ref=f128e624]: 활성
+                - generic [ref=f128e631]: "라이브러리 ID: 1593192122357279"
+                - generic [ref=f128e634]: 2026. 8. 12.에 게재 시작함
+                - generic [ref=f128e636]: 플랫폼
+                - generic [ref=f128e668]:
+                  - strong [ref=f128e669]: 광고 2개
+                  - text: 에서 이 크리에이티브 및 문구를 사용합니다
+              - button "드롭다운 열기" [ref=f128e672] [cursor=pointer]
+            - button "요약 세부 사항 보기" [ref=f128e678] [cursor=pointer]
+            - separator [ref=f128e683]
+            - generic [ref=f128e688]:
+              - generic [ref=f128e690]:
+                - img "메디온 medion" [ref=f128e691]
+                - generic [ref=f128e693]:
+                  - link "메디온 medion" [ref=f128e694] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e698]:
+                    - strong [ref=f128e700]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e701]:
+                - button [ref=f128e704]:
+                  - generic [ref=f128e705]: "질염: 큰일나봐라 이녀석아햄깅: 이리와.. 많이 힘들어찌?[8/1~8/31] 메디온X햄깅이🩵🌿 순하고 산뜻한 마일드 포밍워시🧊 자극없이 시원하게 진정시켜주는 악마햄깅 포밍워시(중요) 천사햄깅이 악마햄깅이 랜덤 키링까지..?> 이 모든걸 오직 올영에서만 만원대로 겟할 수 있다구..? 하나둘셋뛰어"
+                - group "Video player" [ref=f128e718]:
+                  - button "동영상 재생" [ref=f128e720] [cursor=pointer]
+                  - generic [ref=f128e722]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:54
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - generic:
+                  - link:
+                    - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FcTPThfPubIWY0u&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+          - generic [ref=f128e724]:
+            - generic [ref=f128e726]:
+              - generic [ref=f128e727]:
+                - generic [ref=f128e728]: 활성
+                - generic [ref=f128e735]: "라이브러리 ID: 1840510397111377"
+                - generic [ref=f128e738]: 2026. 8. 20.에 게재 시작함
+                - generic [ref=f128e740]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e773] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e779] [cursor=pointer]
+            - separator [ref=f128e784]
+            - generic [ref=f128e789]:
+              - generic [ref=f128e791]:
+                - img "메디온 medion" [ref=f128e792]
+                - generic [ref=f128e794]:
+                  - link "메디온 medion" [ref=f128e795] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e799]:
+                    - strong [ref=f128e801]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e802]:
+                - button [ref=f128e805]:
+                  - generic [ref=f128e806]: 여름철, 운동 후, 한 달에 한 번 찝찝한 그 날까지! 🩵쿨링감 가득 유산균 폼으로 산뜻하게 Y존 세정🫧✔️특허 유산균으로 칸디다균 99.9% 항균효과✔️ 특허 쿨링 원료 ‘허브쿨’로 사용 즉시 -3.4℃ 감소!✔️쫀쫀한 미세 거품 제형으로, 자극없이 촉촉한 사용감올리브영 단독 기획!🫒마일드 포밍워시+ 쿨링 포밍워시+ 햄깅이 키링이 몽~땅! 1만원대💝
+                - group "Video player" [ref=f128e819]:
+                  - button "동영상 재생" [ref=f128e821] [cursor=pointer]
+                  - generic [ref=f128e823]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 1:29
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e825] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2Fey97tbdv21Oczm&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e826]:
+                    - generic [ref=f128e827]:
+                      - button "OY.RUN" [ref=f128e829]
+                      - button "메디온 medion" [ref=f128e832]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "지금 구매하기" [ref=f128e835]
+          - generic [ref=f128e841]:
+            - generic [ref=f128e843]:
+              - generic [ref=f128e844]:
+                - generic [ref=f128e845]: 활성
+                - generic [ref=f128e852]: "라이브러리 ID: 1264905009131708"
+                - generic [ref=f128e855]: 2026. 4. 27.에 게재 시작함
+                - generic [ref=f128e857]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e890] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e896] [cursor=pointer]
+            - separator [ref=f128e901]
+            - generic [ref=f128e906]:
+              - generic [ref=f128e908]:
+                - img "메디온 medion" [ref=f128e909]
+                - generic [ref=f128e911]:
+                  - link "메디온 medion" [ref=f128e912] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e916]:
+                    - strong [ref=f128e918]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e919]:
+                - button [ref=f128e922]:
+                  - generic [ref=f128e923]: 올리브영 1위 여성청결제에 쿨링을 더했다😮여름에 더 상쾌한 Y존케어🩵✅저자극 쿨링 원료로 1초 즉각 쿨링🧊✅쫀득한 미세 거품에 Y존 특허 유산균을 담아✅뽀송하게 칸디다균 99.9% 박멸🫧❤️올리브영 단독 런칭 기념 1+1 기획세트 초특가
+                - group "Video player" [ref=f128e936]:
+                  - button "동영상 재생" [ref=f128e938] [cursor=pointer]
+                  - generic [ref=f128e940]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:36
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e942] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2Fn81A47r19TQ1q0&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e943]:
+                    - generic [ref=f128e944]:
+                      - button "OY.RUN" [ref=f128e946]
+                      - button "메디온 medion" [ref=f128e949]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e952]
+          - generic [ref=f128e958]:
+            - generic [ref=f128e960]:
+              - generic [ref=f128e961]:
+                - generic [ref=f128e962]: 활성
+                - generic [ref=f128e969]: "라이브러리 ID: 1108052851505749"
+                - generic [ref=f128e972]: 2025. 9. 30.에 게재 시작함
+                - generic [ref=f128e974]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e1007] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e1013] [cursor=pointer]
+            - separator [ref=f128e1018]
+            - generic [ref=f128e1023]:
+              - generic [ref=f128e1027]:
+                - generic [ref=f128e1028]:
+                  - link "지미" [ref=f128e1029] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61554191895979/
+                  - text: 페이지는
+                  - link "메디온 medion" [ref=f128e1030] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - text: 과(와) 함께합니다
+                - generic [ref=f128e1034]:
+                  - strong [ref=f128e1036]: 광고
+                  - generic:
+                    - strong
+              - generic [ref=f128e1037]:
+                - button [ref=f128e1040]:
+                  - generic [ref=f128e1041]: "요즘 다낭성 때문에 컨디션이 난리났어요😩알고 보니, 이노시톨 2종이 40:1 비율로 섞인 제품을 먹어야 생리주기도 잡고 군살도 잡을 수 있다고 하더라구요?!💊 그래서 시작한 메디온 이노시톨한 달 만에 생리주기 안정 ✅운동+식단에도 잘 안 빠지던 아랫배 지방도 쏙!앞자리 숫자 바뀌는 놀라운 변화까지😳하루 1포로 내 몸의 리듬과 체형까지 챙길 수 있어서다른 영양제는 필요없더라구요👍📍구매창에 할인코드 'PURE' 입력하면 10% 할인까지 받을 수 있으니까 꼭 챙겨보세요!!@medion_official#메디온 #메디온이노시톨 #이선빈이노시톨 #이노시톨추천"
+                - group "Video player" [ref=f128e1054]:
+                  - button "동영상 재생" [ref=f128e1056] [cursor=pointer]
+                  - generic [ref=f128e1058]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:29
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e1060] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D91%26cafe_mkt%3Due_is_fa25_v2114&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e1061]:
+                    - generic [ref=f128e1062]:
+                      - button "THEMEDION.COM" [ref=f128e1064]
+                      - button "지미" [ref=f128e1067]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e1070]
+          - generic [ref=f128e1076]:
+            - generic [ref=f128e1078]:
+              - generic [ref=f128e1079]:
+                - generic [ref=f128e1080]: 활성
+                - generic [ref=f128e1087]: "라이브러리 ID: 1596336208762549"
+                - generic [ref=f128e1090]: 2026. 8. 12.에 게재 시작함
+                - generic [ref=f128e1092]: 플랫폼
+                - generic [ref=f128e1124]:
+                  - strong [ref=f128e1125]: 광고 2개
+                  - text: 에서 이 크리에이티브 및 문구를 사용합니다
+              - button "드롭다운 열기" [ref=f128e1128] [cursor=pointer]
+            - button "요약 세부 사항 보기" [ref=f128e1134] [cursor=pointer]
+            - separator [ref=f128e1139]
+            - generic [ref=f128e1144]:
+              - generic [ref=f128e1146]:
+                - img "메디온 medion" [ref=f128e1147]
+                - generic [ref=f128e1149]:
+                  - link "메디온 medion" [ref=f128e1150] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e1154]:
+                    - strong [ref=f128e1156]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e1157]:
+                - button [ref=f128e1160]:
+                  - generic [ref=f128e1161]: "질염: 큰일나봐라 이녀석아햄깅: 이리와.. 많이 힘들어찌?[8/1~8/31] 메디온X햄깅이🩵🌿 순하고 산뜻한 마일드 포밍워시🧊 자극없이 시원하게 진정시켜주는 악마햄깅 포밍워시(중요) 천사햄깅이 악마햄깅이 랜덤 키링까지..?> 이 모든걸 오직 올영에서만 만원대로 겟할 수 있다구..? 하나둘셋뛰어"
+                - group "Video player" [ref=f128e1174]:
+                  - button "동영상 재생" [ref=f128e1176] [cursor=pointer]
+                  - generic [ref=f128e1178]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:51
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - generic:
+                  - link:
+                    - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FcTPThfPubIWY0u&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+          - generic [ref=f128e1180]:
+            - generic [ref=f128e1182]:
+              - generic [ref=f128e1183]:
+                - generic [ref=f128e1184]: 활성
+                - generic [ref=f128e1191]: "라이브러리 ID: 2098622884078078"
+                - generic [ref=f128e1194]: 2026. 8. 31.에 게재 시작함
+                - generic [ref=f128e1196]: 플랫폼
+                - generic [ref=f128e1233]:
+                  - strong [ref=f128e1234]: 광고 3개
+                  - text: 에서 이 크리에이티브 및 문구를 사용합니다
+              - button "드롭다운 열기" [ref=f128e1237] [cursor=pointer]
+            - button "요약 세부 사항 보기" [ref=f128e1243] [cursor=pointer]
+            - separator [ref=f128e1248]
+            - generic [ref=f128e1253]:
+              - generic [ref=f128e1255]:
+                - img "걸즈쇼핑꿀템" [ref=f128e1256]
+                - generic [ref=f128e1258]:
+                  - generic [ref=f128e1259]:
+                    - link "Yoojjn Lee" [ref=f128e1260] [cursor=pointer]:
+                      - /url: https://www.facebook.com/61586734701290/
+                    - text: 페이지는
+                    - link "걸즈쇼핑꿀템" [ref=f128e1261] [cursor=pointer]:
+                      - /url: https://www.facebook.com/61592043206173/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e1265]:
+                    - strong [ref=f128e1267]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e1268]:
+                - button [ref=f128e1271]:
+                  - generic [ref=f128e1272]: "#광고 유산균 아직도 먹기만 하신다면 필독!!!!위에서 사멸하기 쉬운 먹는 유산균 대신,Y존에 직접 바르는 메디온만의 질유산균으로 관리 해보세요 ❤️‍🔥✨ 이래서 찐추천해요• 즉각 완화: 특허 유산균이 칸디다균 99% 항균• 안심 케어: 유해성분 ZERO, 약산성 밸런스 유지• 면역력 강화: 질염·부정출혈 고민 싹 해결!• 위생·휴대성: 깔끔한 1포 낱개 포장 👜한번도 안써본 사람은 있어도 한번만 써본 사람은 없다는메디온 베스트셀러 ‘락토메디 이너케어젤’ 🫶지금 7주년 선착순 100명 반값 할인 중이니 얼른 쟁여두세요!#메디온 #락토메디 #이너케어젤 #질염관리"
+                - group "Video player" [ref=f128e1285]:
+                  - button "동영상 재생" [ref=f128e1287] [cursor=pointer]
+                  - generic [ref=f128e1289]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:59
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - generic:
+                  - link:
+                    - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D12%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dig_conv_non_normal%26utm_content%3Dv4201_Msya_A&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+          - generic [ref=f128e1291]:
+            - generic [ref=f128e1293]:
+              - generic [ref=f128e1294]:
+                - generic [ref=f128e1295]: 활성
+                - generic [ref=f128e1302]: "라이브러리 ID: 1352568079595196"
+                - generic [ref=f128e1305]: 2025. 9. 29.에 게재 시작함
+                - generic [ref=f128e1307]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e1340] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e1346] [cursor=pointer]
+            - separator [ref=f128e1351]
+            - generic [ref=f128e1356]:
+              - generic [ref=f128e1360]:
+                - generic [ref=f128e1361]:
+                  - link "카밍의아뜰리에" [ref=f128e1362] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61551396927697/
+                  - text: 페이지는
+                  - link "메디온 medion" [ref=f128e1363] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - text: 과(와) 함께합니다
+                - generic [ref=f128e1367]:
+                  - strong [ref=f128e1369]: 광고
+                  - generic:
+                    - strong
+              - generic [ref=f128e1370]:
+                - button [ref=f128e1373]:
+                  - generic [ref=f128e1374]: "#협찬다낭성 때문에 컨디션이 매번 들쭉날쭉했던 저…😩알고 보니 이노시톨은 2종을 40:1 비율로 섞어야 주기도 안정되고 군살 관리에도 효과가 있더라고요.💊 그래서 선택한 메디온 이노시톨!한 달 만에 생리주기 안정 ✅운동+식단으로도 안 빠지던 아랫배 지방이 쏙!앞자리 숫자까지 바뀌는 놀라운 변화😳하루 1포로 내 몸의 리듬과 체형까지 챙기니까,이제는 다른 영양제가 굳이 필요 없더라고요@medion_official#메디온 #메디온이노시톨 #이선빈이노시톨 #이노시톨추천📍구매창에 할인코드 PURE 입력하면 10% 할인"
+                - group "Video player" [ref=f128e1387]:
+                  - button "동영상 재생" [ref=f128e1389] [cursor=pointer]
+                  - generic [ref=f128e1391]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:40
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e1393] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D91%26cafe_mkt%3Due_is_fa25_v2116&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e1394]:
+                    - generic [ref=f128e1395]:
+                      - button "THEMEDION.COM" [ref=f128e1397]
+                      - button "카밍의아뜰리에" [ref=f128e1400]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e1403]
+          - generic [ref=f128e1409]:
+            - generic [ref=f128e1411]:
+              - generic [ref=f128e1412]:
+                - generic [ref=f128e1413]: 활성
+                - generic [ref=f128e1420]: "라이브러리 ID: 729609436771840"
+                - generic [ref=f128e1423]: 2025. 9. 30.에 게재 시작함
+                - generic [ref=f128e1425]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e1458] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e1464] [cursor=pointer]
+            - separator [ref=f128e1469]
+            - generic [ref=f128e1474]:
+              - generic [ref=f128e1478]:
+                - generic [ref=f128e1479]:
+                  - link "서지애" [ref=f128e1480] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100067813380914/
+                  - text: 페이지는
+                  - link "메디온 medion" [ref=f128e1481] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - text: 과(와) 함께합니다
+                - generic [ref=f128e1485]:
+                  - strong [ref=f128e1487]: 광고
+                  - generic:
+                    - strong
+              - generic [ref=f128e1488]:
+                - button [ref=f128e1491]:
+                  - generic [ref=f128e1492]: "📍구매창에 할인코드 ’PURE‘ 입력하면 10% 할인다낭성 때문에 컨디션 난리나는 제 일상,,,알고 보니, 이노시톨 2종을 40:1 비율로 섞인 제품을 먹어야 생리주기도 잡고 군살도 잡을 수 있대요‼️‼️💊 그래서 시작한 메디온 이노시톨한 달 만에 생리주기 안정 ✅운동+식단에도 잘 안 빠지던 아랫배 지방도 쏙!앞자리 숫자 바뀌는 놀라운 변화까지😳하루 1포로 내 몸의 리듬과 체형까지 챙길 수 있으니,다른 영양제는 필요 없어요💗@medion_official#광고 #메디온 #메디온이노시톨 #이선빈이노시톨 #이노시톨추천 #다이어트 #눈바디"
+                - group "Video player" [ref=f128e1505]:
+                  - button "동영상 재생" [ref=f128e1507] [cursor=pointer]
+                  - generic [ref=f128e1509]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:39
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e1511] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D91%26cafe_mkt%3Due_is_fa25_v2115&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e1512]:
+                    - generic [ref=f128e1513]:
+                      - button "THEMEDION.COM" [ref=f128e1515]
+                      - button "서지애" [ref=f128e1518]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e1521]
+          - generic [ref=f128e1527]:
+            - generic [ref=f128e1529]:
+              - generic [ref=f128e1530]:
+                - generic [ref=f128e1531]: 활성
+                - generic [ref=f128e1538]: "라이브러리 ID: 1520006216054775"
+                - generic [ref=f128e1541]: 2026. 8. 3.에 게재 시작함
+                - generic [ref=f128e1543]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e1576] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e1582] [cursor=pointer]
+            - separator [ref=f128e1587]
+            - generic [ref=f128e1592]:
+              - generic [ref=f128e1594]:
+                - img "메디온 medion" [ref=f128e1595]
+                - generic [ref=f128e1597]:
+                  - generic [ref=f128e1598]:
+                    - link "ka_enfj" [ref=f128e1599] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100090483387713/
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e1600] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e1604]:
+                    - strong [ref=f128e1606]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e1607]:
+                - button [ref=f128e1610]:
+                  - generic [ref=f128e1611]: "@@햄깅이가 악마가 된 이유...? 요즘 같이 더운 날 불쾌지수도 올라가고, Y존 관리도 걱정이라면?올리브영 Y존 쿨링 추천템! 메디온 여성청결제와 햄깅이가 만났다![메디온 포밍워시 듀오 기획]마일드 포밍워시 1개 + 쿨링 포밍워시 1개 + 천사햄깅 OR 악마햄깅 중 1종 랜덤촉촉한 진정이 필요할 땐 마일드 / 개운한 진정이 필요하면 쿨링으로 골라 쓸 수 있고가격도 24,900원에서 18,900원으로 할인가에 득템할 수 있어!나.. 쿨링템에 환장하는 여자... 여성청결제도 이제 쿨링템으로 기분 좋게 샤워한다...!!매일 사용해도 자극 없고 펌핑 한 번으로 바로 사용 가능해서 쓰기도 편해!특허 쿨링 원료로 -3.4도 즉각 쿨링! 자극없이 산뜻한 쿨링감을 주는데다가1회 사용만으로 칸디다균 99% 감소 임상까지 받았다고 해!거기에 메디온 Y존 특허 유산균까지 가득 들어있다고 하니까 넘 좋쟈나...?!8월 초 올리브영에 단독 런칭되고! 8월 한달간 올영픽으로도 진행된대!햄깅이 좋아하는 친구들에게도 공유해주기~@medion_official #메디온 #햄깅이 #올리브영 #여성청결제 #8월올영픽"
+                - group "Video player" [ref=f128e1624]:
+                  - button "동영상 재생" [ref=f128e1626] [cursor=pointer]
+                  - generic [ref=f128e1628]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:32
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e1630] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FPurXa4fklR8PYg&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e1631]:
+                    - generic [ref=f128e1632]:
+                      - button "OY.RUN" [ref=f128e1634]
+                      - button "ka_enfj" [ref=f128e1637]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f128e1640]
+          - generic [ref=f128e1646]:
+            - generic [ref=f128e1648]:
+              - generic [ref=f128e1649]:
+                - generic [ref=f128e1650]: 활성
+                - generic [ref=f128e1657]: "라이브러리 ID: 1921162865223059"
+                - generic [ref=f128e1660]: 2026. 8. 5.에 게재 시작함
+                - generic [ref=f128e1662]: 플랫폼
+                - generic [ref=f128e1694]:
+                  - strong [ref=f128e1695]: 광고 2개
+                  - text: 에서 이 크리에이티브 및 문구를 사용합니다
+              - button "드롭다운 열기" [ref=f128e1698] [cursor=pointer]
+            - button "요약 세부 사항 보기" [ref=f128e1704] [cursor=pointer]
+            - separator [ref=f128e1709]
+            - generic [ref=f128e1714]:
+              - generic [ref=f128e1716]:
+                - img "걸즈쇼핑꿀템" [ref=f128e1717]
+                - generic [ref=f128e1719]:
+                  - generic [ref=f128e1720]:
+                    - link "Msfd" [ref=f128e1721] [cursor=pointer]:
+                      - /url: https://www.facebook.com/61587760201907/
+                    - text: 페이지는
+                    - link "걸즈쇼핑꿀템" [ref=f128e1722] [cursor=pointer]:
+                      - /url: https://www.facebook.com/61592043206173/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e1726]:
+                    - strong [ref=f128e1728]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e1729]:
+                - button [ref=f128e1732]:
+                  - generic [ref=f128e1733]: "@medion_officialY존, 물로만 씻으면 되는 줄 알았는데 착각이었어요 😳유익균이 산성 환경 만들어서 스스로 지키는 구조인데, 물로만 씻으면 이 유익균까지 씻겨나가서 밸런스 깨지더라고요 ㅠㅠ그래서 메디온 이너케어젤 같이 써요. 유해균 억제 + 유익균 증식이라 그냥 세정이랑 달라요.특허 유산균 성분에 칸디다균 99% 감소 임상, 논란성분 9가지 불검출 테스트까지 완료 ✔️친구도 3주 쓰고 냄새 고민 줄었대요 ㅋㅋ 저만 그런 거 아니었어요!개별포장이라 위생적이고 챙기기도 편해요."
+                - group "Video player" [ref=f128e1746]:
+                  - button "동영상 재생" [ref=f128e1748] [cursor=pointer]
+                  - generic [ref=f128e1750]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:43
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - generic:
+                  - link:
+                    - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D12%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dig_conv_asc24_normal%26utm_content%3Dv3842_Mse2_A&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+          - generic [ref=f128e1752]:
+            - generic [ref=f128e1754]:
+              - generic [ref=f128e1755]:
+                - generic [ref=f128e1756]: 활성
+                - generic [ref=f128e1763]: "라이브러리 ID: 1013637141351831"
+                - generic [ref=f128e1766]: 2026. 5. 25.에 게재 시작함
+                - generic [ref=f128e1768]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e1796] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e1802] [cursor=pointer]
+            - separator [ref=f128e1807]
+            - generic [ref=f128e1812]:
+              - generic [ref=f128e1814]:
+                - img "Woman_Health" [ref=f128e1815]
+                - generic [ref=f128e1817]:
+                  - link "Woman_Health" [ref=f128e1818] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100071183610462/
+                  - generic [ref=f128e1822]:
+                    - strong [ref=f128e1824]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e1825]:
+                - button "메디온 이노시톨 역대 최대 할인 중 🍀~오늘 자정까지 🍀" [ref=f128e1828]
+                - group "Video player" [ref=f128e1840]:
+                  - button "동영상 재생" [ref=f128e1842] [cursor=pointer]
+                  - generic [ref=f128e1844]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:15
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e1846] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D91%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dis_conv_asc3_discount%26utm_content%3Dv2024_Mse2_Afr(BGT)&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e1847]:
+                    - generic [ref=f128e1848]:
+                      - button "THEMEDION.COM" [ref=f128e1850]
+                      - button "Woman_Health" [ref=f128e1853]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f128e1856]
+          - generic [ref=f128e1862]:
+            - generic [ref=f128e1864]:
+              - generic [ref=f128e1865]:
+                - generic [ref=f128e1866]: 활성
+                - generic [ref=f128e1873]: "라이브러리 ID: 2191328601619936"
+                - generic [ref=f128e1876]: 2026. 5. 27.에 게재 시작함
+                - generic [ref=f128e1878]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e1911] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e1917] [cursor=pointer]
+            - separator [ref=f128e1922]
+            - generic [ref=f128e1927]:
+              - generic [ref=f128e1929]:
+                - img "메디온 medion" [ref=f128e1930]
+                - generic [ref=f128e1932]:
+                  - link "메디온 medion" [ref=f128e1933] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e1937]:
+                    - strong [ref=f128e1939]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e1940]:
+                - button [ref=f128e1943]:
+                  - generic [ref=f128e1944]: (속보)올영 6월세일 여자라면 무조건 쟁여템⌛5/31~6/6⌛찝찝한 여름 내 Y존 시원~~하게 진정시키고 뽀송하게 마무리해주는 쿨링 포밍워시 리필세트를 단돈 만오천원에..? 이건 못참지 🏃‍➡️🏃‍➡️🏃‍➡️
+                - group "Video player" [ref=f128e1956]:
+                  - button "동영상 재생" [ref=f128e1958] [cursor=pointer]
+                  - generic [ref=f128e1960]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:35
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e1962] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2F7LgkcfLY3JD34g&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e1963]:
+                    - generic [ref=f128e1964]:
+                      - button "OY.RUN" [ref=f128e1966]
+                      - button "메디온 medion" [ref=f128e1969]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e1972]
+          - generic [ref=f128e1978]:
+            - generic [ref=f128e1980]:
+              - generic [ref=f128e1981]:
+                - generic [ref=f128e1982]: 활성
+                - generic [ref=f128e1989]: "라이브러리 ID: 24762566823436798"
+                - generic [ref=f128e1992]: 2025. 10. 13.에 게재 시작함
+                - generic [ref=f128e1994]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2027] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2033] [cursor=pointer]
+            - separator [ref=f128e2038]
+            - generic [ref=f128e2043]:
+              - generic [ref=f128e2045]:
+                - img "메디온 medion" [ref=f128e2046]
+                - generic [ref=f128e2048]:
+                  - generic [ref=f128e2049]:
+                    - link "_yae.din" [ref=f128e2050] [cursor=pointer]:
+                      - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2F_u%2F_yae.din&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e2051] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e2055]:
+                    - strong [ref=f128e2057]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2058]:
+                - button [ref=f128e2061]:
+                  - generic [ref=f128e2062]: "🤔 여성 2명 중 1명이 겪는 질염, 어떻게 관리해야할까요?! #광고 사실 질염은 단순 세정으로는 불가능하고 유해균 억제와, 유익균 증식이 동시에 필요하다는 점!✅메디온 이너케어젤로 관리해보아요!🩵 • 특허 질유산균 + 자연추출물 조합으로 빠른 효과• 칸디다균 99.9% 감소• 2주 정도만 사용해도 질염 고민 싹 사라짐🤍📍지금 구매창에서 할인코드 ’PURE‘ 입력하면 10% 할인 된 금액으로 구매 가능!! 당장 달려가보자구요💨 @medion_official #메디온 #메디온이너케어젤 #이선빈이너케어젤 #이너케어젤추천"
+                - group "Video player" [ref=f128e2075]:
+                  - button "동영상 재생" [ref=f128e2077] [cursor=pointer]
+                  - generic [ref=f128e2079]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:37
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2081] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D85%26cafe_mkt%3Due_ig_fa24_v1596&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2082]:
+                    - generic [ref=f128e2083]:
+                      - button "THEMEDION.COM" [ref=f128e2085]
+                      - button "_yae.din" [ref=f128e2088]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e2091]
+          - generic [ref=f128e2097]:
+            - generic [ref=f128e2099]:
+              - generic [ref=f128e2100]:
+                - generic [ref=f128e2101]: 활성
+                - generic [ref=f128e2108]: "라이브러리 ID: 1508371157245434"
+                - generic [ref=f128e2111]: 2026. 7. 22.에 게재 시작함
+                - generic [ref=f128e2113]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2146] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2152] [cursor=pointer]
+            - separator [ref=f128e2157]
+            - generic [ref=f128e2162]:
+              - generic [ref=f128e2164]:
+                - img "메디온 medion" [ref=f128e2165]
+                - generic [ref=f128e2167]:
+                  - link "메디온 medion" [ref=f128e2168] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e2172]:
+                    - strong [ref=f128e2174]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2175]:
+                - button "햄깅x메디온 쿨링 포밍워시 🩵 8월동안만 올영에서 만나보라구!" [ref=f128e2178]
+                - group "Video player" [ref=f128e2190]:
+                  - button "동영상 재생" [ref=f128e2192] [cursor=pointer]
+                  - generic [ref=f128e2194]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:42
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2196] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FcTPThfPubIWY0u&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2197]:
+                    - generic [ref=f128e2198]:
+                      - button "OY.RUN" [ref=f128e2200]
+                      - button "메디온 medion" [ref=f128e2203]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "지금 구매하기" [ref=f128e2206]
+          - generic [ref=f128e2212]:
+            - generic [ref=f128e2214]:
+              - generic [ref=f128e2215]:
+                - generic [ref=f128e2216]: 활성
+                - generic [ref=f128e2223]: "라이브러리 ID: 3127237894138284"
+                - generic [ref=f128e2226]: 2026. 8. 5.에 게재 시작함
+                - generic [ref=f128e2228]: 플랫폼
+                - generic [ref=f128e2260]:
+                  - strong [ref=f128e2261]: 광고 2개
+                  - text: 에서 이 크리에이티브 및 문구를 사용합니다
+              - button "드롭다운 열기" [ref=f128e2264] [cursor=pointer]
+            - button "요약 세부 사항 보기" [ref=f128e2270] [cursor=pointer]
+            - separator [ref=f128e2275]
+            - generic [ref=f128e2280]:
+              - generic [ref=f128e2284]:
+                - generic [ref=f128e2285]:
+                  - link "로로의집" [ref=f128e2286] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61573220023339/
+                  - text: 페이지는
+                  - link "걸즈쇼핑꿀템" [ref=f128e2287] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61592043206173/
+                  - text: 과(와) 함께합니다
+                - generic [ref=f128e2291]:
+                  - strong [ref=f128e2293]: 광고
+                  - generic:
+                    - strong
+              - generic [ref=f128e2294]:
+                - button [ref=f128e2297]:
+                  - generic [ref=f128e2298]: "#광고만성 질염에 효과 직빵이라길래... 궁금해서 제가 직접 써봤어요!지긋지긋한 Y존 고민, 다들 한 번쯤 겪어보셨죠? 😭단순히 씻어내기만 하는 세정제는 겉만 케어되는 느낌이라 아쉬웠는데, 메디온 이너케어젤은 유해균 억제와 유익균 증식을 동시에 도와줘서 Y존 환경의 근본적인 문제부터 싹 잡아주더라고요 🌿✨ 특허 유산균 + 자연 추출물의 최적 조합으로 시너지 효과 up!✨ 임상 시험으로 검증된 칸디다균 99% 감소 효과까지!확실히 검증된 성분 조합이라 그런지 효과가 생각보다 훨씬 빠르고 확실하게 느껴졌어요 👏🏻제형도 바를 땐 촉촉하게 롤링되다가 금방 보송하게 쏙 스며들어서 끈적임이나 찝찝함 전혀 없이 쾌적함만 남아요 🤍Y존 고민으로 이것저것 다 써봐도 정착 못 하셨던 분들, 근본부터 케어해주는 메디온 이너케어젤 꼭 한번 경험해 보세요!"
+                - group "Video player" [ref=f128e2310]:
+                  - button "동영상 재생" [ref=f128e2312] [cursor=pointer]
+                  - generic [ref=f128e2314]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:42
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - generic:
+                  - link:
+                    - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D12%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dig_conv_asc24_normal%26utm_content%3Dv3834_Mse2_A&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+          - generic [ref=f128e2316]:
+            - generic [ref=f128e2318]:
+              - generic [ref=f128e2319]:
+                - generic [ref=f128e2320]: 활성
+                - generic [ref=f128e2327]: "라이브러리 ID: 1595525758635373"
+                - generic [ref=f128e2330]: 2026. 8. 12.에 게재 시작함
+                - generic [ref=f128e2332]: 플랫폼
+                - generic [ref=f128e2364]:
+                  - strong [ref=f128e2365]: 광고 2개
+                  - text: 에서 이 크리에이티브 및 문구를 사용합니다
+              - button "드롭다운 열기" [ref=f128e2368] [cursor=pointer]
+            - button "요약 세부 사항 보기" [ref=f128e2374] [cursor=pointer]
+            - separator [ref=f128e2379]
+            - generic [ref=f128e2384]:
+              - generic [ref=f128e2386]:
+                - img "메디온 medion" [ref=f128e2387]
+                - generic [ref=f128e2389]:
+                  - link "메디온 medion" [ref=f128e2390] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e2394]:
+                    - strong [ref=f128e2396]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2397]:
+                - button [ref=f128e2400]:
+                  - generic [ref=f128e2401]: "질염: 큰일나봐라 이녀석아햄깅: 이리와.. 많이 힘들어찌?[8/1~8/31] 메디온X햄깅이🩵🌿 순하고 산뜻한 마일드 포밍워시🧊 자극없이 시원하게 진정시켜주는 악마햄깅 포밍워시(중요) 천사햄깅이 악마햄깅이 랜덤 키링까지..?> 이 모든걸 오직 올영에서만 만원대로 겟할 수 있다구..? 하나둘셋뛰어"
+                - group "Video player" [ref=f128e2414]:
+                  - button "동영상 재생" [ref=f128e2416] [cursor=pointer]
+                  - generic [ref=f128e2418]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:54
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - generic:
+                  - link:
+                    - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FcTPThfPubIWY0u&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+          - generic [ref=f128e2420]:
+            - generic [ref=f128e2422]:
+              - generic [ref=f128e2423]:
+                - generic [ref=f128e2424]: 활성
+                - generic [ref=f128e2431]: "라이브러리 ID: 822535790444522"
+                - generic [ref=f128e2434]: 2025. 9. 29.에 게재 시작함
+                - generic [ref=f128e2436]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2469] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2475] [cursor=pointer]
+            - separator [ref=f128e2480]
+            - generic [ref=f128e2485]:
+              - generic [ref=f128e2487]:
+                - img "메디온 medion" [ref=f128e2488]
+                - generic [ref=f128e2490]:
+                  - generic [ref=f128e2491]:
+                    - link "allsu_777" [ref=f128e2492] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100068802992251/
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e2493] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e2497]:
+                    - strong [ref=f128e2499]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2500]:
+                - button [ref=f128e2503]:
+                  - generic [ref=f128e2504]: "생리 주기·컨디션·뱃살까지…다 잡고 싶다면 40:1 메디온 이노시톨 💊상큼한 레몬맛 분말 스틱이라 매일 챙기기도 편하고요.💊 한 달 꾸준히 챙겼더니✔ 생리 주기 안정 → 몸 컨디션이 확 달라지고✔ 안 빠지던 아랫배 지방까지 정리✔ 체중 앞자리 숫자 바뀌는 변화까지 경험!이제 하루 1포로 몸의 리듬과 체형까지 관리할 수 있어서예전의 답답했던 제가 생각도 안 나요.📍 구매창에 할인코드 ‘PURE’ 입력하면 10% 할인 (10/11 23:59까지)@medion_official #메디온 #메디온이노시톨 #이선빈이노시톨 #이노시톨추천 #이너뷰티 #medion #화해1등"
+                - group "Video player" [ref=f128e2517]:
+                  - button "동영상 재생" [ref=f128e2519] [cursor=pointer]
+                  - generic [ref=f128e2521]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:33
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2523] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D91%26cafe_mkt%3Due_is_fa25_v2113&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2524]:
+                    - generic [ref=f128e2525]:
+                      - button "THEMEDION.COM" [ref=f128e2527]
+                      - button "allsu_777" [ref=f128e2530]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e2533]
+          - generic [ref=f128e2539]:
+            - generic [ref=f128e2541]:
+              - generic [ref=f128e2542]:
+                - generic [ref=f128e2543]: 활성
+                - generic [ref=f128e2550]: "라이브러리 ID: 1698811488047179"
+                - generic [ref=f128e2553]: 2026. 8. 9.에 게재 시작함
+                - generic [ref=f128e2555]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2588] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2594] [cursor=pointer]
+            - separator [ref=f128e2599]
+            - generic [ref=f128e2604]:
+              - generic [ref=f128e2606]:
+                - img "걸즈쇼핑꿀템" [ref=f128e2607]
+                - generic [ref=f128e2609]:
+                  - generic [ref=f128e2610]:
+                    - link "__bbshy" [ref=f128e2611] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100067593994701/
+                    - text: 페이지는
+                    - link "걸즈쇼핑꿀템" [ref=f128e2612] [cursor=pointer]:
+                      - /url: https://www.facebook.com/61592043206173/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e2616]:
+                    - strong [ref=f128e2618]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2619]:
+                - button [ref=f128e2622]:
+                  - generic [ref=f128e2623]: "#광고 @medion_official 여성분들 Y존 물로만 관리하고 계셨다면 주목해주세요😊저도 평소 찝찝함이나 분비물 때문에 신경 쓰이는 날이 있었는데, 메디온 락토메디 이너케어젤 2.0을 사용하면서 관리 방법을 바꿔보게 됐어요.메디온만의 특허 유산균 성분이 유해균 억제와 유익균 증식을 함께 케어해주고, 칸디다균 99% 감소 효과 임상 시험 결과도 있다고 해서 더 믿음이 갔답니다✨촉촉하게 발리고 보송하게 스며드는 사용감이라 깔끔하게 사용할 수 있었고, 특허 유산균과 자연 추출물 조합이라 안심하고 관리하기 좋았어요.Y존 9가지 논란성분 불검출 테스트 완료 제품이라 더욱 만족스러웠고요💕무엇보다 하나씩 개별포장 되어 있어서 위생적이고, 여행이나 운동할 때 챙겨 다니기에도 정말 편했어요.불만족 시 100% 환불 가능하다고 하니 부담 없이 사용해보기 좋고, 지금 1000만개 판매 기념 최저가 할인도 진행 중이라 좋은 기회에 만나보세요😊"
+                - group "Video player" [ref=f128e2636]:
+                  - button "동영상 재생" [ref=f128e2638] [cursor=pointer]
+                  - generic [ref=f128e2640]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:45
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2642] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D12%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dig_conv_asc24_normal%26utm_content%3Dv4053_Mse2_A&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2643]:
+                    - generic [ref=f128e2644]:
+                      - button "THEMEDION.COM" [ref=f128e2646]
+                      - button "__bbshy" [ref=f128e2649]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f128e2652]
+          - generic [ref=f128e2658]:
+            - generic [ref=f128e2660]:
+              - generic [ref=f128e2661]:
+                - generic [ref=f128e2662]: 활성
+                - generic [ref=f128e2669]: "라이브러리 ID: 2187011648713100"
+                - generic [ref=f128e2672]: 2026. 5. 25.에 게재 시작함
+                - generic [ref=f128e2674]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2707] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2713] [cursor=pointer]
+            - separator [ref=f128e2718]
+            - generic [ref=f128e2723]:
+              - generic [ref=f128e2725]:
+                - img "Woman_Health" [ref=f128e2726]
+                - generic [ref=f128e2728]:
+                  - link "Woman_Health" [ref=f128e2729] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100071183610462/
+                  - generic [ref=f128e2733]:
+                    - strong [ref=f128e2735]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2736]:
+                - button "죄송합니다. 그동안 감사했습니다" [ref=f128e2739]
+                - group "Video player" [ref=f128e2751]:
+                  - button "동영상 재생" [ref=f128e2753] [cursor=pointer]
+                  - generic [ref=f128e2755]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:25
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2757] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D141%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dcc_conv_asc37_discount%26utm_content%3Dv427_Mje3_Afr(KRG)&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2758]:
+                    - generic [ref=f128e2759]:
+                      - button "THEMEDION.COM" [ref=f128e2761]
+                      - button "Woman_Health" [ref=f128e2764]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "지금 구매하기" [ref=f128e2767]
+          - generic [ref=f128e2773]:
+            - generic [ref=f128e2775]:
+              - generic [ref=f128e2776]:
+                - generic [ref=f128e2777]: 활성
+                - generic [ref=f128e2784]: "라이브러리 ID: 944438275033141"
+                - generic [ref=f128e2787]: 2026. 4. 27.에 게재 시작함
+                - generic [ref=f128e2789]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2822] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2828] [cursor=pointer]
+            - separator [ref=f128e2833]
+            - generic [ref=f128e2838]:
+              - generic [ref=f128e2840]:
+                - img "메디온 medion" [ref=f128e2841]
+                - generic [ref=f128e2843]:
+                  - link "메디온 medion" [ref=f128e2844] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e2848]:
+                    - strong [ref=f128e2850]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e2851]:
+                - button [ref=f128e2854]:
+                  - generic [ref=f128e2855]: 올리브영 1위 여성청결제에 쿨링을 더했다😮여름에 더 상쾌한 Y존케어🩵✅저자극 쿨링 원료로 1초 즉각 쿨링🧊✅쫀득한 미세 거품에 Y존 특허 유산균을 담아✅뽀송하게 칸디다균 99.9% 박멸🫧❤️올리브영 단독 런칭 기념 1+1 기획세트 초특가
+                - group "Video player" [ref=f128e2868]:
+                  - button "동영상 재생" [ref=f128e2870] [cursor=pointer]
+                  - generic [ref=f128e2872]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:34
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2874] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2Fn81A47r19TQ1q0&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2875]:
+                    - generic [ref=f128e2876]:
+                      - button "OY.RUN" [ref=f128e2878]
+                      - button "메디온 medion" [ref=f128e2881]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e2884]
+          - generic [ref=f128e2890]:
+            - generic [ref=f128e2892]:
+              - generic [ref=f128e2893]:
+                - generic [ref=f128e2894]: 활성
+                - generic [ref=f128e2901]: "라이브러리 ID: 1037105215687076"
+                - generic [ref=f128e2904]: 2026. 8. 6.에 게재 시작함
+                - generic [ref=f128e2906]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e2939] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e2945] [cursor=pointer]
+            - separator [ref=f128e2950]
+            - generic [ref=f128e2955]:
+              - generic [ref=f128e2959]:
+                - generic [ref=f128e2960]:
+                  - link "ㅎㅇ" [ref=f128e2961] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61577084496374/
+                  - text: 페이지는
+                  - link "걸즈쇼핑꿀템" [ref=f128e2962] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61592043206173/
+                  - text: 과(와) 함께합니다
+                - generic [ref=f128e2966]:
+                  - strong [ref=f128e2968]: 광고
+                  - generic:
+                    - strong
+              - generic [ref=f128e2969]:
+                - button [ref=f128e2972]:
+                  - generic [ref=f128e2973]: "#광고 #락토메디 #락토메디레이디스 #이너케어젤 #메디온 Y존케어 여성청결 여성케어 데일리케어 이너뷰티 여성필수템 생리전후케어▶️여러분, Y존도 전용 케어가 필요하다는 거 알고 계셨나요?_<🤍저도 생리 전후나 오래 앉아 있거나 꽉 끼는 옷을 입는 날이면 찝찝함이 신경 쓰였는데, 요즘은 락토메디 레이디스 이너케어젤 2.0으로 꾸준히 관리하고 있어요...!🔥🔥메디온만의 특허 유산균 성분이 함유되어 있어 유해균 억제와 유익균 증식을 함께 케어해 주고, 칸디다균 99% 감소 효과**에 대한 임상시험 결과도 확인된 제품이라 더욱 믿고 사용하고 있습니다.☺️🙏촉촉하게 발리지만 끈적임 없이 산뜻하게 마무리되어 사용감도 만족스러웠고,약산성 pH, 9가지 논란 성분 FREE, 피부 저자극 테스트 완료** 제품이라 안심하고 사용할 수 있었어요.무엇보다 개별 포장이라 위생적이고, 여행이나 운동 갈 때도 하나씩 챙기기 편해서 데일리 케어템으로 추천드려요.✨지금 1,000만*개 판매 기념 최저가 할인도 진행 중이고,불만족 시 100% 환불도 가능하다고 하니 부담 없이 경험해 보세요!💕💕🍀"
+                - group "Video player" [ref=f128e2986]:
+                  - button "동영상 재생" [ref=f128e2988] [cursor=pointer]
+                  - generic [ref=f128e2990]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:48
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e2992] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D12%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dig_conv_asc24_normal%26utm_content%3Dv4024_Mse2_A&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e2993]:
+                    - generic [ref=f128e2994]:
+                      - button "THEMEDION.COM" [ref=f128e2996]
+                      - button "ㅎㅇ" [ref=f128e2999]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f128e3002]
+          - generic [ref=f128e3008]:
+            - generic [ref=f128e3010]:
+              - generic [ref=f128e3011]:
+                - generic [ref=f128e3012]: 활성
+                - generic [ref=f128e3019]: "라이브러리 ID: 24436663359368386"
+                - generic [ref=f128e3022]: 2025. 10. 12.에 게재 시작함
+                - generic [ref=f128e3024]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e3057] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e3063] [cursor=pointer]
+            - separator [ref=f128e3068]
+            - generic [ref=f128e3073]:
+              - generic [ref=f128e3075]:
+                - img "메디온 medion" [ref=f128e3076]
+                - generic [ref=f128e3078]:
+                  - generic [ref=f128e3079]:
+                    - link "kim_vely_528" [ref=f128e3080] [cursor=pointer]:
+                      - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2F_u%2Fkim_vely_528&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e3081] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e3085]:
+                    - strong [ref=f128e3087]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e3088]:
+                - button [ref=f128e3091]:
+                  - generic [ref=f128e3092]: "#광고 화해 1등하는 이너케어젤, 과연 좋을까?🤔 여성 2명 중 1명이 겪는 질염, 어떻게 관리하세요?단순 세정으로는 불가능!유해균 억제 + 유익균 증식이 동시에 필요해요! 👉특허 질유산균 + 자연추출물 조합으로 빠른 효과👉칸디다균 99.9% 감소👉2주 정도만 사용해도 질염 고민 싹 사라져요📍구매창에 할인코드 ’PURE‘ 입력하면 10% 할인다들 어서 구경가보세요🙋🏻‍♀️💕..@medion_official#메디온 #메디온이너케어젤 #이선빈이너케어젤 #이너케어젤추천"
+                - group "Video player" [ref=f128e3105]:
+                  - button "동영상 재생" [ref=f128e3107] [cursor=pointer]
+                  - generic [ref=f128e3109]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:36
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e3111] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D85%26cafe_mkt%3Due_ig_fa24_v1592&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e3112]:
+                    - generic [ref=f128e3113]:
+                      - button "THEMEDION.COM" [ref=f128e3115]
+                      - button "kim_vely_528" [ref=f128e3118]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e3121]
+          - generic [ref=f128e3127]:
+            - generic [ref=f128e3129]:
+              - generic [ref=f128e3130]:
+                - generic [ref=f128e3131]: 활성
+                - generic [ref=f128e3138]: "라이브러리 ID: 937291732127411"
+                - generic [ref=f128e3141]: 2026. 3. 7.에 게재 시작함
+                - generic [ref=f128e3143]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e3176] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e3182] [cursor=pointer]
+            - separator [ref=f128e3187]
+            - generic [ref=f128e3192]:
+              - generic [ref=f128e3194]:
+                - img "메디온 medion" [ref=f128e3195]
+                - generic [ref=f128e3197]:
+                  - generic [ref=f128e3198]:
+                    - link "hee.myo" [ref=f128e3199] [cursor=pointer]:
+                      - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.instagram.com%2F_u%2Fhee.myo&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                    - text: 페이지는
+                    - link "메디온 medion" [ref=f128e3200] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083200993501/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e3204]:
+                    - strong [ref=f128e3206]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e3207]:
+                - button [ref=f128e3210]:
+                  - generic [ref=f128e3211]: "여러분 와… 이게 다 유산균이래요..!(진짜임)거품 이렇게 쫀쫀한데… 유산균 거품이라니 ㅋㅋ ✧･ﾟ: ✧･ﾟ:거품 속에 Y존 유산균 가득이라칸디다균 99% 감소에 도움 된다구…? (충격) (๑˃ᴗ˂)ﻭ✔ 풍성+쫀득 거품이라 초저자극 세정 가능✔ 약산성 pH 밸런스까지 딱 맞춰줌올영에서 단독 특가 15,900원 ✨지금 딱 쟁일 타이밍이야…(소근) ૮₍˶ᵔ ᵕ ᵔ˶₎ა@medion_official#메디온 #메디온포밍워시 #올영필수템 #포밍워시 #올영세일"
+                - group "Video player" [ref=f128e3224]:
+                  - button "동영상 재생" [ref=f128e3226] [cursor=pointer]
+                  - generic [ref=f128e3228]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:31
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e3230] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2FpUwrR5PMHIRFHY&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e3231]:
+                    - generic [ref=f128e3232]:
+                      - button "OY.RUN" [ref=f128e3234]
+                      - button "hee.myo" [ref=f128e3237]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e3240]
+          - generic [ref=f128e3246]:
+            - generic [ref=f128e3248]:
+              - generic [ref=f128e3249]:
+                - generic [ref=f128e3250]: 활성
+                - generic [ref=f128e3257]: "라이브러리 ID: 1331151678863718"
+                - generic [ref=f128e3260]: 2026. 4. 27.에 게재 시작함
+                - generic [ref=f128e3262]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e3295] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e3301] [cursor=pointer]
+            - separator [ref=f128e3306]
+            - generic [ref=f128e3311]:
+              - generic [ref=f128e3313]:
+                - img "메디온 medion" [ref=f128e3314]
+                - generic [ref=f128e3316]:
+                  - link "메디온 medion" [ref=f128e3317] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100083200993501/
+                  - generic [ref=f128e3321]:
+                    - strong [ref=f128e3323]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e3324]:
+                - button [ref=f128e3327]:
+                  - generic [ref=f128e3328]: 올리브영 1위 여성청결제에 쿨링을 더했다😮여름에 더 상쾌한 Y존케어🩵✅저자극 쿨링 원료로 1초 즉각 쿨링🧊✅쫀득한 미세 거품에 Y존 특허 유산균을 담아✅뽀송하게 칸디다균 99.9% 박멸🫧❤️올리브영 단독 런칭 기념 1+1 기획세트 초특가
+                - group "Video player" [ref=f128e3341]:
+                  - button "동영상 재생" [ref=f128e3343] [cursor=pointer]
+                  - generic [ref=f128e3345]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:35
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e3347] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Foy.run%2Fn81A47r19TQ1q0&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e3348]:
+                    - generic [ref=f128e3349]:
+                      - button "OY.RUN" [ref=f128e3351]
+                      - button "메디온 medion" [ref=f128e3354]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f128e3357]
+          - generic [ref=f128e3363]:
+            - generic [ref=f128e3365]:
+              - generic [ref=f128e3366]:
+                - generic [ref=f128e3367]: 활성
+                - generic [ref=f128e3374]: "라이브러리 ID: 1521906183042435"
+                - generic [ref=f128e3377]: 2026. 8. 6.에 게재 시작함
+                - generic [ref=f128e3379]: 플랫폼
+              - button "드롭다운 열기" [ref=f128e3412] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f128e3418] [cursor=pointer]
+            - separator [ref=f128e3423]
+            - generic [ref=f128e3428]:
+              - generic [ref=f128e3430]:
+                - img "걸즈쇼핑꿀템" [ref=f128e3431]
+                - generic [ref=f128e3433]:
+                  - generic [ref=f128e3434]:
+                    - link "소윤" [ref=f128e3435] [cursor=pointer]:
+                      - /url: https://www.facebook.com/100083848125106/
+                    - text: 페이지는
+                    - link "걸즈쇼핑꿀템" [ref=f128e3436] [cursor=pointer]:
+                      - /url: https://www.facebook.com/61592043206173/
+                    - text: 과(와) 함께합니다
+                  - generic [ref=f128e3440]:
+                    - strong [ref=f128e3442]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f128e3443]:
+                - button [ref=f128e3446]:
+                  - generic [ref=f128e3447]: "#광고 @medion_officialY존도 피부처럼 꾸준한 케어가 중요하다는 거, 알고 계셨나요?♥저도 평소 신경 쓰던 부분이라 사용해봤는데,메디온 이너케어젤은 단순 세정이 아닌 유해균 억제와 유익균 증식을 함께 도와주는 제품이라 더욱 눈길이 갔어요.✔️ 메디온만의 특허 유산균 성분 함유✔️ 칸디다균 99% 감소 효과 임상 시험 결과✔️ 촉촉하게 발리고 보송하게 흡수되는 사용감✔️ 하나씩 개별 포장되어 위생적이라 운동이나 여행 갈 때도 간편하게 챙기기 좋아요.불만족 시 100% 환불 보장!지금은 1,000만 개 판매 기념 최저가 할인도 진행 중이라고 하니,관심 있으신 분들은 아래 링크에서 확인해 보세요🤍#메디온 #메디온이너케어젤 #Y존케어 #여성케어"
+                - group "Video player" [ref=f128e3460]:
+                  - button "동영상 재생" [ref=f128e3462] [cursor=pointer]
+                  - generic [ref=f128e3464]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:42
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f128e3466] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fthemedion.com%2Fproduct%2Fdetail.html%3Fproduct_no%3D12%26utm_source%3Dmeta%26utm_medium%3Dpaid_social%26utm_campaign%3Dig_conv_asc24_normal%26utm_content%3Dv4025_Mse2_A&h=AUBSHL79Ofx3Bx11aaUSsV8XDRnGhOI0EPpvi0JrAIdS6mPg8BDBCXS9ihIVVcu7MKi9VBles1qroqe85YCG5eXvmzy8FuCsRjsnGRR63hwYMAxlcpPjy3XVrSFLFlnXlsZRtkOY_6JYazZ8vutpIQ
+                  - generic [ref=f128e3467]:
+                    - generic [ref=f128e3468]:
+                      - button "THEMEDION.COM" [ref=f128e3470]
+                      - button "소윤" [ref=f128e3473]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f128e3476]
+        - button "더 보기" [ref=f128e3481] [cursor=pointer]
+    - generic [ref=f128e153]:
+      - generic [ref=f128e154]: 시스템 상태
+      - generic [ref=f128e165]:
+        - list [ref=f128e166]:
+          - listitem [ref=f128e167]:
+            - heading [level=3] [ref=f128e168]:
+              - link "광고 라이브러리 API" [ref=f128e169] [cursor=pointer]:
+                - /url: /ads/library/api/?source=archive-landing-page
+          - listitem [ref=f128e170]:
+            - heading [level=3] [ref=f128e171]:
+              - link "광고 및 데이터 사용 정보" [ref=f128e172] [cursor=pointer]:
+                - /url: /ads/about/?entry_product=ad_library
+          - listitem [ref=f128e173]:
+            - heading [level=3] [ref=f128e174]:
+              - link "개인정보처리방침" [ref=f128e175] [cursor=pointer]:
+                - /url: /privacy/center/?entry_point=privacy_basics_redirect
+          - listitem [ref=f128e176]:
+            - heading [level=3] [ref=f128e177]:
+              - link "약관" [ref=f128e178] [cursor=pointer]:
+                - /url: /policies/
+          - listitem [ref=f128e179]:
+            - heading [level=3] [ref=f128e180]:
+              - link "쿠키" [ref=f128e181] [cursor=pointer]:
+                - /url: /policies/cookies/
+        - heading [level=3] [ref=f128e183]:
+          - link "한국어" [ref=f128e184] [cursor=pointer]:
+            - /url: /language/

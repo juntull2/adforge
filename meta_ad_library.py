@@ -652,3 +652,233 @@ def _fetch_ads_from_api(
 
     ads.sort(key=lambda x: x.get("_running_days", 0), reverse=True)
     return ads
+
+
+# ─────────────────────────────────────────────────────────────────────
+# 세션 재사용 클라이언트 (A급 소재 탐색 · 연결 계정 추적용)
+# ─────────────────────────────────────────────────────────────────────
+
+class AdLibraryBlocked(RuntimeError):
+    """메타가 광고 라이브러리 접속을 막아 검색을 시작할 수 없을 때 발생합니다."""
+
+
+class AdLibraryRateLimited(AdLibraryBlocked):
+    """메타가 'Rate limit exceeded'(요청 한도 초과)를 돌려줄 때. 다시 시도해도 한동안 풀리지 않으므로 바로 멈춥니다."""
+
+
+RATE_LIMIT_MESSAGE = ("메타 광고 라이브러리 요청 한도를 넘었습니다 (Rate limit exceeded). "
+                      "한동안 기다린 뒤 다시 시도하세요. 그동안 찾은 결과는 유지합니다.")
+
+
+def _library_variables(
+    query: str,
+    country: str,
+    search_type: str,
+    active_status: str,
+    started_before: str | None,
+    page_id: str | None,
+    cursor: str | None,
+) -> dict:
+    """AdLibrarySearchPaginationQuery 변수. started_before(YYYY-MM-DD) 이전에 게재 시작한 광고만 받습니다."""
+    return {
+        "activeStatus": active_status,
+        "adType": "all",
+        "bylines": [],
+        "collationToken": None,
+        "contentLanguages": [],
+        "countries": [country],
+        "cursor": cursor,
+        "excludedIDs": [],
+        "first": 30,
+        "isTargetedCountry": False,
+        "location": None,
+        "mediaType": "all",
+        "multiCountryFilterMode": None,
+        "pageIDs": [],
+        "potentialReachInput": None,
+        "publisherPlatforms": [],
+        "queryString": query,
+        "regions": [],
+        "searchType": search_type,
+        "sessionID": None,
+        "sortData": None,
+        "source": None,
+        "startDate": {"min": None, "max": started_before} if started_before else None,
+        "v": "ed3774",
+        "viewAllPageID": page_id,
+    }
+
+
+class AdLibraryClient:
+    """
+    메타 광고 라이브러리 공개 GraphQL 클라이언트.
+
+    - 세션과 LSD 토큰을 한 번만 받아 여러 검색에 재사용합니다.
+    - 메타는 한 번에 광고 10개씩 돌려주므로 커서로 다음 페이지를 이어 받습니다.
+    - started_before: 해당 날짜 이전에 게재를 시작한 광고만 받습니다 (60일+ 게재 광고 탐색).
+    - search_type="keyword_exact_phrase": 광고 문구가 정확히 같은 광고를 찾습니다.
+    - page_ads(): 특정 페이지(광고 계정)가 게재 중인 광고를 받습니다.
+    """
+
+    GRAPHQL_URL = "https://www.facebook.com/api/graphql/"
+
+    def __init__(self, country: str = "KR", min_interval: float = 1.0, retry_wait: float = 5.0,
+                 max_consecutive_failures: int = 3):
+        if not CURL_CFFI_AVAILABLE:
+            raise AdLibraryBlocked("curl_cffi 패키지가 없어 메타 광고 라이브러리에 접속할 수 없습니다.")
+        self.country = country
+        self.min_interval = min_interval
+        self.retry_wait = retry_wait
+        self.max_consecutive_failures = max_consecutive_failures
+        self._consecutive_failures = 0
+        self.rate_limited = False
+        self.request_count = 0
+        self.failed_queries: list[str] = []
+        self._sess = None
+        self._lsd = ""
+        self._referer = ""
+        self._last_request = 0.0
+
+    def _wait(self):
+        gap = time.monotonic() - self._last_request
+        if gap < self.min_interval:
+            time.sleep(self.min_interval - gap)
+        self._last_request = time.monotonic()
+
+    def _connect(self):
+        sess = _make_session()
+        _get_page(sess, "https://www.facebook.com/")
+        time.sleep(1.5)
+        referer = _build_search_url("영양제", self.country)
+        resp = _get_page(sess, referer)
+        self.request_count += 2
+        lsd = _extract_lsd(resp.text if resp is not None else "")
+        if not lsd:
+            raise AdLibraryBlocked(
+                "메타 광고 라이브러리 접속 토큰을 받지 못했습니다. 잠시 후 다시 시도하거나 네트워크를 확인하세요."
+            )
+        self._sess, self._lsd, self._referer = sess, lsd, referer
+
+    def _post(self, variables: dict):
+        """GraphQL 1회 호출. 정상 응답이면 search_results_connection, 실패하면 None."""
+        if not self._lsd:
+            self._connect()
+        self._wait()
+        headers = {
+            "Accept": "*/*",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Origin": "https://www.facebook.com",
+            "Referer": self._referer,
+            "X-FB-LSD": self._lsd,
+            "X-ASBD-ID": "198387",
+            "X-FB-Friendly-Name": "AdLibrarySearchPaginationQuery",
+            "Accept-Language": "ko-KR,ko;q=0.9",
+        }
+        form = {
+            "lsd": self._lsd,
+            "variables": json.dumps(variables),
+            "doc_id": _AD_LIB_DOC_ID,
+            "__comet_req": "15",
+            "__a": "1",
+        }
+        self.request_count += 1
+        try:
+            r = self._sess.post(self.GRAPHQL_URL, data=form, headers=headers, timeout=25)
+        except Exception:
+            return None
+        if r.status_code != 200:
+            return None
+        text = r.text or ""
+        if text.startswith("for (;;);"):
+            text = text[len("for (;;);"):]
+        try:
+            data = json.loads(text)
+        except ValueError:
+            return None
+        errors = data.get("errors") or []
+        if any("rate limit" in str(e.get("message", "")).lower() or e.get("code") == 1675004 for e in errors):
+            self.rate_limited = True
+            raise AdLibraryRateLimited(RATE_LIMIT_MESSAGE)
+        main = (data.get("data") or {}).get("ad_library_main") or {}
+        return main.get("search_results_connection")
+
+    def _try_post(self, variables: dict):
+        """
+        한 번 요청하고, 실패하면 잠시 쉬었다가 세션을 새로 열어 한 번만 다시 시도합니다.
+        요청 한도 초과(AdLibraryRateLimited)는 다시 시도해도 풀리지 않으므로 그대로 올려 보냅니다.
+        """
+        if self.rate_limited:
+            raise AdLibraryRateLimited(RATE_LIMIT_MESSAGE)
+        try:
+            conn = self._post(variables)
+        except AdLibraryRateLimited:
+            raise
+        except AdLibraryBlocked:
+            conn = None
+        if conn is not None:
+            return conn
+        # 토큰 만료·일시 차단: 실패가 이어질수록 더 오래 쉬고 다시 연결
+        time.sleep(self.retry_wait * (1 + self._consecutive_failures))
+        self._lsd = ""
+        try:
+            return self._post(variables)
+        except AdLibraryRateLimited:
+            raise
+        except AdLibraryBlocked:
+            return None
+
+    def _collect(self, make_variables, max_pages: int, label: str) -> list:
+        ads = []
+        cursor = None
+        for _ in range(max(1, int(max_pages))):
+            try:
+                conn = self._try_post(make_variables(cursor))
+            except AdLibraryRateLimited:
+                self.failed_queries.append(label)
+                raise
+            if conn is None:
+                self.failed_queries.append(label)
+                self._consecutive_failures += 1
+                if self._consecutive_failures >= self.max_consecutive_failures:
+                    # 계속 두드리면 차단이 길어지므로 멈춥니다 (호출한 쪽에서 이전 결과를 유지)
+                    raise AdLibraryBlocked(
+                        f"메타가 잠시 접속을 막았습니다 (연속 {self._consecutive_failures}회 실패). 몇 분 뒤 다시 시도하세요."
+                    )
+                break
+            self._consecutive_failures = 0
+            for edge in conn.get("edges") or []:
+                node = (edge or {}).get("node") or {}
+                collated = node.get("collated_results") or []
+                if not collated and node.get("ad_archive_id"):
+                    collated = [node]
+                ads.extend(collated)
+            info = conn.get("page_info") or {}
+            cursor = info.get("end_cursor")
+            if not info.get("has_next_page") or not cursor:
+                break
+        return ads
+
+    def search(
+        self,
+        query: str,
+        *,
+        search_type: str = "keyword_unordered",
+        active_status: str = "active",
+        started_before=None,
+        max_pages: int = 3,
+    ) -> list:
+        """키워드(또는 도메인·정확 문구)로 광고를 검색합니다. 원본 광고 dict 목록을 돌려줍니다."""
+        before = started_before.strftime("%Y-%m-%d") if hasattr(started_before, "strftime") else (started_before or None)
+        return self._collect(
+            lambda cur: _library_variables(query, self.country, search_type, active_status, before, None, cur),
+            max_pages,
+            f"{search_type}:{query}",
+        )
+
+    def page_ads(self, page_id: str, *, active_status: str = "active", max_pages: int = 1) -> list:
+        """특정 페이지(광고 계정)의 광고를 받습니다."""
+        return self._collect(
+            lambda cur: _library_variables("", self.country, "page", active_status, None, str(page_id), cur),
+            max_pages,
+            f"page:{page_id}",
+        )

@@ -9,6 +9,7 @@ temp_videos/
 temp_uploads/
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # Outputs
 outputs/

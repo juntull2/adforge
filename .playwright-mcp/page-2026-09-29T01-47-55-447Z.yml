@@ -1,0 +1,693 @@
+- generic [ref=f112e12]:
+  - generic [ref=f112e15]:
+    - link "Meta 광고 라이브러리" [ref=f112e18] [cursor=pointer]:
+      - /url: /ads/library/?source=fb-logo
+    - generic [ref=f112e21]: 광고 라이브러리
+    - menuitem "광고 라이브러리 보고서" [ref=f112e24] [cursor=pointer]
+    - menuitem "광고 라이브러리 API" [ref=f112e27] [cursor=pointer]
+    - menuitem "브랜디드 콘텐츠" [ref=f112e30] [cursor=pointer]
+    - menuitem "Open navigation panel" [ref=f112e33] [cursor=pointer]
+  - generic [ref=f112e40]:
+    - combobox "대한민국" [ref=f112e44] [cursor=pointer]
+    - combobox "모든 광고" [ref=f112e57] [cursor=pointer]
+    - generic [ref=f112e77]:
+      - generic [ref=f112e78]: 키워드 또는 광고주로 검색
+      - generic [ref=f112e89]:
+        - searchbox "키워드 또는 광고주로 검색" [ref=f112e95]: 코팩
+        - button "지우기" [ref=f112e97] [cursor=pointer]
+  - dialog [ref=f112e99]:
+    - generic [ref=f112e100]:
+      - link [ref=f112e101] [cursor=pointer]:
+        - /url: /
+        - heading [level=4] [ref=f112e102]: 로그인
+      - menuitem [ref=f112e103] [cursor=pointer]
+    - generic [ref=f112e105]:
+      - generic [ref=f112e106]:
+        - heading [level=4] [ref=f112e108]: 광고 라이브러리
+        - menuitem [ref=f112e110] [cursor=pointer]:
+          - heading [level=4] [ref=f112e112]: 광고 라이브러리 보고서
+        - menuitem [ref=f112e114] [cursor=pointer]:
+          - heading [level=4] [ref=f112e116]: 광고 라이브러리 API
+        - menuitem [ref=f112e118] [cursor=pointer]:
+          - heading [level=4] [ref=f112e120]: 브랜디드 콘텐츠
+      - separator [ref=f112e121]
+      - generic [ref=f112e122]:
+        - menuitem [ref=f112e124] [cursor=pointer]:
+          - heading [level=4] [ref=f112e126]: 시스템 상태
+        - menuitem [ref=f112e128] [cursor=pointer]:
+          - heading [level=4] [ref=f112e130]: 이메일 업데이트 구독
+        - menuitem [ref=f112e132] [cursor=pointer]:
+          - heading [level=4] [ref=f112e134]: FAQ
+        - menuitem [ref=f112e136] [cursor=pointer]:
+          - heading [level=4] [ref=f112e138]: 광고 및 데이터 사용 정보
+        - menuitem [ref=f112e140] [cursor=pointer]:
+          - heading [level=4] [ref=f112e142]: 개인 정보 보호
+        - menuitem [ref=f112e144] [cursor=pointer]:
+          - heading [level=4] [ref=f112e146]: 이용 약관
+        - menuitem [ref=f112e148] [cursor=pointer]:
+          - heading [level=4] [ref=f112e150]: 쿠키
+  - generic [ref=f112e151]:
+    - generic [ref=f112e152]:
+      - generic [ref=f112e158]:
+        - heading "결과 ~9개" [level=3] [ref=f112e160]
+        - generic [ref=f112e162]:
+          - text: 이 결과에는
+          - strong [ref=f112e163]: 키워드 검색어
+          - text: 와 일치하는 광고가 포함됩니다.
+      - generic [ref=f112e164]:
+        - generic [ref=f112e173]:
+          - generic [ref=f112e174]:
+            - button "필터" [ref=f112e175] [cursor=pointer]
+            - generic [ref=f112e182]:
+              - generic [ref=f112e183]: 정렬
+              - combobox "정렬" [ref=f112e193] [cursor=pointer]:
+                - generic [ref=f112e194]: 정렬 기준
+          - generic [ref=f112e203]:
+            - generic [ref=f112e205]:
+              - generic [ref=f112e206]:
+                - strong [ref=f112e207]: 활동 상태
+                - text: ": 게재 중인 광고"
+              - button "삭제" [ref=f112e208] [cursor=pointer]
+            - generic [ref=f112e215]:
+              - generic [ref=f112e216]:
+                - strong [ref=f112e217]: 미디어 유형
+                - text: ": 동영상"
+              - button "삭제" [ref=f112e218] [cursor=pointer]
+            - button [ref=f112e225] [cursor=pointer]:
+              - strong [ref=f112e230]: 모두 지우기
+        - generic [ref=f112e232]:
+          - generic [ref=f112e234]:
+            - generic [ref=f112e236]:
+              - generic [ref=f112e237]:
+                - generic [ref=f112e238]: 활성
+                - generic [ref=f112e245]: "라이브러리 ID: 27766047983075991"
+                - generic [ref=f112e248]: 2026. 8. 10.에 게재 시작함
+                - generic [ref=f112e250]: 플랫폼
+                - generic [ref=f112e286]: 여러 버전이 있는 광고입니다
+              - button "드롭다운 열기" [ref=f112e297] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e303] [cursor=pointer]
+            - separator [ref=f112e308]
+            - generic [ref=f112e313]:
+              - generic [ref=f112e316]:
+                - img "뷰દા꿀팁" [ref=f112e317]
+                - generic [ref=f112e319]:
+                  - link "뷰દા꿀팁" [ref=f112e320] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61565939955094/
+                  - generic [ref=f112e324]:
+                    - strong [ref=f112e326]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e328]:
+                - button [ref=f112e331]:
+                  - generic [ref=f112e332]: 🔥 해외에서 난리난 메X폼 코팩?!👃코관리 루틴 바꿔보세요. 모공은 건드리지 않고 피지만 부드럽게 제거👉 아침이 달라지는 코관리
+                - group "Video player" [ref=f112e344]:
+                  - button "동영상 재생" [ref=f112e346] [cursor=pointer]
+                  - generic [ref=f112e348]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:39
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e350] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fcellology.co.kr%2Fproduct%2Fdetail.html%3Fproduct_no%3D193%26utm_source%3Dinsta%26utm_medium%3Dcpc%26utm_campaign%3D%25ED%258F%25AC%25EC%2596%25B4%25EC%2583%25B7%25EC%25A0%259C%25EB%25A1%259C%25ED%258C%25A9_%25ED%2595%259C%25EA%25B5%25AD%25EC%25BD%2594%25ED%258C%25A9%25EC%25A7%2595%25EA%25B7%25B8%25EB%259F%25AC(%25EC%258B%25A0%25EA%25B7%259C%25EA%25B3%25A0%25EA%25B0%259D)_%25EB%2585%25BC%25ED%2583%2580%25EA%25B2%259F%25ED%258C%2585_260810_%25EB%25A9%2594%25ED%2583%2580_%25EC%25A0%2584%25ED%2599%2598%26utm_content%3D260702_%25ED%258F%25AC%25EC%2596%25B4%25EC%2583%25B7%25EC%25A0%259C%25EB%25A1%259C%25ED%258C%25A9_037_RVI_%25ED%2595%259C%25EA%25B5%25AD%25EC%25BD%2594%25ED%258C%25A9_%25EC%25A7%2595%25EA%25B7%25B8%25EB%259F%25AC&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e351]:
+                    - generic [ref=f112e352]:
+                      - generic:
+                        - button
+                      - button "🚨8차 완판 임박! 공식몰 단독 최저가" [ref=f112e354]
+                      - button "❌ 뜯는 코팩 이제 그만" [ref=f112e357]
+                      - generic:
+                        - button
+                    - button "See Details" [ref=f112e360]
+          - generic [ref=f112e366]:
+            - generic [ref=f112e368]:
+              - generic [ref=f112e369]:
+                - generic [ref=f112e370]: 활성
+                - generic [ref=f112e377]: "라이브러리 ID: 1682919702987293"
+                - generic [ref=f112e380]: 2026. 7. 23.에 게재 시작함
+                - generic [ref=f112e382]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e397] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e403] [cursor=pointer]
+            - separator [ref=f112e408]
+            - generic [ref=f112e413]:
+              - generic [ref=f112e415]:
+                - img "샵봉_Shopbong" [ref=f112e416]
+                - generic [ref=f112e418]:
+                  - link "샵봉_Shopbong" [ref=f112e419] [cursor=pointer]:
+                    - /url: https://www.facebook.com/100087778674033/
+                  - generic [ref=f112e423]:
+                    - strong [ref=f112e425]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e426]:
+                - button [ref=f112e429]:
+                  - generic [ref=f112e430]: D-1 피지앰플이 드디어와요!!!!!제가 예전에는❌’광나는 피부‘ 는 사치였고❌화장해도 금방 지워지고❌오히려 피부 더 더럽고 ❌맨날 블랙헤드 짜고 뜯기도 함 ❌딥클렌징.흡착.연화제.코팩 등그래서 안써본거 없었어요^_^*안 믿기죠?“감히 니가 내 블랙헤드를 없앤다고?”“말도안되는 소리지만 한번 또 속아준다ㅋ”하는 마음으로 늘 좋다는건 다 사서 써봤는데 솔.직.히피지앰플로 효과 제대로 본거 맞고블랙헤드 고민이다?그럼 전 무조건 추천이거든요?! 놀라운건,우리 언니들 후기보면 의약품이냐고 물어볼정도로효과가 진짜 좋아요ㅋㅋㅋ🙏🏻가끔은이 좋은 제품이 노출이 덜 되거나..브랜드가 낯설거나.. 이렇게밖에 표현 못하는 제가 답답할때도 많은데...ㅋ🔥그럼에도 사용해준 분들은 ”잘샀다!“”효과를 잘 보고 있다!“하시는데 그 맛에 또 희열을 느끼고 ...💖이렇게 또 제 이야기를 꺼내봅니다!!!제 인생을 모두 건 샵봉 에서특히 피지로 개고생한 제가허튼 제품 들고오진 않으니까 진짜 고민이라면꼭 써보시는걸 추천해요 !암튼...오픈은... 내일!🤍
+                - group "Video player" [ref=f112e443]:
+                  - button "동영상 재생" [ref=f112e445] [cursor=pointer]
+                  - generic [ref=f112e447]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:47
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e449] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=http%3A%2F%2Finstagram.com%2F_shopbong&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e450]:
+                    - generic [ref=f112e451]:
+                      - button "INSTAGRAM.COM" [ref=f112e453]
+                      - button "샵봉_Shopbong" [ref=f112e456]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "Instagram 프로필 방문" [ref=f112e459]
+          - generic [ref=f112e465]:
+            - generic [ref=f112e467]:
+              - generic [ref=f112e468]:
+                - generic [ref=f112e469]: 활성
+                - generic [ref=f112e476]: "라이브러리 ID: 1063002006493301"
+                - generic [ref=f112e479]: 2026. 8. 9.에 게재 시작함
+                - generic [ref=f112e481]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e519] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e525] [cursor=pointer]
+            - separator [ref=f112e530]
+            - generic [ref=f112e535]:
+              - generic [ref=f112e537]:
+                - img "뷰દા꿀팁" [ref=f112e538]
+                - generic [ref=f112e540]:
+                  - link "뷰દા꿀팁" [ref=f112e541] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61565939955094/
+                  - generic [ref=f112e545]:
+                    - strong [ref=f112e547]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e548]:
+                - 'button "화장으로도 안 가려지는 블랙헤드랑 꽉 막힌 피지... 😭자극적인 코팩 대신 해외 유튜버들이 쟁여두고 쓴다는*[셀올로지 포어샷 제로팩]**으로 바꿔보세요!💧 피지 녹임: 답답한 피지를 부드럽게 녹여 밀착 흡착🔬 모공 타이트닝: 포어샷 성분이 모공 속부터 탄탄하게 케어떼어내는 순간 느껴지는 매끈 뽀송한 피부 바탕!더 이상 피지 짜지 말고 제로팩으로 밤사이 해결하세요." [ref=f112e551]'
+                - group "Video player" [ref=f112e563]:
+                  - button "동영상 재생" [ref=f112e565] [cursor=pointer]
+                  - generic [ref=f112e567]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:25
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e569] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fcellology.co.kr%2Fproduct%2Fdetail.html%3Fproduct_no%3D193%26utm_source%3Dinsta%26utm_medium%3Dcpc%26utm_campaign%3D%25ED%258F%25AC%25EC%2596%25B4%25EC%2583%25B7%25EC%25A0%259C%25EB%25A1%259C%25ED%258C%25A9_8%25EC%259B%25942%25EC%25A3%25BC%25EC%25B0%25A8(%25EC%258B%25A0%25EA%25B7%259C%25EA%25B3%25A0%25EA%25B0%259D)_%25EB%2585%25BC%25ED%2583%2580%25EA%25B2%259F%25ED%258C%2585_260810_%25EB%25A9%2594%25ED%2583%2580_%25EC%25A0%2584%25ED%2599%2598%26utm_content%3D260729_%25ED%258F%25AC%25EC%2596%25B4%25EC%2583%25B7%25EC%25A0%259C%25EB%25A1%259C%25ED%258C%25A9_171_RVI_%25EC%2599%25B8%25EA%25B5%25AD%25EC%259D%25B8_B&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e570]:
+                    - generic [ref=f112e571]:
+                      - button "CELLOLOGY.CO.KR" [ref=f112e573]
+                      - button "🔥해외에서 먼저 터졌다! 피지 녹이고 모공 쪼이는 [포어샷 제로팩]🔥" [ref=f112e576]
+                      - button "⚡ 한정 수량 단독 특가 | 재고 소진 시 조기 마감" [ref=f112e579]
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f112e582]
+          - generic [ref=f112e588]:
+            - generic [ref=f112e590]:
+              - generic [ref=f112e591]:
+                - generic [ref=f112e592]: 활성
+                - generic [ref=f112e599]: "라이브러리 ID: 1264622518972417"
+                - generic [ref=f112e602]: 2026. 7. 22.에 게재 시작함
+                - generic [ref=f112e604]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e619] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e625] [cursor=pointer]
+            - separator [ref=f112e630]
+            - generic [ref=f112e635]:
+              - generic [ref=f112e637]:
+                - img "본트리 borntree" [ref=f112e638]
+                - generic [ref=f112e640]:
+                  - link "본트리 borntree" [ref=f112e641] [cursor=pointer]:
+                    - /url: https://www.facebook.com/borntree.korea/
+                  - generic [ref=f112e645]:
+                    - strong [ref=f112e647]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e648]:
+                - button [ref=f112e651]:
+                  - generic [ref=f112e652]: "손대면 커지는 코 모공, 이젠 진짜 멈추셔야 합니다! ✋레몬이랑 티트리가 만나 피지를 순하게 싹- 녹여주니까 자극 하나 없이 보송하고 매끈한 깐달걀 코 완성 🥚✨거울 볼 때마다 피지 때문에 스트레스받았던 분들, 지금 올리브영에서 본트리 코팩 꼭 겟하세요! 🛒#올리브영 #올영세일#코팩 #블랙헤드 #피지관리"
+                - group "Video player" [ref=f112e665]:
+                  - button "동영상 재생" [ref=f112e667] [cursor=pointer]
+                  - generic [ref=f112e669]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:22
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e671] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fwww.oliveyoung.co.kr%2Fstore%2Fgoods%2FgetGoodsDetail.do%3FgoodsNo%3DA000000171821%26t_page%3D%25ED%2586%25B5%25ED%2595%25A9%25EA%25B2%2580%25EC%2583%2589%25EA%25B2%25B0%25EA%25B3%25BC%25ED%258E%2598%25EC%259D%25B4%25EC%25A7%2580%26t_click%3D%25EA%25B2%2580%25EC%2583%2589%25EC%2583%2581%25ED%2592%2588%25EC%2583%2581%25EC%2584%25B8%26t_search_name%3D%25EC%25BD%2594%25ED%258C%25A9%26t_number%3D20%26dispCatNo%3D1000001000900050001%26trackingCd%3DResult_11_30&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e672]:
+                    - generic [ref=f112e673]:
+                      - button "WWW.OLIVEYOUNG.CO.KR" [ref=f112e675]
+                      - button "본트리 borntree" [ref=f112e678]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "더 알아보기" [ref=f112e681]
+          - generic [ref=f112e687]:
+            - generic [ref=f112e689]:
+              - generic [ref=f112e690]:
+                - generic [ref=f112e691]: 활성
+                - generic [ref=f112e698]: "라이브러리 ID: 963224382740088"
+                - generic [ref=f112e701]: 2026. 4. 27.에 게재 시작함
+                - generic [ref=f112e703]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e718] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e724] [cursor=pointer]
+            - separator [ref=f112e729]
+            - generic [ref=f112e734]:
+              - generic [ref=f112e736]:
+                - img "Frommegwanggyo" [ref=f112e737]
+                - generic [ref=f112e739]:
+                  - link "Frommegwanggyo" [ref=f112e740] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61557826351280/
+                  - generic [ref=f112e744]:
+                    - strong [ref=f112e746]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e747]:
+                - button [ref=f112e750]:
+                  - generic [ref=f112e751]: "블랙헤드, 뽑는다고 해결되지 않습니다.“왜 계속 차는지”를 바꿔야 진짜 개선됩니다.단 2회만에 눈에 보이는 변화,그 이유는 관리 방식이 다르기 때문입니다.✔️ 집에서 꼭 지켜야 할 블랙헤드 홈케어• 과한 세안 ❌ → 피지 과다 분비 유발• 충분한 수분보습 → 유수분 밸런스 유지• 손압출 금지 → 모공 확장 & 색소침착 예방• 코팩 , 연화제 남용 ❌ → 일시적 효과, 반복 악화👉 핵심은“빼는 것”이 아니라 “쌓이지 않게 만드는 것”블랙헤드와 모공이 고민이시라면프롬미광교점에서 도와드리겠습니다 :)🙏#수원피부관리 #광교피부관리 #수원블랙헤드 #광교블랙헤드 #수원모공관리"
+                - group "Video player" [ref=f112e764]:
+                  - button "동영상 재생" [ref=f112e766] [cursor=pointer]
+                  - generic [ref=f112e768]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:11
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e770] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=http%3A%2F%2Finstagram.com%2Ffrom.me_skin_gwanggyo&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e771]:
+                    - generic [ref=f112e772]:
+                      - button "INSTAGRAM.COM" [ref=f112e774]
+                      - button "Frommegwanggyo" [ref=f112e777]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "Instagram 프로필 방문" [ref=f112e780]
+          - generic [ref=f112e786]:
+            - generic [ref=f112e788]:
+              - generic [ref=f112e789]:
+                - generic [ref=f112e790]: 활성
+                - generic [ref=f112e797]: "라이브러리 ID: 1755667865476037"
+                - generic [ref=f112e800]: 2026. 9. 27.에 게재 시작함
+                - generic [ref=f112e802]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e822] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e828] [cursor=pointer]
+            - separator [ref=f112e833]
+            - generic [ref=f112e838]:
+              - generic [ref=f112e840]:
+                - img "동안 연구소" [ref=f112e841]
+                - generic [ref=f112e843]:
+                  - link "동안 연구소" [ref=f112e844] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61583259742813/
+                  - generic [ref=f112e848]:
+                    - strong [ref=f112e850]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e851]:
+                - group "Video player" [ref=f112e861]:
+                  - button "동영상 재생" [ref=f112e863] [cursor=pointer]
+                  - generic [ref=f112e865]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:50
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e867] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fbit.ly%2F4yPtqVl&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e868]:
+                    - generic [ref=f112e869]:
+                      - button "HTTPS://BIT.LY" [ref=f112e871]
+                      - button "⠀" [ref=f112e874]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "지금 구매하기" [ref=f112e877]
+          - generic [ref=f112e883]:
+            - generic [ref=f112e885]:
+              - generic [ref=f112e886]:
+                - generic [ref=f112e887]: 활성
+                - generic [ref=f112e894]: "라이브러리 ID: 27156809323993506"
+                - generic [ref=f112e897]: 2026. 8. 9.에 게재 시작함
+                - generic [ref=f112e899]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e937] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e943] [cursor=pointer]
+            - separator [ref=f112e948]
+            - generic [ref=f112e953]:
+              - generic [ref=f112e955]:
+                - img "뷰દા꿀팁" [ref=f112e956]
+                - generic [ref=f112e958]:
+                  - link "뷰દા꿀팁" [ref=f112e959] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61565939955094/
+                  - generic [ref=f112e963]:
+                    - strong [ref=f112e965]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e966]:
+                - button "해외 SNS에서 난리 난 바로 그 '신개념 코팩' 🔥아직도 자극적으로 피지 뜯어내시나요?피지를 억지로 뽑으면 모공만 더 넓어집니다!셀올로지 포어샷 제로팩은1️⃣ 묵은 피지를 부드럽게 '녹여서' 흡착2️⃣ 미세 스피큘 성분으로 모공을 '타이트닝'뜯지 않고 붙였다 떼어내면 꽉 차 있던 피지가 싹-" [ref=f112e969]
+                - group "Video player" [ref=f112e981]:
+                  - button "동영상 재생" [ref=f112e983] [cursor=pointer]
+                  - generic [ref=f112e985]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:24
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e987] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fcellology.co.kr%2Fproduct%2Fdetail.html%3Fproduct_no%3D193%26utm_source%3Dinsta%26utm_medium%3Dcpc%26utm_campaign%3D%25ED%258F%25AC%25EC%2596%25B4%25EC%2583%25B7%25EC%25A0%259C%25EB%25A1%259C%25ED%258C%25A9_8%25EC%259B%25942%25EC%25A3%25BC%25EC%25B0%25A8(%25EC%258B%25A0%25EA%25B7%259C%25EA%25B3%25A0%25EA%25B0%259D)_%25EB%2585%25BC%25ED%2583%2580%25EA%25B2%259F%25ED%258C%2585_260810_%25EB%25A9%2594%25ED%2583%2580_%25EC%25A0%2584%25ED%2599%2598%26utm_content%3D260729_%25ED%258F%25AC%25EC%2596%25B4%25EC%2583%25B7%25EC%25A0%259C%25EB%25A1%259C%25ED%258C%25A9_171_RVI_%25EC%2599%25B8%25EA%25B5%25AD%25EC%259D%25B8_A&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e988]:
+                    - generic [ref=f112e989]:
+                      - button "CELLOLOGY.CO.KR" [ref=f112e991]
+                      - button "\"K-뷰티 미쳤다\" 해외 반응 폭발한 피지 흡착 팩 💣 셀올로지 포어샷 제로팩" [ref=f112e994]
+                      - button "🎁 지금 구매 시 신규 회원 할인 쿠폰 증정" [ref=f112e997]
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f112e1000]
+          - generic [ref=f112e1006]:
+            - generic [ref=f112e1008]:
+              - generic [ref=f112e1009]:
+                - generic [ref=f112e1010]: 활성
+                - generic [ref=f112e1017]: "라이브러리 ID: 2308251549952252"
+                - generic [ref=f112e1020]: 2026. 8. 20.에 게재 시작함
+                - generic [ref=f112e1022]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e1055] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e1061] [cursor=pointer]
+            - separator [ref=f112e1066]
+            - generic [ref=f112e1071]:
+              - generic [ref=f112e1073]:
+                - img "모두થ ચ뷰" [ref=f112e1074]
+                - generic [ref=f112e1076]:
+                  - link "모두થ ચ뷰" [ref=f112e1077] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61563511276031/
+                  - generic [ref=f112e1081]:
+                    - strong [ref=f112e1083]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e1084]:
+                - button [ref=f112e1087]:
+                  - generic [ref=f112e1088]: 💚트러블 삭제 피지흡착팩💚오늘 자정까지만 1만원대 특가✨
+                - group "Video player" [ref=f112e1100]:
+                  - button "동영상 재생" [ref=f112e1102] [cursor=pointer]
+                  - generic [ref=f112e1104]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:21
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e1106] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Fcalmlab.kr%2Fproduct%2Fdetail.html%3Fproduct_no%3D59%26utm_source%3Dfacebook%26utm_medium%3Dvideo%26utm_campaign%3Df_%25EC%259D%25BC%25EB%25B0%2598%25EC%25BA%25A0%25ED%258E%2598%25EC%259D%25B8_hn%26utm_term%3D%25EC%25BA%2584%25EB%259E%25A9%25EB%25A7%2588%25EC%258A%25A4%25ED%2581%25AC%25ED%258C%25A9%26utm_content%3D%25EC%259A%2594%25EC%25A6%2598%25EC%2595%25BD%25EA%25B5%25AD_260820_4&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e1107]:
+                    - generic [ref=f112e1108]:
+                      - button "HTTPS://BULY.KR/EZLMHVX" [ref=f112e1110]
+                      - button "오늘 지나면 비싸져요!" [ref=f112e1113]
+                      - button "불만족시 100%환불" [ref=f112e1116]
+                      - generic:
+                        - button
+                    - button "자세히 보기" [ref=f112e1119]
+          - generic [ref=f112e1125]:
+            - generic [ref=f112e1127]:
+              - generic [ref=f112e1128]:
+                - generic [ref=f112e1129]: 활성
+                - generic [ref=f112e1136]: "라이브러리 ID: 1736198071009168"
+                - generic [ref=f112e1139]: 2026. 9. 28.에 게재 시작함 · 총 활성 시간 19시간
+                - generic [ref=f112e1141]: 플랫폼
+              - button "드롭다운 열기" [ref=f112e1151] [cursor=pointer]
+            - button "광고 상세 정보 보기" [ref=f112e1157] [cursor=pointer]
+            - separator [ref=f112e1162]
+            - generic [ref=f112e1167]:
+              - generic [ref=f112e1169]:
+                - img "미소에스테틱 대구" [ref=f112e1170]
+                - generic [ref=f112e1172]:
+                  - link "미소에스테틱 대구" [ref=f112e1173] [cursor=pointer]:
+                    - /url: https://www.facebook.com/61552681940318/
+                  - generic [ref=f112e1177]:
+                    - strong [ref=f112e1179]: 광고
+                    - generic:
+                      - strong
+              - generic [ref=f112e1180]:
+                - button [ref=f112e1183]:
+                  - generic [ref=f112e1184]: "🔥 👃🏻 블랙헤드 전후, 차이 느껴보세요고객님 단 1회 관리 후 모공 속 묵은 피지를 정돈해드렸습니다✨클렌징오일이나 코팩 사용 해봐도 효과도 없고 오히려 모공이 늘어나거나예민해지지 않으셨나요?미소에스테틱은 피부 자극은 최소화하고 필요한 부분만 섬세하게 정리해드립니다🙂✔️ 블랙헤드가 자주 올라오는 분✔️ 코에 딸기씨처럼 보이는 분✔️ 짜도 금방 다시 차오르는 분✔️ 자극이 걱정되셨던 분같은 블랙헤드 관리라도 어떻게 정리하느냐에 따라 피부 느낌은 달라질 수 있습니다‼️• 피부 상태, 피지량, 모공 크기에 따라 관리 결과와 유지 기간은 개인차가 있습니다.• 프로그램 구성에 따라 관리 방식과 범위는 달라질 수 있습니다.그래서 더, 현재 피부 컨디션에 맞춰 맞춤으로 진행합니다 💙👃🏻모공, 블랙헤드가 고민 일 땐 #미소에스테틱#대구블랙헤드관리#대구아쿠아필#대구에스테틱#대구아쿠아필잘하는곳"
+                - group "Video player" [ref=f112e1197]:
+                  - button "동영상 재생" [ref=f112e1199] [cursor=pointer]
+                  - generic [ref=f112e1201]:
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "재생"
+                      - generic: 0:00 / 0:03
+                    - generic:
+                      - generic:
+                        - slider "Change Position"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "설정"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - button "전체 화면으로 보기"
+                    - generic:
+                      - generic:
+                        - generic:
+                          - generic:
+                            - slider "볼륨 조정"
+                        - generic:
+                          - generic:
+                            - generic:
+                              - button "소리 켜기"
+                - link [ref=f112e1203] [cursor=pointer]:
+                  - /url: https://l.facebook.com/l.php?u=https%3A%2F%2Finstagram.com%2Fmiso.aesthetic_&h=AUCwZuXmgQ2WFNmyCL-L-b9sjs3MXDpvhDHHuxiQPeuDP6NstYuPWz2924N2XtsojJFj8sIGyCLQtzQSyQdlrj5_QLikWJ_tzQIqboAbAUJOdczDkd0LXtMyBhtwMHsZOdVMpkDUkZGQWWNz5shRfA
+                  - generic [ref=f112e1204]:
+                    - generic [ref=f112e1205]:
+                      - button "INSTAGRAM.COM" [ref=f112e1207]
+                      - button "미소에스테틱 대구" [ref=f112e1210]
+                      - generic:
+                        - button
+                      - generic:
+                        - button
+                    - button "Instagram 프로필 방문" [ref=f112e1213]
+    - generic [ref=f112e1219]:
+      - generic [ref=f112e1220]: 시스템 상태
+      - generic [ref=f112e1231]:
+        - list [ref=f112e1232]:
+          - listitem [ref=f112e1233]:
+            - heading [level=3] [ref=f112e1234]:
+              - link "광고 라이브러리 API" [ref=f112e1235] [cursor=pointer]:
+                - /url: /ads/library/api/?source=archive-landing-page
+          - listitem [ref=f112e1236]:
+            - heading [level=3] [ref=f112e1237]:
+              - link "광고 및 데이터 사용 정보" [ref=f112e1238] [cursor=pointer]:
+                - /url: /ads/about/?entry_product=ad_library
+          - listitem [ref=f112e1239]:
+            - heading [level=3] [ref=f112e1240]:
+              - link "개인정보처리방침" [ref=f112e1241] [cursor=pointer]:
+                - /url: /privacy/center/?entry_point=privacy_basics_redirect
+          - listitem [ref=f112e1242]:
+            - heading [level=3] [ref=f112e1243]:
+              - link "약관" [ref=f112e1244] [cursor=pointer]:
+                - /url: /policies/
+          - listitem [ref=f112e1245]:
+            - heading [level=3] [ref=f112e1246]:
+              - link "쿠키" [ref=f112e1247] [cursor=pointer]:
+                - /url: /policies/cookies/
+        - heading [level=3] [ref=f112e1249]:
+          - link "한국어" [ref=f112e1250] [cursor=pointer]:
+            - /url: /language/

@@ -91,7 +91,7 @@ def list_local_projects(limit: int = 50) -> List[Dict[str, Any]]:
                     content = json.load(cf)
                     m = content.get("materials", {})
                     counts["texts"] = len(m.get("texts", []))
-                    counts["effects"] = len(m.get("effects", []))
+                    counts["effects"] = len(m.get("effects", [])) + len(m.get("video_effects", []))
                     counts["transitions"] = len(m.get("transitions", []))
                     counts["animations"] = len(m.get("material_animations", []))
                     counts["videos"] = len(m.get("videos", []))
@@ -203,7 +203,7 @@ def inspect_project_details(folder_path: str) -> Dict[str, Any]:
 
     # 3. 효과 (Effects) 목록
     parsed_effects = []
-    for eff in materials.get("effects", []):
+    for eff in materials.get("effects", []) + materials.get("video_effects", []):
         parsed_effects.append({
             "id": eff.get("id"),
             "name": eff.get("name") or "효과",
@@ -308,6 +308,16 @@ def save_preset_from_project(
     # 애니메이션 목록
     animations = details["animations"]
 
+    raw_animations = details["raw_materials"].get("material_animations", [])
+    animations_by_id = {a.get("id"): a for a in raw_animations}
+    text_animation_templates = []
+    for text in texts[:2]:
+        template = next(
+            (animations_by_id[ref] for ref in text.get("extra_refs", []) if ref in animations_by_id),
+            None,
+        )
+        text_animation_templates.append(template)
+
     preset = {
         "id": str(uuid.uuid4())[:8],
         "name": preset_name,
@@ -322,8 +332,10 @@ def save_preset_from_project(
         # 원본 복제를 위한 raw materials 일부 보존
         "raw_template": {
             "effects": details["raw_materials"].get("effects", []),
+            "video_effects": details["raw_materials"].get("video_effects", []),
             "transitions": details["raw_materials"].get("transitions", []),
-            "material_animations": details["raw_materials"].get("material_animations", [])
+            "material_animations": raw_animations,
+            "text_animations": text_animation_templates,
         }
     }
 
@@ -347,8 +359,13 @@ def delete_preset(preset_id: str) -> bool:
     return False
 
 
-def apply_preset_to_draft(draft_folder_path: str, preset: Dict[str, Any]) -> bool:
-    """새로 생성된 CapCut 프로젝트(초안)에 프리셋의 캡컷 효과, 전환 효과, 자막 스타일을 직접 주입합니다."""
+def apply_preset_to_draft(draft_folder_path: str, preset: Dict[str, Any],
+                          transition_segment_ids: Optional[set] = None) -> bool:
+    """새로 생성된 CapCut 프로젝트(초안)에 프리셋의 캡컷 효과, 전환 효과, 자막 스타일을 직접 주입합니다.
+
+    transition_segment_ids를 주면 그 영상 클립 뒤에만 전환을 넣는다. 한 문장을 여러 컷으로 나눈
+    초안에서 문장 경계에만 전환이 들어가게 할 때 쓴다.
+    """
     content_path = os.path.join(draft_folder_path, "draft_content.json")
     if not os.path.exists(content_path):
         return False
@@ -359,25 +376,23 @@ def apply_preset_to_draft(draft_folder_path: str, preset: Dict[str, Any]) -> boo
 
         materials = content.setdefault("materials", {})
         tracks = content.setdefault("tracks", [])
+        video_tracks = [tr for tr in tracks if tr.get("type") == "video"]
+        text_tracks = [tr for tr in tracks if tr.get("type") == "text"]
 
         # -------------------------------------------------------------
         # 1. 전환 효과 (Transitions) 주입
         # -------------------------------------------------------------
         preset_transitions = preset.get("raw_template", {}).get("transitions", []) or preset.get("transitions", [])
         if preset_transitions:
-            target_trans = copy.deepcopy(preset_transitions[0])
-            # 새 UUID 부여 및 등록
-            trans_id = str(uuid.uuid4()).upper()
-            target_trans["id"] = trans_id
-            materials.setdefault("transitions", []).append(target_trans)
-
-            # 비디오 트랙을 찾아서 컷과 컷 사이에 전환 효과 적용
-            for tr in tracks:
-                if tr.get("type") == "video":
-                    segs = tr.get("segments", [])
-                    # 마지막 세그먼트를 제외한 앞 세그먼트들에 전환 효과 바인딩
-                    for s in segs[:-1]:
-                        s["transition_id"] = trans_id
+            for tr in video_tracks:
+                for segment in tr.get("segments", [])[:-1]:
+                    if transition_segment_ids is not None and segment.get("id") not in transition_segment_ids:
+                        continue
+                    target_trans = copy.deepcopy(preset_transitions[0])
+                    trans_id = uuid.uuid4().hex
+                    target_trans["id"] = trans_id
+                    materials.setdefault("transitions", []).append(target_trans)
+                    segment.setdefault("extra_material_refs", []).append(trans_id)
 
         # -------------------------------------------------------------
         # 2. 텍스트 효과 (Text Effects) 주입
@@ -391,6 +406,48 @@ def apply_preset_to_draft(draft_folder_path: str, preset: Dict[str, Any]) -> boo
             applied_effect_id = str(uuid.uuid4()).upper()
             target_eff["id"] = applied_effect_id
             materials.setdefault("effects", []).append(target_eff)
+
+        preset_video_effects = preset.get("raw_template", {}).get("video_effects", []) or [
+            e for e in preset_effects if e.get("type") in ("video_effect", "face_effect")
+        ]
+        if preset_video_effects and video_tracks and video_tracks[0].get("segments"):
+            video_effect = copy.deepcopy(preset_video_effects[0])
+            video_effect_id = uuid.uuid4().hex
+            video_effect["id"] = video_effect_id
+            video_effect["apply_target_type"] = 0
+            materials.setdefault("video_effects", []).append(video_effect)
+            video_tracks[0]["segments"][0].setdefault("extra_material_refs", []).append(video_effect_id)
+
+        text_animation_templates = preset.get("raw_template", {}).get("text_animations", [])
+        if not text_animation_templates:
+            fallback_animation = next(
+                (a for a in preset.get("raw_template", {}).get("material_animations", [])
+                 if a.get("type") == "sticker_animation"), None
+            )
+            if fallback_animation:
+                text_animation_templates = [fallback_animation]
+        if text_animation_templates:
+            replaced_ids = set()
+            existing_animation_ids = {
+                item.get("id") for item in materials.get("material_animations", [])
+            }
+            for tr in text_tracks:
+                for idx, segment in enumerate(tr.get("segments", [])):
+                    template = text_animation_templates[0 if idx == 0 else min(1, len(text_animation_templates) - 1)]
+                    if not template:
+                        continue
+                    old_refs = segment.setdefault("extra_material_refs", [])
+                    replaced_ids.update(ref for ref in old_refs if ref in existing_animation_ids)
+                    segment["extra_material_refs"] = [ref for ref in old_refs if ref not in existing_animation_ids]
+                    animation = copy.deepcopy(template)
+                    animation_id = uuid.uuid4().hex
+                    animation["id"] = animation_id
+                    materials.setdefault("material_animations", []).append(animation)
+                    segment.setdefault("extra_material_refs", []).append(animation_id)
+            materials["material_animations"] = [
+                item for item in materials.get("material_animations", [])
+                if item.get("id") not in replaced_ids
+            ]
 
         # -------------------------------------------------------------
         # 3. 자막 스타일 & 폰트 적용
@@ -439,14 +496,13 @@ def apply_preset_to_draft(draft_folder_path: str, preset: Dict[str, Any]) -> boo
 
         # 4. 텍스트 트랙의 훅 세그먼트에 텍스트 효과(네온 등) 연결
         if applied_effect_id:
-            for tr in tracks:
-                if tr.get("type") == "text":
-                    segs = tr.get("segments", [])
-                    if segs:
-                        hook_seg = segs[0]
-                        extra_refs = hook_seg.setdefault("extra_material_refs", [])
-                        if applied_effect_id not in extra_refs:
-                            extra_refs.append(applied_effect_id)
+            for tr in text_tracks:
+                segs = tr.get("segments", [])
+                if segs:
+                    hook_seg = segs[0]
+                    extra_refs = hook_seg.setdefault("extra_material_refs", [])
+                    if applied_effect_id not in extra_refs:
+                        extra_refs.append(applied_effect_id)
 
         # 저장
         with open(content_path, "w", encoding="utf-8") as f:

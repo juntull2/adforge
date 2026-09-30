@@ -1,0 +1,22 @@
+- generic [active] [ref=f39e1]:
+  - main [ref=f39e2]:
+    - generic [ref=f39e4]:
+      - generic [ref=f39e5]:
+        - link [ref=f39e6] [cursor=pointer]:
+          - /url: /
+          - img "아이템스카우트 로고 심볼" [ref=f39e7]
+          - img "아이템스카우트 로고 텍스트" [ref=f39e8]
+        - heading "회원가입" [level=1] [ref=f39e9]
+      - generic [ref=f39e12]:
+        - text: 이메일
+        - generic [ref=f39e13]:
+          - textbox "이메일" [ref=f39e14]:
+            - /placeholder: 이메일 입력
+          - button "인증코드 발송" [disabled]
+      - generic [ref=f39e15]:
+        - text: 이미 가입하셨다면
+        - link "로그인하러가기" [ref=f39e16] [cursor=pointer]:
+          - /url: /signin
+  - button [ref=f39e17] [cursor=pointer]:
+    - img "채널톡 상담" [ref=f39e18]
+  - alert [ref=f39e19]

@@ -1,0 +1,368 @@
+- generic [active] [ref=f31e1]:
+  - banner [ref=f31e2]:
+    - navigation [ref=f31e3]:
+      - link [ref=f31e4] [cursor=pointer]:
+        - /url: /
+        - img "아이템스카우트 로고 심볼" [ref=f31e5]
+      - list [ref=f31e6]:
+        - listitem [ref=f31e7]:
+          - generic [ref=f31e8]: BETA
+          - link "아이템등록" [ref=f31e9] [cursor=pointer]:
+            - /url: /register/home
+        - listitem [ref=f31e10]:
+          - link "아이템발굴" [ref=f31e11] [cursor=pointer]:
+            - /url: /category
+        - listitem [ref=f31e12]:
+          - link "키워드분석" [ref=f31e13] [cursor=pointer]:
+            - /url: /keyword
+        - listitem [ref=f31e14]:
+          - generic [ref=f31e15]: 랭킹추적
+          - link "일간" [ref=f31e16] [cursor=pointer]:
+            - /url: /tracking/daily
+          - generic [ref=f31e17]: "|"
+          - link "실시간" [ref=f31e18] [cursor=pointer]:
+            - /url: /tracking/realtime
+        - listitem [ref=f31e19]:
+          - link "유틸리티" [ref=f31e20] [cursor=pointer]:
+            - /url: /utility
+      - generic [ref=f31e21]:
+        - list [ref=f31e22]:
+          - listitem [ref=f31e23]:
+            - link "멤버십" [ref=f31e24] [cursor=pointer]:
+              - /url: /membership
+          - listitem [ref=f31e25]:
+            - link "가이드" [ref=f31e26] [cursor=pointer]:
+              - /url: https://school.itemscout.io/
+        - link [ref=f31e28] [cursor=pointer]:
+          - /url: /signin
+          - button "로그인" [ref=f31e29]
+  - main [ref=f31e30]:
+    - generic [ref=f31e32]:
+      - generic [ref=f31e33]:
+        - generic [ref=f31e34]:
+          - heading "키워드 검색" [level=2] [ref=f31e35]
+          - generic [ref=f31e36]:
+            - switch [ref=f31e37] [cursor=pointer]
+            - generic [ref=f31e38]: 간편검색
+            - paragraph [ref=f31e39]: 연관키워드 및 간략한 데이터만 한 눈에 확인 할 수 있습니다.
+        - generic [ref=f31e40]:
+          - generic [ref=f31e41]:
+            - generic "search" [ref=f31e42]: 
+            - textbox "검색어를 입력해주세요" [ref=f31e43]
+          - button "검색" [ref=f31e44] [cursor=pointer]
+      - button [ref=f31e45] [cursor=pointer]:
+        - img "아이템스카우트배대지2" [ref=f31e46]
+    - generic [ref=f31e47]:
+      - generic [ref=f31e49]:
+        - heading [level=3] [ref=f31e50]:
+          - button "트렌드 키워드 " [expanded] [ref=f31e51] [cursor=pointer]:
+            - heading "트렌드 키워드" [level=2] [ref=f31e52]
+            - generic [ref=f31e53]: 
+        - region "트렌드 키워드 " [ref=f31e58]:
+          - generic [ref=f31e60]:
+            - generic [ref=f31e62]:
+              - generic [ref=f31e63]:
+                - heading "일간 트렌드 키워드" [level=4] [ref=f31e64]
+                - generic [ref=f31e65]:
+                  - generic [ref=f31e66]: 2026-09-29 05:43 기준
+                  - button "" [ref=f31e67] [cursor=pointer]:
+                    - generic "download" [ref=f31e68]: 
+              - table [ref=f31e69]:
+                - rowgroup [ref=f31e70]:
+                  - row [ref=f31e71]:
+                    - columnheader "" [ref=f31e72]:
+                      - generic "star" [ref=f31e74]: 
+                    - columnheader "순위" [ref=f31e75]
+                    - columnheader "키워드" [ref=f31e76]
+                    - columnheader "대표 카테고리" [ref=f31e77]
+                    - columnheader "검색수" [ref=f31e78]
+                    - columnheader "상품수" [ref=f31e79]
+                    - columnheader "경쟁강도" [ref=f31e80]
+                - rowgroup [ref=f31e81]:
+                  - row [ref=f31e82] [cursor=pointer]:
+                    - cell "" [ref=f31e83]:
+                      - generic "star" [ref=f31e84]: 
+                    - cell "1" [ref=f31e85]
+                    - cell "케이스티파이" [ref=f31e86]
+                    - cell "-" [ref=f31e87]
+                    - cell "1,069,200" [ref=f31e88]
+                    - cell "7,328" [ref=f31e89]
+                    - cell "0.01" [ref=f31e90]
+                  - row [ref=f31e91] [cursor=pointer]:
+                    - cell "" [ref=f31e92]:
+                      - generic "star" [ref=f31e93]: 
+                    - cell "2" [ref=f31e94]
+                    - cell "자라" [ref=f31e95]
+                    - cell "-" [ref=f31e96]
+                    - cell "1,555,700" [ref=f31e97]
+                    - cell "2,021,783" [ref=f31e98]
+                    - cell "1.3" [ref=f31e99]
+                  - row [ref=f31e100] [cursor=pointer]:
+                    - cell "" [ref=f31e101]:
+                      - generic "star" [ref=f31e102]: 
+                    - cell "3" [ref=f31e103]
+                    - cell "안다르" [ref=f31e104]
+                    - cell "-" [ref=f31e105]
+                    - cell "482,500" [ref=f31e106]
+                    - cell "81,605" [ref=f31e107]
+                    - cell "0.17" [ref=f31e108]
+                  - row [ref=f31e109] [cursor=pointer]:
+                    - cell "" [ref=f31e110]:
+                      - generic "star" [ref=f31e111]: 
+                    - cell "4" [ref=f31e112]
+                    - cell "파라다이스그레인" [ref=f31e113]
+                    - cell "-" [ref=f31e114]
+                    - cell "310,100" [ref=f31e115]
+                    - cell "18,984" [ref=f31e116]
+                    - cell "0.06" [ref=f31e117]
+                  - row [ref=f31e118] [cursor=pointer]:
+                    - cell "" [ref=f31e119]:
+                      - generic "star" [ref=f31e120]: 
+                    - cell "5" [ref=f31e121]
+                    - cell "탑텐" [ref=f31e122]
+                    - cell "-" [ref=f31e123]
+                    - cell "387,200" [ref=f31e124]
+                    - cell "300,690" [ref=f31e125]
+                    - cell "0.78" [ref=f31e126]
+                  - row [ref=f31e127] [cursor=pointer]:
+                    - cell "" [ref=f31e128]:
+                      - generic "star" [ref=f31e129]: 
+                    - cell "6" [ref=f31e130]
+                    - cell "루이비통" [ref=f31e131]
+                    - cell "-" [ref=f31e132]
+                    - cell "662,100" [ref=f31e133]
+                    - cell "569,018" [ref=f31e134]
+                    - cell "0.86" [ref=f31e135]
+                  - row [ref=f31e136] [cursor=pointer]:
+                    - cell "" [ref=f31e137]:
+                      - generic "star" [ref=f31e138]: 
+                    - cell "7" [ref=f31e139]
+                    - cell "갤럭시폴드8" [ref=f31e140]
+                    - cell "-" [ref=f31e141]
+                    - cell "707,900" [ref=f31e142]
+                    - cell "221,064" [ref=f31e143]
+                    - cell "0.31" [ref=f31e144]
+                  - row [ref=f31e145] [cursor=pointer]:
+                    - cell "" [ref=f31e146]:
+                      - generic "star" [ref=f31e147]: 
+                    - cell "8" [ref=f31e148]
+                    - cell "룰루레몬" [ref=f31e149]
+                    - cell "-" [ref=f31e150]
+                    - cell "481,700" [ref=f31e151]
+                    - cell "159,651" [ref=f31e152]
+                    - cell "0.33" [ref=f31e153]
+                  - row [ref=f31e154] [cursor=pointer]:
+                    - cell "" [ref=f31e155]:
+                      - generic "star" [ref=f31e156]: 
+                    - cell "9" [ref=f31e157]
+                    - cell "h&m" [ref=f31e158]
+                    - cell "-" [ref=f31e159]
+                    - cell "362,100" [ref=f31e160]
+                    - cell "96,029" [ref=f31e161]
+                    - cell "0.27" [ref=f31e162]
+                  - row [ref=f31e163] [cursor=pointer]:
+                    - cell "" [ref=f31e164]:
+                      - generic "star" [ref=f31e165]: 
+                    - cell "10" [ref=f31e166]
+                    - cell "마시모두띠" [ref=f31e167]
+                    - cell "-" [ref=f31e168]
+                    - cell "353,500" [ref=f31e169]
+                    - cell "80,848" [ref=f31e170]
+                    - cell "0.23" [ref=f31e171]
+            - generic [ref=f31e173]:
+              - generic [ref=f31e174]:
+                - heading "주간 트렌드 키워드" [level=4] [ref=f31e175]
+                - generic [ref=f31e176]:
+                  - generic [ref=f31e177]: 2026-09-29 07:21 기준
+                  - button "" [ref=f31e178] [cursor=pointer]:
+                    - generic "download" [ref=f31e179]: 
+              - table [ref=f31e180]:
+                - rowgroup [ref=f31e181]:
+                  - row [ref=f31e182]:
+                    - columnheader "" [ref=f31e183]:
+                      - generic "star" [ref=f31e185]: 
+                    - columnheader "순위" [ref=f31e186]
+                    - columnheader "키워드" [ref=f31e187]
+                    - columnheader "대표 카테고리" [ref=f31e188]
+                    - columnheader "검색수" [ref=f31e189]
+                    - columnheader "상품수" [ref=f31e190]
+                    - columnheader "경쟁강도" [ref=f31e191]
+                - rowgroup [ref=f31e192]:
+                  - row [ref=f31e193] [cursor=pointer]:
+                    - cell "" [ref=f31e194]:
+                      - generic "star" [ref=f31e195]: 
+                    - cell "1" [ref=f31e196]
+                    - cell "케이스티파이" [ref=f31e197]
+                    - cell "-" [ref=f31e198]
+                    - cell "1,069,200" [ref=f31e199]
+                    - cell "7,328" [ref=f31e200]
+                    - cell "0.01" [ref=f31e201]
+                  - row [ref=f31e202] [cursor=pointer]:
+                    - cell "" [ref=f31e203]:
+                      - generic "star" [ref=f31e204]: 
+                    - cell "2" [ref=f31e205]
+                    - cell "자라" [ref=f31e206]
+                    - cell "-" [ref=f31e207]
+                    - cell "1,555,700" [ref=f31e208]
+                    - cell "2,021,783" [ref=f31e209]
+                    - cell "1.3" [ref=f31e210]
+                  - row [ref=f31e211] [cursor=pointer]:
+                    - cell "" [ref=f31e212]:
+                      - generic "star" [ref=f31e213]: 
+                    - cell "3" [ref=f31e214]
+                    - cell "갤럭시폴드8" [ref=f31e215]
+                    - cell "-" [ref=f31e216]
+                    - cell "707,900" [ref=f31e217]
+                    - cell "221,064" [ref=f31e218]
+                    - cell "0.31" [ref=f31e219]
+                  - row [ref=f31e220] [cursor=pointer]:
+                    - cell "" [ref=f31e221]:
+                      - generic "star" [ref=f31e222]: 
+                    - cell "4" [ref=f31e223]
+                    - cell "안다르" [ref=f31e224]
+                    - cell "-" [ref=f31e225]
+                    - cell "482,500" [ref=f31e226]
+                    - cell "81,605" [ref=f31e227]
+                    - cell "0.17" [ref=f31e228]
+                  - row [ref=f31e229] [cursor=pointer]:
+                    - cell "" [ref=f31e230]:
+                      - generic "star" [ref=f31e231]: 
+                    - cell "5" [ref=f31e232]
+                    - cell "유니클로" [ref=f31e233]
+                    - cell "-" [ref=f31e234]
+                    - cell "1,852,800" [ref=f31e235]
+                    - cell "267,770" [ref=f31e236]
+                    - cell "0.14" [ref=f31e237]
+                  - row [ref=f31e238] [cursor=pointer]:
+                    - cell "" [ref=f31e239]:
+                      - generic "star" [ref=f31e240]: 
+                    - cell "6" [ref=f31e241]
+                    - cell "창억떡" [ref=f31e242]
+                    - cell "-" [ref=f31e243]
+                    - cell "451,600" [ref=f31e244]
+                    - cell "1,274" [ref=f31e245]
+                    - cell "0" [ref=f31e246]
+                  - row [ref=f31e247] [cursor=pointer]:
+                    - cell "" [ref=f31e248]:
+                      - generic "star" [ref=f31e249]: 
+                    - cell "7" [ref=f31e250]
+                    - cell "룰루레몬" [ref=f31e251]
+                    - cell "-" [ref=f31e252]
+                    - cell "481,700" [ref=f31e253]
+                    - cell "159,651" [ref=f31e254]
+                    - cell "0.33" [ref=f31e255]
+                  - row [ref=f31e256] [cursor=pointer]:
+                    - cell "" [ref=f31e257]:
+                      - generic "star" [ref=f31e258]: 
+                    - cell "8" [ref=f31e259]
+                    - cell "정관장" [ref=f31e260]
+                    - cell "-" [ref=f31e261]
+                    - cell "340,600" [ref=f31e262]
+                    - cell "75,663" [ref=f31e263]
+                    - cell "0.22" [ref=f31e264]
+                  - row [ref=f31e265] [cursor=pointer]:
+                    - cell "" [ref=f31e266]:
+                      - generic "star" [ref=f31e267]: 
+                    - cell "9" [ref=f31e268]
+                    - cell "탑텐" [ref=f31e269]
+                    - cell "-" [ref=f31e270]
+                    - cell "387,200" [ref=f31e271]
+                    - cell "300,690" [ref=f31e272]
+                    - cell "0.78" [ref=f31e273]
+                  - row [ref=f31e274] [cursor=pointer]:
+                    - cell "" [ref=f31e275]:
+                      - generic "star" [ref=f31e276]: 
+                    - cell "10" [ref=f31e277]
+                    - cell "h&m" [ref=f31e278]
+                    - cell "-" [ref=f31e279]
+                    - cell "362,100" [ref=f31e280]
+                    - cell "96,029" [ref=f31e281]
+                    - cell "0.27" [ref=f31e282]
+      - generic [ref=f31e283]:
+        - generic [ref=f31e284]:
+          - generic [ref=f31e285] [cursor=pointer]:
+            - text: 검색 내역
+            - generic [ref=f31e286]: 
+          - generic [ref=f31e290] [cursor=pointer]:
+            - text: 즐겨찾기
+            - generic [ref=f31e291]: 
+        - generic [ref=f31e294]:
+          - generic [ref=f31e295]:
+            - generic [ref=f31e296]:
+              - button " 보기옵션" [ref=f31e297] [cursor=pointer]:
+                - generic "Playlist_Add" [ref=f31e298]: 
+                - text: 보기옵션
+              - button " 선택삭제" [disabled]:
+                - generic "DeleteForever": 
+                - text: 선택삭제
+            - generic [ref=f31e299]:
+              - button " 엑셀 다운로드" [ref=f31e300] [cursor=pointer]:
+                - generic "download" [ref=f31e301]: 
+                - text: 엑셀 다운로드
+              - button "" [ref=f31e302] [cursor=pointer]:
+                - generic "expand_all" [ref=f31e303]: 
+          - generic [ref=f31e304]:
+            - region "scrollable content" [ref=f31e311]:
+              - table [ref=f31e313]:
+                - rowgroup [ref=f31e314]:
+                  - row [ref=f31e315]:
+                    - columnheader [ref=f31e316]
+                    - columnheader "" [ref=f31e321]:
+                      - generic "star" [ref=f31e326]: 
+                    - columnheader "키워드" [ref=f31e327]
+                    - columnheader "대표 카테고리" [ref=f31e335]
+                    - columnheader "키워드 분류" [ref=f31e340]
+                    - columnheader "검색수" [ref=f31e345]
+                    - columnheader "상품수" [ref=f31e350]
+                    - columnheader "경쟁강도" [ref=f31e355]
+                    - columnheader "평균 광고클릭수" [ref=f31e360]
+                    - columnheader "광고 클릭 경쟁률" [ref=f31e365]
+                    - columnheader "클릭대비 광고비" [ref=f31e370]
+            - generic [ref=f31e374]:
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - region "scrollable content":
+                        - generic:
+                          - table
+        - heading "확인 모달" [level=2] [ref=f31e376]
+        - heading "엑셀 다운로드 범위 선택" [level=2] [ref=f31e377]
+  - contentinfo [ref=f31e378]:
+    - generic [ref=f31e379]:
+      - generic [ref=f31e380]:
+        - img "아이템스카우트 로고 심볼" [ref=f31e381]
+        - list [ref=f31e382]:
+          - listitem [ref=f31e383]: "주식회사 문리버|대표: 문승우|주소: 서울특별시 구로구 디지털로 300, 12층 1233호"
+          - listitem [ref=f31e384]: "사업자등록번호: 505-81-86012|통신판매신고번호: 제 2023-서울구로-2317호"
+          - listitem [ref=f31e385]:
+            - generic [ref=f31e386]:
+              - text: "전화:"
+              - link "070-8833-3002" [ref=f31e387] [cursor=pointer]:
+                - /url: tel:070-8833-3002
+            - text: "|"
+            - generic [ref=f31e388]:
+              - text: "메일:"
+              - link "help@itemscout.io" [ref=f31e389] [cursor=pointer]:
+                - /url: mailto:help@itemscout.io
+      - navigation [ref=f31e391]:
+        - link "회사소개" [ref=f31e392] [cursor=pointer]:
+          - /url: https://company.itemscout.io/
+        - link "이용약관" [ref=f31e393] [cursor=pointer]:
+          - /url: /policy/service/20210805
+        - link "모바일 앱" [ref=f31e394] [cursor=pointer]:
+          - /url: https://play.google.com/store/apps/details?id=io.itemscout.app
+        - button "문의/상담" [ref=f31e395] [cursor=pointer]
+        - link "채용안내" [ref=f31e396] [cursor=pointer]:
+          - /url: https://company.itemscout.io/#jump-recruit
+        - link "개인정보 처리방침" [ref=f31e397] [cursor=pointer]:
+          - /url: /policy/privacy
+        - link "확장 프로그램" [ref=f31e398] [cursor=pointer]:
+          - /url: https://chrome.google.com/webstore/detail/itemscout/ecmeogcbcoalojmkfkmancobmiahaigg?hl=ko
+        - link "강의 제휴" [ref=f31e399] [cursor=pointer]:
+          - /url: mailto:help@itemscout.io
+      - button "" [ref=f31e400] [cursor=pointer]:
+        - generic "upgrade" [ref=f31e401]: 
+  - button [ref=f31e402] [cursor=pointer]:
+    - img "채널톡 상담" [ref=f31e403]
+  - alert [ref=f31e404]

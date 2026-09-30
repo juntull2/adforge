@@ -1,0 +1,43 @@
+<?svml using="@hypit/markup@1"?>
+<svml>
+  <import as="time" from="@hypit/timeline-author@1"/>
+  <import as="spatial" from="@hypit/spatial@1"/>
+  <import as="fonts" from="@hypit/fonts-open@1"/>
+  <import as="film" from="@hypit/film@1"/>
+  <import as="media" from="@hypit/media@1"/>
+  <import as="pipeline" from="@hypit/media-pipeline@1"/>
+  <import as="media-track" from="@hypit/media-track@1"/>
+  <import as="audio" from="@hypit/audio-track@1"/>
+  <import as="render" from="@hypit/render-hyperframes@1"/>
+  <import as="style" source="./main.svs"/>
+
+  <time:Clock id="clock" frame-rate="30"/>
+  <time:Timeline id="timeline" clock={clock} end="47s"/>
+  <spatial:Canvas id="canvas" width="1080" height="1920"/>
+  <spatial:Frame id="full" within={canvas} left="0%" top="0%" right="100%" bottom="100%"/>
+  <fonts:Stack id="font" family="noto-sans-kr" weight="900" style="normal"/>
+
+  <media:Video id="raw-video" src="../../temp_videos/retiragen_remastered/master_clean_cfr.mp4"/>
+  <media:Audio id="raw-audio" src="../../temp_videos/retiragen_remastered/master_audio.wav"/>
+
+  <pipeline:Normalize id="norm-video" source={raw-video} clock={clock}
+    video="primary-moving" audio="none" span-authority="video"/>
+  <pipeline:Normalize id="norm-audio" source={raw-audio} clock={clock}
+    video="none" audio="default" span-authority="audio"/>
+
+  <media-track:Track id="video-layer" timeline={timeline.timeline} canvas={canvas}>
+    <media-track:Item id="main-video" media={norm-video.media} frame={full}
+      at="0s" for="47s" appearance={style.media.full}/>
+  </media-track:Track>
+
+  <audio:Track id="audio-layer" timeline={timeline.timeline}>
+    <audio:Item id="master-sound" source={norm-audio.media} at="0s" for="47s" playback="once"/>
+  </audio:Track>
+
+  <film:Film id="main" canvas={canvas} timeline={timeline.timeline} appearance={style.film.main}>
+    <film:Track source={video-layer.visual}/>
+    <film:Track source={audio-layer.audio}/>
+  </film:Film>
+
+  <render:Video id="final" composition={main.composition} timeline={timeline.timeline}/>
+</svml>

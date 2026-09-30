@@ -1,0 +1,32 @@
+=== [Page: 메타 광고 레퍼런스 모음] ===
+Block [paragraph] (ID: 3d0f1019-0fb1-80ef-b29e-db9898295e51): 아래 표에 레퍼런스를 계속 추가해두면, 캠페인/소재 기획할 때 빠르게 꺼내볼 수 있어요.
+Block [heading_2] (ID: 1486efc3-8af2-4c07-85eb-25845cafe6ab): 레퍼런스 모음
+Block [table] (ID: cecc9bbe-1d8f-4cfe-a299-1dc0d56127b3): 
+   Row: ['기획 내용', '레퍼런스 링크', '브랜드 선택', '진행 여부', '날짜']
+   Row: ['', '', '', '', '2026-09-03']
+   Row: ['', '', '', '', '']
+   Row: ['', '', '', '', '']
+   Row: ['', '', '', '', '']
+   Row: ['', '', '', '', '']
+   Row: ['', '', '', '', '']
+Block [heading_2] (ID: 1a796b19-aae4-41bb-a7dd-4d2935f1a427): 태그/분류 가이드 (선택)
+Block [bulleted_list_item] (ID: c9bfeb0a-8e4a-458c-b50a-b42fdf96a584): 카테고리(목적) 예시: 인지도, 트래픽, 전환, 리타겟팅, 앱 설치, 리드
+Block [bulleted_list_item] (ID: 79abae8c-7c0e-4d45-9c0f-ba797291b7be): 크리에이티브 유형 예시: UGC, 인터뷰, 전/후 비교, 튜토리얼, 리뷰/후기, 밈, 슬라이드형
+Block [bulleted_list_item] (ID: 7704760a-3e51-4529-9bb7-f59b8f0aa260): 포맷: 피드(1:1/4:5), 릴스(9:16), 스토리(9:16)
+Block [bulleted_list_item] (ID: f1d51fdf-5240-4826-b5ef-59c5dca869af): 링크: Meta Ad Library / 인스타 포스트 / 랜딩페이지 / 스크린샷(파일 URL) 등
+Block [heading_2] (ID: a55215c6-562d-4a41-ba28-ae762551c85b): 사용 팁
+Block [bulleted_list_item] (ID: 2968c290-3b14-4498-ab5d-77ec6d10ae55): 같은 캠페인의 소재가 여러 개면 ID를 001-a, 001-b처럼 파생해서 관리해도 좋아요.
+Block [bulleted_list_item] (ID: 95446bba-f7f2-4bd9-b548-5f1c6174dbd7): "크리에이티브 포인트"에는 첫 3초 훅/자막/컷 전환/제품 노출 타이밍 등을 적어두면 재사용이 쉬워요.
+Block [child_database] (ID: 3d0f1019-0fb1-814c-9aee-db1ed0bf1188): 
+
+=== [Database: 3d0f1019-0fb1-814c-9aee-db1ed0bf1188] ===
+DB query failed: 400 {"object":"error","status":400,"code":"validation_error","message":"Databases with multiple data sources are not supported in this API version.","additional_data":{"error_type":"multiple_data_sources_for_database","database_id":"3d0f1019-0fb1-814c-9aee-db1ed0bf1188","child_data_source_ids":["3d0f1019-0fb1-81dd-800f-000b3fe0dc52","3dcf1019-0fb1-80f5-a133-000ba0753e48"],"minimum_api_version":"2025-09-03"},"request_id":"56e93ea4-14a2-4244-98a8-1ea1d92f3a39"}
+
+=== [Search for '검증' in Notion] ===
+Found 0 items with keyword '검증':
+
+=== [Search for '브랜드' in Notion] ===
+Found 0 items with keyword '브랜드':
+
+=== [Search for '실측' in Notion] ===
+Found 0 items with keyword '실측':

@@ -1,0 +1,75 @@
+- generic [ref=f122e12]:
+  - generic [ref=f122e15]:
+    - link "Meta 광고 라이브러리" [ref=f122e18] [cursor=pointer]:
+      - /url: /ads/library/?source=fb-logo
+    - generic [ref=f122e21]: 광고 라이브러리
+    - menuitem "광고 라이브러리 보고서" [ref=f122e24] [cursor=pointer]
+    - menuitem "광고 라이브러리 API" [ref=f122e27] [cursor=pointer]
+    - menuitem "브랜디드 콘텐츠" [ref=f122e30] [cursor=pointer]
+    - menuitem "Open navigation panel" [ref=f122e33] [cursor=pointer]
+  - generic [ref=f122e40]:
+    - combobox "대한민국" [ref=f122e44] [cursor=pointer]
+    - combobox "모든 광고" [ref=f122e57] [cursor=pointer]
+    - generic [ref=f122e77]:
+      - generic [ref=f122e78]: 키워드 또는 광고주로 검색
+      - generic [ref=f122e89]:
+        - searchbox "키워드 또는 광고주로 검색" [ref=f122e95]: 리포데이
+        - button "지우기" [ref=f122e97] [cursor=pointer]
+  - dialog [ref=f122e99]:
+    - generic [ref=f122e100]:
+      - link [ref=f122e101] [cursor=pointer]:
+        - /url: /
+        - heading [level=4] [ref=f122e102]: 로그인
+      - menuitem [ref=f122e103] [cursor=pointer]
+    - generic [ref=f122e105]:
+      - generic [ref=f122e106]:
+        - heading [level=4] [ref=f122e108]: 광고 라이브러리
+        - menuitem [ref=f122e110] [cursor=pointer]:
+          - heading [level=4] [ref=f122e112]: 광고 라이브러리 보고서
+        - menuitem [ref=f122e114] [cursor=pointer]:
+          - heading [level=4] [ref=f122e116]: 광고 라이브러리 API
+        - menuitem [ref=f122e118] [cursor=pointer]:
+          - heading [level=4] [ref=f122e120]: 브랜디드 콘텐츠
+      - separator [ref=f122e121]
+      - generic [ref=f122e122]:
+        - menuitem [ref=f122e124] [cursor=pointer]:
+          - heading [level=4] [ref=f122e126]: 시스템 상태
+        - menuitem [ref=f122e128] [cursor=pointer]:
+          - heading [level=4] [ref=f122e130]: 이메일 업데이트 구독
+        - menuitem [ref=f122e132] [cursor=pointer]:
+          - heading [level=4] [ref=f122e134]: FAQ
+        - menuitem [ref=f122e136] [cursor=pointer]:
+          - heading [level=4] [ref=f122e138]: 광고 및 데이터 사용 정보
+        - menuitem [ref=f122e140] [cursor=pointer]:
+          - heading [level=4] [ref=f122e142]: 개인 정보 보호
+        - menuitem [ref=f122e144] [cursor=pointer]:
+          - heading [level=4] [ref=f122e146]: 이용 약관
+        - menuitem [ref=f122e148] [cursor=pointer]:
+          - heading [level=4] [ref=f122e150]: 쿠키
+  - generic [ref=f122e153]:
+    - generic [ref=f122e154]: 시스템 상태
+    - generic [ref=f122e165]:
+      - list [ref=f122e166]:
+        - listitem [ref=f122e167]:
+          - heading [level=3] [ref=f122e168]:
+            - link "광고 라이브러리 API" [ref=f122e169] [cursor=pointer]:
+              - /url: /ads/library/api/?source=archive-landing-page
+        - listitem [ref=f122e170]:
+          - heading [level=3] [ref=f122e171]:
+            - link "광고 및 데이터 사용 정보" [ref=f122e172] [cursor=pointer]:
+              - /url: /ads/about/?entry_product=ad_library
+        - listitem [ref=f122e173]:
+          - heading [level=3] [ref=f122e174]:
+            - link "개인정보처리방침" [ref=f122e175] [cursor=pointer]:
+              - /url: /privacy/center/?entry_point=privacy_basics_redirect
+        - listitem [ref=f122e176]:
+          - heading [level=3] [ref=f122e177]:
+            - link "약관" [ref=f122e178] [cursor=pointer]:
+              - /url: /policies/
+        - listitem [ref=f122e179]:
+          - heading [level=3] [ref=f122e180]:
+            - link "쿠키" [ref=f122e181] [cursor=pointer]:
+              - /url: /policies/cookies/
+      - heading [level=3] [ref=f122e183]:
+        - link "한국어" [ref=f122e184] [cursor=pointer]:
+          - /url: /language/

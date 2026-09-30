@@ -1,0 +1,393 @@
+- generic [active] [ref=f35e12]:
+  - banner [ref=f35e13]:
+    - navigation [ref=f35e14]:
+      - link [ref=f35e15] [cursor=pointer]:
+        - /url: /
+        - img "아이템스카우트 로고 심볼" [ref=f35e16]
+      - list [ref=f35e17]:
+        - listitem [ref=f35e18]:
+          - generic [ref=f35e19]: BETA
+          - link "아이템등록" [ref=f35e20] [cursor=pointer]:
+            - /url: /register/home
+        - listitem [ref=f35e21]:
+          - link "아이템발굴" [ref=f35e22] [cursor=pointer]:
+            - /url: /category
+        - listitem [ref=f35e23]:
+          - link "키워드분석" [ref=f35e24] [cursor=pointer]:
+            - /url: /keyword
+        - listitem [ref=f35e25]:
+          - generic [ref=f35e26]: 랭킹추적
+          - link "일간" [ref=f35e27] [cursor=pointer]:
+            - /url: /tracking/daily
+          - generic [ref=f35e28]: "|"
+          - link "실시간" [ref=f35e29] [cursor=pointer]:
+            - /url: /tracking/realtime
+        - listitem [ref=f35e30]:
+          - link "유틸리티" [ref=f35e31] [cursor=pointer]:
+            - /url: /utility
+      - generic [ref=f35e32]:
+        - list [ref=f35e33]:
+          - listitem [ref=f35e34]:
+            - link "멤버십" [ref=f35e35] [cursor=pointer]:
+              - /url: /membership
+          - listitem [ref=f35e36]:
+            - link "가이드" [ref=f35e37] [cursor=pointer]:
+              - /url: https://school.itemscout.io/
+        - link [ref=f35e39] [cursor=pointer]:
+          - /url: /signin
+          - button "로그인" [ref=f35e40]
+  - main [ref=f35e41]:
+    - generic [ref=f35e42]:
+      - generic [ref=f35e43]:
+        - generic [ref=f35e44]:
+          - generic [ref=f35e45]: 
+          - generic [ref=f35e46]: 셀러를 위한 모든 데이터 분석
+        - generic [ref=f35e47]:
+          - generic [ref=f35e48]: 
+          - textbox "상품을 검색해보세요." [ref=f35e49]
+          - button "검색" [ref=f35e50] [cursor=pointer]
+      - tablist [ref=f35e52]:
+        - tab "일간 트렌드" [selected] [ref=f35e53] [cursor=pointer]
+        - tab "주간 트렌드" [ref=f35e54] [cursor=pointer]
+      - generic [ref=f35e55]:
+        - generic [ref=f35e56]:
+          - button "전체" [ref=f35e57] [cursor=pointer]
+          - button "패션의류" [ref=f35e58] [cursor=pointer]
+          - button "패션잡화" [ref=f35e59] [cursor=pointer]
+          - button "화장품/미용" [ref=f35e60] [cursor=pointer]
+          - button "디지털/가전" [ref=f35e61] [cursor=pointer]
+          - button "가구/인테리어" [ref=f35e62] [cursor=pointer]
+          - button "출산/육아" [ref=f35e63] [cursor=pointer]
+          - button "식품" [ref=f35e64] [cursor=pointer]
+          - button "스포츠/레저" [ref=f35e65] [cursor=pointer]
+          - button "생활/건강" [ref=f35e66] [cursor=pointer]
+        - generic [ref=f35e67]:
+          - generic [ref=f35e68]:
+            - generic [ref=f35e69]:
+              - heading "키워드 Best" [level=4] [ref=f35e70]
+              - paragraph [ref=f35e71]: 네이버쇼핑에서 많이 검색된 키워드입니다.
+            - generic [ref=f35e72]:
+              - button "1 케이스티파이 " [ref=f35e73] [cursor=pointer]:
+                - generic [ref=f35e74]:
+                  - generic [ref=f35e75]: "1"
+                  - generic [ref=f35e76]: 케이스티파이
+                - generic [ref=f35e77]: 
+              - button "2 자라 " [ref=f35e79] [cursor=pointer]:
+                - generic [ref=f35e80]:
+                  - generic [ref=f35e81]: "2"
+                  - generic [ref=f35e82]: 자라
+                - generic [ref=f35e83]: 
+              - button "3 안다르 " [ref=f35e85] [cursor=pointer]:
+                - generic [ref=f35e86]:
+                  - generic [ref=f35e87]: "3"
+                  - generic [ref=f35e88]: 안다르
+                - generic [ref=f35e89]: 
+              - button "4 파라다이스그레인 " [ref=f35e91] [cursor=pointer]:
+                - generic [ref=f35e92]:
+                  - generic [ref=f35e93]: "4"
+                  - generic [ref=f35e94]: 파라다이스그레인
+                - generic [ref=f35e95]: 
+              - button "5 탑텐 " [ref=f35e97] [cursor=pointer]:
+                - generic [ref=f35e98]:
+                  - generic [ref=f35e99]: "5"
+                  - generic [ref=f35e100]: 탑텐
+                - generic [ref=f35e101]: 
+              - button "6 루이비통 " [ref=f35e103] [cursor=pointer]:
+                - generic [ref=f35e104]:
+                  - generic [ref=f35e105]: "6"
+                  - generic [ref=f35e106]: 루이비통
+                - generic [ref=f35e107]: 
+              - button "7 갤럭시폴드8 " [ref=f35e109] [cursor=pointer]:
+                - generic [ref=f35e110]:
+                  - generic [ref=f35e111]: "7"
+                  - generic [ref=f35e112]: 갤럭시폴드8
+                - generic [ref=f35e113]: 
+              - button "8 룰루레몬 " [ref=f35e115] [cursor=pointer]:
+                - generic [ref=f35e116]:
+                  - generic [ref=f35e117]: "8"
+                  - generic [ref=f35e118]: 룰루레몬
+                - generic [ref=f35e119]: 
+              - button "9 h&m " [ref=f35e121] [cursor=pointer]:
+                - generic [ref=f35e122]:
+                  - generic [ref=f35e123]: "9"
+                  - generic [ref=f35e124]: h&m
+                - generic [ref=f35e125]: 
+              - button "10 마시모두띠 " [ref=f35e127] [cursor=pointer]:
+                - generic [ref=f35e128]:
+                  - generic [ref=f35e129]: "10"
+                  - generic [ref=f35e130]: 마시모두띠
+                - generic [ref=f35e131]: 
+          - generic [ref=f35e133]:
+            - generic [ref=f35e134]:
+              - heading "판매량 Best" [level=4] [ref=f35e135]
+              - paragraph [ref=f35e136]: 네이버쇼핑에서 판매량이 높았던 상품들입니다.
+            - generic [ref=f35e138]:
+              - generic [ref=f35e139]:
+                - generic [ref=f35e142] [cursor=pointer]:
+                  - img "판매량 1위 상품 이미지" [ref=f35e144]
+                  - generic [ref=f35e145]: 판매량 1위
+                  - generic [ref=f35e146]:
+                    - generic [ref=f35e147]: 유심사스토어
+                    - generic [ref=f35e148]: 일본 이심 eSIM 도쿄 후쿠오카 소프트뱅크 매일 500MB 무제한 1일 유심사 알림톡
+                - generic [ref=f35e149]:
+                  - generic [ref=f35e150] [cursor=pointer]:
+                    - img "판매량 2위 상품 이미지" [ref=f35e152]
+                    - generic [ref=f35e154]:
+                      - generic [ref=f35e155]: 판매량 2위
+                      - generic [ref=f35e156]: 말톡
+                      - generic [ref=f35e157]: 일본이심 eSIM 후쿠오카 오사카 도쿄 5G로컬망 소프트뱅크1일 1GB e심 로밍전화
+                  - generic [ref=f35e158] [cursor=pointer]:
+                    - img "판매량 3위 상품 이미지" [ref=f35e160]
+                    - generic [ref=f35e162]:
+                      - generic [ref=f35e163]: 판매량 3위
+                      - generic [ref=f35e164]: 도시락이심
+                      - generic [ref=f35e165]: 일본이심 eSIM 도쿄 오사카 후쿠오카 삿포로 e심 무제한데이터 소프트뱅크 매일500MB
+              - generic [ref=f35e166]:
+                - generic [ref=f35e167]:
+                  - generic [ref=f35e168] [cursor=pointer]:
+                    - img "판매량 4위 상품 이미지" [ref=f35e170]
+                    - generic [ref=f35e172]:
+                      - generic [ref=f35e173]: 판매량 4위
+                      - generic [ref=f35e174]: 컬쳐랜드 상품권
+                      - generic [ref=f35e175]: 컬쳐랜드상품권(모바일문화상품권) 5만원
+                  - generic [ref=f35e176] [cursor=pointer]:
+                    - img "판매량 5위 상품 이미지" [ref=f35e178]
+                    - generic [ref=f35e180]:
+                      - generic [ref=f35e181]: 판매량 5위
+                      - generic [ref=f35e182]: 로밍도깨비
+                      - generic [ref=f35e183]: 일본이심 eSIM 오사카 후쿠오카 도쿄 삿포로 e심 소프트뱅크 1일 500MB 무제한
+                - generic [ref=f35e184]:
+                  - generic [ref=f35e185] [cursor=pointer]:
+                    - img "판매량 6위 상품 이미지" [ref=f35e187]
+                    - generic [ref=f35e189]:
+                      - generic [ref=f35e190]: 판매량 6위
+                      - generic [ref=f35e191]: 인포벨홈쇼핑
+                      - generic [ref=f35e192]: 김성길 박사 허리골반 척척핏 2세트 쿨방석 벌집 통풍 허니콤 골반균형 커버 쿨링 사무실
+                  - generic [ref=f35e193] [cursor=pointer]:
+                    - img "판매량 7위 상품 이미지" [ref=f35e195]
+                    - generic [ref=f35e197]:
+                      - generic [ref=f35e198]: 판매량 7위
+                      - generic [ref=f35e199]: 부산요트투어 위드요트
+                      - generic [ref=f35e200]: 부산요트투어 광안리 해변출발 해운대 더베이101 야경 폭죽 드론쇼 예약 소인 주간 위드요트
+      - button [ref=f35e202] [cursor=pointer]:
+        - img "아이템스카우트배대지2" [ref=f35e203]
+      - button "⇩" [ref=f35e204] [cursor=pointer]
+    - generic [ref=f35e205]:
+      - heading "💎" [level=2] [ref=f35e206]
+      - heading "매출상승의 핵심, 키워드에 대한 모든 것" [level=2] [ref=f35e207]
+      - paragraph [ref=f35e208]: 키워드 데이터만큼은 구글, 네이버 대신 아이템스카우트! 키워드의 지표, 차트, 등록된 상품, 연관 키워드까지 모두 확인해보세요.
+      - link "키워드분석 바로가기" [ref=f35e209] [cursor=pointer]:
+        - /url: /keyword
+      - link [ref=f35e210] [cursor=pointer]:
+        - /url: https://school.itemscout.io/wiki/keyword/tab0
+        - text: 자세히 알아보기
+        - paragraph [ref=f35e211]: ↩︎
+      - generic [ref=f35e212]:
+        - generic [ref=f35e213]:
+          - tablist [ref=f35e214]:
+            - tab "키워드 개요" [selected] [ref=f35e215] [cursor=pointer]
+            - tab "상품 목록" [ref=f35e216] [cursor=pointer]
+            - tab "연관 키워드" [ref=f35e217] [cursor=pointer]
+          - generic [ref=f35e219]:
+            - generic [ref=f35e220]:
+              - term [ref=f35e221]: 상품수
+              - definition [ref=f35e222]:
+                - strong [ref=f35e223]: "0"
+                - text: 개
+              - term [ref=f35e224]: 한 달 검색수
+              - definition [ref=f35e225]:
+                - strong [ref=f35e226]: "0"
+                - text: 회
+              - term [ref=f35e227]: 검색 비율
+              - definition [ref=f35e228]:
+                - generic [ref=f35e229]:
+                  - generic [ref=f35e230]:
+                    - text: PC
+                    - strong [ref=f35e231]: "0"
+                    - text: "%"
+                  - generic [ref=f35e232]:
+                    - text: 모바일
+                    - strong [ref=f35e233]: "0"
+                    - text: "%"
+            - generic [ref=f35e234]:
+              - term [ref=f35e235]: 6개월 매출
+              - definition [ref=f35e236]:
+                - strong [ref=f35e237]: "0"
+                - text: 만원
+              - term [ref=f35e238]: 6개월 판매량
+              - definition [ref=f35e239]:
+                - strong [ref=f35e240]: "0"
+                - text: 개
+              - term [ref=f35e241]: 평균 가격
+              - definition [ref=f35e242]:
+                - strong [ref=f35e243]: "0"
+                - text: 원
+            - list [ref=f35e244]:
+              - listitem [ref=f35e245]:
+                - strong [ref=f35e246]: 아주좋음
+                - generic [ref=f35e247]: 경쟁 종합 지표
+              - listitem [ref=f35e248]:
+                - generic [ref=f35e249]: 경쟁강도
+                - strong [ref=f35e250]:
+                  - text: "1.74"
+                  - emphasis [ref=f35e251]: 아주좋음
+              - listitem [ref=f35e252]:
+                - generic [ref=f35e253]: 실거래상품 비율
+                - strong [ref=f35e254]:
+                  - text: 63%
+                  - emphasis [ref=f35e255]: 좋음
+              - listitem [ref=f35e256]:
+                - generic [ref=f35e257]: 해외상품 비율
+                - strong [ref=f35e258]:
+                  - text: 10%
+                  - emphasis [ref=f35e259]: 나쁨
+        - table [ref=f35e261]:
+          - rowgroup [ref=f35e262]:
+            - row [ref=f35e263]:
+              - cell "50" [ref=f35e264]
+              - cell "30" [ref=f35e265]
+              - cell "20" [ref=f35e266]
+            - row [ref=f35e267]:
+              - cell "80" [ref=f35e268]
+              - cell "50" [ref=f35e269]
+              - cell "10" [ref=f35e270]
+            - row [ref=f35e271]:
+              - cell "40" [ref=f35e272]
+              - cell "30" [ref=f35e273]
+              - cell "20" [ref=f35e274]
+    - generic [ref=f35e275]:
+      - heading "🕶" [level=2] [ref=f35e276]
+      - heading "내 상품은 네이버에서 몇 위에 노출 중일까요?" [level=2] [ref=f35e277]
+      - paragraph [ref=f35e278]: 상품이 어떤 키워드에서 몇위에 노출되고 있는지 아이템스카우트가 다 관리할게요. 경쟁력있는 상품이 되도록 리뷰와 가격 변화까지 꼼꼼히 보세요.
+      - link "랭킹 추적 바로가기" [ref=f35e279] [cursor=pointer]:
+        - /url: /tracking/daily
+      - link [ref=f35e280] [cursor=pointer]:
+        - /url: https://school.itemscout.io/tip/ranking-tracking
+        - text: 자세히 알아보기
+        - paragraph [ref=f35e281]: ↩︎
+      - generic [ref=f35e283]:
+        - tablist [ref=f35e284]:
+          - tab "상품 일간 추적" [selected] [ref=f35e285] [cursor=pointer]
+          - tab "실시간 랭킹 추적" [ref=f35e286] [cursor=pointer]
+        - tabpanel "상품 일간 추적" [ref=f35e287]:
+          - table [ref=f35e291]:
+            - rowgroup [ref=f35e292]:
+              - row [ref=f35e293]:
+                - columnheader [ref=f35e294]
+                - columnheader "상품명" [ref=f35e295]
+                - columnheader "가격" [ref=f35e296]
+                - columnheader "리뷰수" [ref=f35e297]
+            - rowgroup [ref=f35e298]:
+              - row [ref=f35e299]:
+                - columnheader [ref=f35e300]
+                - columnheader "RISATORP 리사토르프 수납바스켓" [ref=f35e301]
+                - columnheader "9,900원" [ref=f35e302]
+                - columnheader "2" [ref=f35e303]
+              - row [ref=f35e304]:
+                - columnheader [ref=f35e305]
+                - columnheader "TÄRNABY 테르나뷔 탁상 스탠드" [ref=f35e306]
+                - columnheader "29,900원" [ref=f35e307]
+                - columnheader "85" [ref=f35e308]
+              - row [ref=f35e309]:
+                - columnheader [ref=f35e310]
+                - columnheader "NIKKEBY 니케뷔 4칸서랍장" [ref=f35e311]
+                - columnheader "99,900원" [ref=f35e312]
+                - columnheader "3" [ref=f35e313]
+              - row [ref=f35e314]:
+                - columnheader [ref=f35e315]
+                - columnheader "HÖGSTEN 획스텐 야외용 암체어" [ref=f35e316]
+                - columnheader "129,000원" [ref=f35e317]
+                - columnheader "3" [ref=f35e318]
+    - generic [ref=f35e331]:
+      - heading "👨🏻‍🏫" [level=2] [ref=f35e332]
+      - heading "아이템스카우트 사용에 어려움이 있으시다면" [level=2] [ref=f35e333]
+      - paragraph [ref=f35e334]: 각 메뉴와 기능, 용어들 모두 낯설어서 어떻게 사용해야할지 아직 잘 모르시겠다구요? 지금 아이템스쿨에서 사용 방법과 활용 꿀팀까지 차근차근 확인해보세요.
+      - link "아이템스쿨 바로가기" [ref=f35e335] [cursor=pointer]:
+        - /url: https://school.itemscout.io
+      - generic [ref=f35e337]:
+        - heading "추천 아이템스쿨 컨텐츠" [level=4] [ref=f35e338]
+        - generic [ref=f35e339]:
+          - link "키워드에 대한 모든 것 보기 " [ref=f35e341] [cursor=pointer]:
+            - /url: https://school.itemscout.io/article/what-is-keyword-1
+            - text: 키워드에 대한 모든 것
+            - emphasis [ref=f35e342]: 보기
+            - generic [ref=f35e343]: 
+          - link "무엇을 팔면 좋을까? 보기 " [ref=f35e345] [cursor=pointer]:
+            - /url: https://school.itemscout.io/tip/category_search
+            - text: 무엇을 팔면 좋을까?
+            - emphasis [ref=f35e346]: 보기
+            - generic [ref=f35e347]: 
+          - link "랭킹 추적 활용팁 보기 " [ref=f35e349] [cursor=pointer]:
+            - /url: https://school.itemscout.io/tip/ranking-tracking
+            - text: 랭킹 추적 활용팁
+            - emphasis [ref=f35e350]: 보기
+            - generic [ref=f35e351]: 
+          - link "노출 순위 올리기 전략 보기 " [ref=f35e353] [cursor=pointer]:
+            - /url: https://school.itemscout.io/article/seo-strategy-1
+            - text: 노출 순위 올리기 전략
+            - emphasis [ref=f35e354]: 보기
+            - generic [ref=f35e355]: 
+    - generic [ref=f35e356]:
+      - heading "📖" [level=2] [ref=f35e357]
+      - heading "자주 묻는 질문" [level=2] [ref=f35e358]
+      - paragraph
+      - generic [ref=f35e361]:
+        - generic [ref=f35e362]:
+          - heading [level=3] [ref=f35e363]:
+            - button " 아이템스카우트, 왜 사용해야하나요?" [disabled] [expanded] [ref=f35e364] [cursor=pointer]:
+              - generic "play_circle" [ref=f35e365]: 
+              - text: 아이템스카우트, 왜 사용해야하나요?
+          - region " 아이템스카우트, 왜 사용해야하나요?" [ref=f35e366]:
+            - generic [ref=f35e367]: 온라인 판매업에도 데이터에 기반한 시장조사와 의사결정 과정이 필요합니다. 아이템스카우트는 셀러 여러분의 판매 상품 발굴, 판매 전략 수립, 상품의 노출 순위 관리를 위한 다양한 데이터와 기능을 제공합니다. 무척 빠르고 간편하게요!
+        - heading [level=3] [ref=f35e369]:
+          - button " 아이템스카우트, 꼭 유료로 사용해야하나요?" [ref=f35e370] [cursor=pointer]:
+            - generic "play_circle" [ref=f35e371]: 
+            - text: 아이템스카우트, 꼭 유료로 사용해야하나요?
+        - heading [level=3] [ref=f35e373]:
+          - button " 유료서비스를 미리 체험해 볼 수 있을까요?" [ref=f35e374] [cursor=pointer]:
+            - generic "play_circle" [ref=f35e375]: 
+            - text: 유료서비스를 미리 체험해 볼 수 있을까요?
+    - generic [ref=f35e376]:
+      - heading "✉️" [level=2] [ref=f35e377]
+      - heading [level=2]
+      - paragraph [ref=f35e378]: 아이템스카우트는 더 나은 온라인커머스 시작을 위해 어떤 정보가 효과적이며 필요할까 고민하며 만들어가고 있습니다. 혹시 제안하고 싶은 내용이 있나요?
+      - button "제안하기" [ref=f35e379] [cursor=pointer]
+      - button "⇧" [ref=f35e381] [cursor=pointer]
+  - contentinfo [ref=f35e382]:
+    - generic [ref=f35e383]:
+      - generic [ref=f35e384]:
+        - img "아이템스카우트 로고 심볼" [ref=f35e385]
+        - list [ref=f35e386]:
+          - listitem [ref=f35e387]: "주식회사 문리버|대표: 문승우|주소: 서울특별시 구로구 디지털로 300, 12층 1233호"
+          - listitem [ref=f35e388]: "사업자등록번호: 505-81-86012|통신판매신고번호: 제 2023-서울구로-2317호"
+          - listitem [ref=f35e389]:
+            - generic [ref=f35e390]:
+              - text: "전화:"
+              - link "070-8833-3002" [ref=f35e391] [cursor=pointer]:
+                - /url: tel:070-8833-3002
+            - text: "|"
+            - generic [ref=f35e392]:
+              - text: "메일:"
+              - link "help@itemscout.io" [ref=f35e393] [cursor=pointer]:
+                - /url: mailto:help@itemscout.io
+      - navigation [ref=f35e395]:
+        - link "회사소개" [ref=f35e396] [cursor=pointer]:
+          - /url: https://company.itemscout.io/
+        - link "이용약관" [ref=f35e397] [cursor=pointer]:
+          - /url: /policy/service/20210805
+        - link "모바일 앱" [ref=f35e398] [cursor=pointer]:
+          - /url: https://play.google.com/store/apps/details?id=io.itemscout.app
+        - button "문의/상담" [ref=f35e399] [cursor=pointer]
+        - link "채용안내" [ref=f35e400] [cursor=pointer]:
+          - /url: https://company.itemscout.io/#jump-recruit
+        - link "개인정보 처리방침" [ref=f35e401] [cursor=pointer]:
+          - /url: /policy/privacy
+        - link "확장 프로그램" [ref=f35e402] [cursor=pointer]:
+          - /url: https://chrome.google.com/webstore/detail/itemscout/ecmeogcbcoalojmkfkmancobmiahaigg?hl=ko
+        - link "강의 제휴" [ref=f35e403] [cursor=pointer]:
+          - /url: mailto:help@itemscout.io
+      - button "" [ref=f35e404] [cursor=pointer]:
+        - generic "upgrade" [ref=f35e405]: 
+  - button [ref=f35e406] [cursor=pointer]:
+    - img "채널톡 상담" [ref=f35e407]
+  - alert [ref=f35e408]

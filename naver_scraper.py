@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import hmac
 import hashlib
@@ -128,6 +129,100 @@ def get_brand_and_product_volumes(brand_name: str, product_name: str, customer_i
             "metrics": product_res
         } if product_res else None
     }
+
+
+def _naver_ads_headers(uri: str, customer_id: str, access_license: str, secret_key: str) -> dict:
+    """네이버 검색광고 API 서명 헤더"""
+    timestamp = str(int(time.time() * 1000))
+    message = f"{timestamp}.GET.{uri}"
+    signature = hmac.new(secret_key.encode("utf-8"), message.encode("utf-8"), hashlib.sha256).digest()
+    return {
+        "X-Timestamp": timestamp,
+        "X-API-KEY": access_license,
+        "X-Customer": str(customer_id),
+        "X-Signature": base64.b64encode(signature).decode("utf-8"),
+    }
+
+
+def _parse_naver_count(value) -> int:
+    """'< 10' 같은 표기는 5로 봅니다 (기존 get_naver_search_volume과 같은 규칙)."""
+    if isinstance(value, str) and "<" in value:
+        return 5
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def get_naver_search_volumes(keywords: list, customer_id: str, access_license: str, secret_key: str) -> dict:
+    """
+    여러 키워드의 최근 30일 검색수(PC+모바일)를 한 번에 최대 5개씩 조회합니다.
+    검색광고 API는 공백을 없애고 영문을 대문자로 돌려주므로 같은 규칙으로 맞춰 비교합니다.
+
+    반환: {입력 키워드: {"pc", "mobile", "total", "found", "error"}}
+          found=False는 검색수 데이터가 없는 키워드, error=True는 API 호출 자체가 실패한 키워드입니다.
+    """
+    results = {kw: {"pc": 0, "mobile": 0, "total": 0, "found": False, "error": False} for kw in keywords}
+    if not (customer_id and access_license and secret_key):
+        for kw in results:
+            results[kw]["error"] = True
+        return results
+
+    def _norm(text) -> str:
+        return re.sub(r"[^0-9A-Za-z가-힣]", "", str(text)).upper()
+
+    by_hint = {}
+    for kw in keywords:
+        hint = _norm(kw)
+        if len(hint) >= 2:
+            by_hint.setdefault(hint, []).append(kw)
+
+    uri = "/keywordstool"
+
+    def _fetch(hints):
+        try:
+            res = std_requests.get(
+                "https://api.naver.com" + uri,
+                params={"hintKeywords": ",".join(hints), "showDetail": 1},
+                headers=_naver_ads_headers(uri, customer_id, access_license, secret_key),
+                timeout=8,
+            )
+        except std_requests.RequestException:
+            return None
+        if res.status_code != 200:
+            return None
+        try:
+            return res.json().get("keywordList", [])
+        except ValueError:
+            return None
+
+    hints = list(by_hint)
+    for i in range(0, len(hints), 5):
+        batch = hints[i:i + 5]
+        items = _fetch(batch)
+        failed = set()
+        if items is None:
+            # 묶음 중 하나가 거절되면 전체가 실패하므로 하나씩 다시 조회
+            items = []
+            for hint in batch:
+                part = _fetch([hint])
+                if part is None:
+                    failed.add(hint)
+                else:
+                    items.extend(part)
+                time.sleep(0.2)
+        for item in items:
+            rel = _norm(item.get("relKeyword", ""))
+            if rel in by_hint:
+                pc = _parse_naver_count(item.get("monthlyPcQcCnt"))
+                mo = _parse_naver_count(item.get("monthlyMobileQcCnt"))
+                for kw in by_hint[rel]:
+                    results[kw] = {"pc": pc, "mobile": mo, "total": pc + mo, "found": True, "error": False}
+        for hint in failed:
+            for kw in by_hint[hint]:
+                results[kw]["error"] = True
+        time.sleep(0.2)
+    return results
 
 
 

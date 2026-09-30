@@ -1,0 +1,234 @@
+- generic [ref=f45e2]:
+  - generic [ref=f45e3]:
+    - generic [ref=f45e4]: 🚀 대량의 키워드를 한번에 분석하고 엑셀로 결과를 받아보세요
+    - link "대량 분석하기" [ref=f45e6] [cursor=pointer]:
+      - /url: https://b2b.blackkiwi.net
+    - img [ref=f45e9] [cursor=pointer]
+  - banner [ref=f45e10]:
+    - navigation [ref=f45e11]:
+      - link [ref=f45e14] [cursor=pointer]:
+        - /url: /
+        - img "블랙키위 로고" [ref=f45e15]
+      - list [ref=f45e16]:
+        - listitem [ref=f45e17]:
+          - button "모든 서비스" [ref=f45e18] [cursor=pointer]
+        - listitem [ref=f45e23] [cursor=pointer]: 리소스
+        - listitem [ref=f45e26]: 공유하기
+        - listitem [ref=f45e27]:
+          - link [ref=f45e29] [cursor=pointer]:
+            - /url: https://blackkiwi.notion.site/v2-3e7bd07a20eb45658a247c044b3b3827
+      - list [ref=f45e34]:
+        - listitem [ref=f45e35]:
+          - link "요금제" [ref=f45e36] [cursor=pointer]:
+            - /url: /pricing
+  - main [ref=f45e38]:
+    - generic [ref=f45e41]:
+      - heading "AI 시대의 검색 마케팅을 위한 가장 쉽고 강력한 데이터 분석 툴" [level=1] [ref=f45e42]: AI 시대의 검색 마케팅을 위한가장 쉽고 강력한 데이터 분석 툴
+      - heading "AI 기반 키워드 분석으로 검색 수요 · 경쟁 강도 · AI 인용 현황을 한눈에 파악하고, 성과로 이어질 콘텐츠 주제를 빠르게 찾아보세요." [level=2] [ref=f45e43]: AI 기반 키워드 분석으로 검색 수요 · 경쟁 강도 · AI 인용 현황을 한눈에 파악하고,성과로 이어질 콘텐츠 주제를 빠르게 찾아보세요.
+      - generic [ref=f45e46]:
+        - button [ref=f45e47]
+        - textbox [ref=f45e50]
+        - generic: 분석할
+        - generic [ref=f45e51] [cursor=pointer]: NAVER
+      - generic [ref=f45e59]: 🔥 인기 급상승 키워드
+      - link "더 보기" [ref=f45e65] [cursor=pointer]:
+        - /url: /service/trend
+      - generic [ref=f45e69]:
+        - generic [ref=f45e70]: 32만+
+        - generic [ref=f45e71]: 사용자가 선택한 데이터 분석 툴
+      - generic [ref=f45e120] [cursor=pointer]:
+        - generic [ref=f45e121]:
+          - generic [ref=f45e122]: 블랙키위 멤버십
+          - generic [ref=f45e125]: 광고 없는 쾌적한 분석 환경을 경험해보세요.
+          - generic [ref=f45e126]: 멤버십으로 배너광고를 제거하고 키워드 분석 흐름에 더 집중할 수 있어요.
+        - generic [ref=f45e127]:
+          - text: 14일 무료체험하기
+          - generic [ref=f45e128]: →
+    - generic [ref=f45e130]:
+      - generic [ref=f45e131]:
+        - heading "주요 서비스" [level=1] [ref=f45e132]
+        - heading "키워드 탐색부터 콘텐츠 성과 추적까지, AI 시대의 검색 마케팅 데이터 분석 과정을 한곳에서 해결하세요." [level=2] [ref=f45e135]
+      - generic [ref=f45e141]:
+        - generic [ref=f45e142]:
+          - heading "이렇게 활용해보세요." [level=3] [ref=f45e143]
+          - paragraph [ref=f45e144]: 복잡한 검색 마케팅 과정을 4단계 워크플로우로 쉽게 정리했습니다.
+        - generic [ref=f45e145]:
+          - generic [ref=f45e149]:
+            - button "01 탐색 단계" [pressed] [ref=f45e150] [cursor=pointer]:
+              - generic [ref=f45e151]: "01"
+              - generic [ref=f45e152]: 탐색 단계
+            - button "02 선별 단계" [ref=f45e156] [cursor=pointer]:
+              - generic [ref=f45e157]: "02"
+              - generic [ref=f45e158]: 선별 단계
+            - button "03 분석 단계" [ref=f45e162] [cursor=pointer]:
+              - generic [ref=f45e163]: "03"
+              - generic [ref=f45e164]: 분석 단계
+            - button "04 성과 추적 단계" [ref=f45e168] [cursor=pointer]:
+              - generic [ref=f45e169]: "04"
+              - generic [ref=f45e170]: 성과 추적 단계
+          - generic [ref=f45e172]:
+            - generic [ref=f45e173]:
+              - generic [ref=f45e174]:
+                - generic [ref=f45e175]: 01 탐색 단계
+                - generic [ref=f45e176]:
+                  - strong [ref=f45e177]: "목표:"
+                  - text: 초기 키워드 풀 확보
+              - heading "시장의 관심 변화를 빠르게 발견합니다." [level=3] [ref=f45e178]
+              - paragraph [ref=f45e179]: 급상승·신규·시즌 키워드를 먼저 확인하고, 시드 키워드를 롱테일 후보로 확장해 콘텐츠와 마케팅에 활용할 초기 키워드 풀을 만듭니다.
+            - generic [ref=f45e180]:
+              - generic [ref=f45e181]: 활용 서비스
+              - generic [ref=f45e182]:
+                - link "트렌드" [ref=f45e183] [cursor=pointer]:
+                  - /url: /service/trend
+                - link "키워드 확장" [ref=f45e188] [cursor=pointer]:
+                  - /url: /service/keyword-expansion
+      - button "전체 활용 가이드 보기" [ref=f45e201] [cursor=pointer]
+    - generic [ref=f45e205]:
+      - generic [ref=f45e206]:
+        - heading "영향력 순위 🏆" [level=1] [ref=f45e207]
+        - heading "검색 결과와 AI 답변에서 가장 영향력 있는 웹사이트, 블로그를 알아보세요. 영향력 순위는 검색 데이터와 AI 인용 데이터를 기반으로 웹사이트의 영향력을 측정합니다." [level=2] [ref=f45e208]: 검색 결과와 AI 답변에서 가장 영향력 있는 웹사이트, 블로그를 알아보세요.영향력 순위는 검색 데이터와 AI 인용 데이터를 기반으로 웹사이트의 영향력을 측정합니다.
+      - button "내 영향력 순위 알아보기" [ref=f45e211] [cursor=pointer]
+    - generic [ref=f45e215]:
+      - generic [ref=f45e216]:
+        - heading "트렌드 🔥" [level=1] [ref=f45e217]
+        - heading "지금 떠오르는 검색 이슈부터 앞으로 수요가 몰릴 시즌 키워드까지 콘텐츠 기획에 필요한 트렌드 흐름을 한눈에 확인하세요." [level=2] [ref=f45e218]: 지금 떠오르는 검색 이슈부터 앞으로 수요가 몰릴 시즌 키워드까지콘텐츠 기획에 필요한 트렌드 흐름을 한눈에 확인하세요.
+      - button "트렌드 더 보기" [ref=f45e221] [cursor=pointer]
+    - generic [ref=f45e225]:
+      - generic [ref=f45e226]:
+        - heading "멤버십 요금제" [level=1] [ref=f45e227]
+        - heading "키워드 분석부터 콘텐츠 성과 추적까지, 블랙키위를 더 깊게 활용해보세요. AI 인사이트, 검색 순위 추적, 경쟁자 분석 등 멤버십 전용 기능을 사용할 수 있습니다." [level=2] [ref=f45e228]: 키워드 분석부터 콘텐츠 성과 추적까지, 블랙키위를 더 깊게 활용해보세요.AI 인사이트, 검색 순위 추적, 경쟁자 분석 등 멤버십 전용 기능을 사용할 수 있습니다.
+      - generic [ref=f45e230]:
+        - generic [ref=f45e232]:
+          - generic [ref=f45e233]:
+            - generic [ref=f45e234] [cursor=pointer]
+            - generic [ref=f45e235] [cursor=pointer]
+            - switch [ref=f45e236]
+          - generic [ref=f45e237]: 무료체험 생략하기
+        - generic [ref=f45e241]:
+          - generic [ref=f45e242]:
+            - generic [ref=f45e243]: 베이직
+            - generic [ref=f45e245]: 개인 블로거, 브랜드 블로그를 운영하고 있는 소규모 자영업자 등이 이용하기에 적합한 플랜
+            - generic [ref=f45e247]:
+              - generic [ref=f45e248]: 13,800
+              - generic [ref=f45e249]: 원
+              - generic [ref=f45e250]: / 30일
+            - generic [ref=f45e251]:
+              - button "14일 무료로 체험하기" [ref=f45e252]
+              - generic [ref=f45e253]: 무료체험 중에는 결제되지 않습니다.
+            - generic [ref=f45e255]: "포함된 기능:"
+            - list [ref=f45e256]:
+              - listitem [ref=f45e257]:
+                - generic [ref=f45e261]: 배너 광고 제거
+              - listitem [ref=f45e262]:
+                - generic [ref=f45e266]: 로봇 인증 제거
+              - listitem [ref=f45e267]:
+                - generic [ref=f45e271]: 네이버 키워드 분석 10회 / 1분
+            - button "+ 포함 기능 더보기" [ref=f45e272] [cursor=pointer]
+          - generic [ref=f45e273]:
+            - generic [ref=f45e274]: 가입자 64%가 선택
+            - generic [ref=f45e275]: 스탠다드
+            - generic [ref=f45e277]: 소규모 마케팅팀, 마케팅 에이전시, 전문직 사업자 등이 이용하기에 적합한 플랜
+            - generic [ref=f45e279]:
+              - generic [ref=f45e280]: 29,700
+              - generic [ref=f45e281]: 원
+              - generic [ref=f45e282]: / 30일
+            - generic [ref=f45e283]:
+              - button "14일 무료로 체험하기" [ref=f45e284]
+              - generic [ref=f45e285]: 무료체험 중에는 결제되지 않습니다.
+            - generic [ref=f45e287]: "베이직의 모든 기능 포함:"
+            - list [ref=f45e288]:
+              - listitem [ref=f45e289]:
+                - generic [ref=f45e293]: AI 인사이트 최대 480회 / 30일
+              - listitem [ref=f45e294]:
+                - generic [ref=f45e298]: 연관 키워드 100개
+              - listitem [ref=f45e299]:
+                - generic [ref=f45e303]: 경쟁자 분석 데이터
+            - button "+ 포함 기능 더보기" [ref=f45e307] [cursor=pointer]
+          - generic [ref=f45e308]:
+            - generic [ref=f45e309]: 프리미엄
+            - generic [ref=f45e311]: 데이터를 기반으로 마케팅을 진행하는 중간 규모 이상의 마케팅팀에 적합한 플랜
+            - generic [ref=f45e313]:
+              - generic [ref=f45e314]: 89,100
+              - generic [ref=f45e315]: 원
+              - generic [ref=f45e316]: / 30일
+            - generic [ref=f45e317]:
+              - button "구독하기" [ref=f45e318]
+              - generic [ref=f45e319]: 언제든 해지할 수 있습니다.
+            - generic [ref=f45e321]: "스탠다드의 모든 기능 포함:"
+            - list [ref=f45e322]:
+              - listitem [ref=f45e323]:
+                - generic [ref=f45e327]: 트렌드 조회 기간 10년+
+              - listitem [ref=f45e331]:
+                - generic [ref=f45e335]: 연관 키워드 200개
+              - listitem [ref=f45e336]:
+                - generic [ref=f45e340]: 동시 접속 4명
+            - button "+ 포함 기능 더보기" [ref=f45e344] [cursor=pointer]
+        - generic [ref=f45e345]: "* 부가세 별도"
+      - button "플랜별 기능 비교하기" [ref=f45e349] [cursor=pointer]
+    - generic [ref=f45e353]:
+      - generic [ref=f45e357]:
+        - heading "지금 블랙키위에 가입하세요." [level=1] [ref=f45e358]
+        - heading "10초 회원가입 후 320,000명이 사용 중인 블랙키위의 다양한 서비스들을 경험해보세요." [level=2] [ref=f45e359]
+      - generic [ref=f45e361]:
+        - button "무료 가입하기" [ref=f45e362] [cursor=pointer]
+        - button "더 알아보기" [ref=f45e365] [cursor=pointer]
+  - contentinfo [ref=f45e368]:
+    - generic [ref=f45e370]:
+      - generic [ref=f45e371]:
+        - generic [ref=f45e372]:
+          - img "블랙키위 로고" [ref=f45e375]
+          - paragraph [ref=f45e376]: 키워드 탐색부터 성과 추적까지,AI 시대의 검색 마케팅 데이터 분석을 한곳에서
+          - link "무료체험 시작하기" [ref=f45e377] [cursor=pointer]:
+            - /url: /pricing
+          - generic [ref=f45e381]: "블랙키위(주) · 대표: 권기웅, 나영균사업자등록번호: 620-88-01626통신판매업신고번호: 2022-서울강남-00896경기도 성남시 분당구 판교역로 230삼환하이펙스 B동 419호"
+        - generic [ref=f45e382]:
+          - generic [ref=f45e383]: Services
+          - generic [ref=f45e384]:
+            - generic [ref=f45e385]:
+              - button "탐색 단계" [expanded] [ref=f45e386] [cursor=pointer]
+              - list [ref=f45e392]:
+                - listitem [ref=f45e393]:
+                  - link "트렌드" [ref=f45e394] [cursor=pointer]:
+                    - /url: /service/trend
+                - listitem [ref=f45e395]:
+                  - link "키워드 확장" [ref=f45e396] [cursor=pointer]:
+                    - /url: /service/keyword-expansion
+            - button "선별 단계" [ref=f45e398] [cursor=pointer]
+            - button "분석 단계" [ref=f45e405] [cursor=pointer]
+            - button "성과 추적 단계" [ref=f45e412] [cursor=pointer]
+        - generic [ref=f45e418]:
+          - generic [ref=f45e419]: Resources
+          - list [ref=f45e420]:
+            - listitem [ref=f45e421]:
+              - link "블랙키위 소개" [ref=f45e422] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=f45e423]:
+              - link "요금제" [ref=f45e424] [cursor=pointer]:
+                - /url: /pricing
+            - listitem [ref=f45e425]:
+              - link [ref=f45e427] [cursor=pointer]:
+                - /url: https://blackkiwi.notion.site/4f7638f466274937874747118262997f
+            - listitem [ref=f45e431]:
+              - link [ref=f45e433] [cursor=pointer]:
+                - /url: https://blackkiwi.notion.site/35be74b7e6804ae1a75637998d773323
+            - listitem [ref=f45e437]:
+              - link [ref=f45e439] [cursor=pointer]:
+                - /url: https://blackkiwi.notion.site/v2-3e7bd07a20eb45658a247c044b3b3827
+        - generic [ref=f45e443]:
+          - generic [ref=f45e444]: Legal
+          - list [ref=f45e445]:
+            - listitem [ref=f45e446]:
+              - link [ref=f45e448] [cursor=pointer]:
+                - /url: https://blackkiwi.notion.site/2024-05-02-1c7daefef8424725abbea6ec512ef8ae?pvs=4
+            - listitem [ref=f45e452]:
+              - link [ref=f45e454] [cursor=pointer]:
+                - /url: https://blackkiwi.notion.site/2020-09-08-80e2b6818da14a5eb929db88c720d854
+        - generic [ref=f45e458]:
+          - generic [ref=f45e459]: Support
+          - list [ref=f45e460]:
+            - listitem [ref=f45e461]: 제휴 문의
+            - listitem [ref=f45e462]: 070-8064-2910
+            - listitem [ref=f45e463]:
+              - link "master@blackkiwi.net" [ref=f45e465] [cursor=pointer]:
+                - /url: mailto:master@blackkiwi.net
+      - generic [ref=f45e466]: Copyright 2026. blackkiwi Inc. All Rights Reserved.

@@ -1,0 +1,32 @@
+- generic [ref=f45e2]:
+  - banner [ref=f45e469]:
+    - navigation [ref=f45e470]:
+      - link [ref=f45e473] [cursor=pointer]:
+        - /url: /
+        - img "블랙키위 로고" [ref=f45e474]
+      - list [ref=f45e475]:
+        - listitem [ref=f45e476]:
+          - button "모든 서비스" [ref=f45e477] [cursor=pointer]
+        - listitem [ref=f45e480]: 공유하기
+        - listitem [ref=f45e481]:
+          - link [ref=f45e483] [cursor=pointer]:
+            - /url: https://blackkiwi.notion.site/v2-3e7bd07a20eb45658a247c044b3b3827
+      - list [ref=f45e488]:
+        - listitem [ref=f45e489]:
+          - link "요금제" [ref=f45e490] [cursor=pointer]:
+            - /url: /pricing
+  - main [ref=f45e491]
+  - contentinfo [ref=f45e493]:
+    - generic [ref=f45e495]:
+      - generic [ref=f45e496]: Copyright 2026. blackkiwi Inc. All Rights Reserved.
+      - generic [ref=f45e497]:
+        - button "맨 위로" [ref=f45e498]
+        - generic [ref=f45e499]: ·
+        - link [ref=f45e501] [cursor=pointer]:
+          - /url: https://blackkiwi.notion.site/v2-3e7bd07a20eb45658a247c044b3b3827
+        - generic [ref=f45e505]: ·
+        - link [ref=f45e507] [cursor=pointer]:
+          - /url: https://blackkiwi.notion.site/2024-05-02-1c7daefef8424725abbea6ec512ef8ae?pvs=4
+        - generic [ref=f45e511]: ·
+        - link [ref=f45e513] [cursor=pointer]:
+          - /url: https://blackkiwi.notion.site/2020-09-08-80e2b6818da14a5eb929db88c720d854

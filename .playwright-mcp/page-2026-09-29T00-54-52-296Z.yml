@@ -1,0 +1,244 @@
+- generic [active] [ref=f12e1]:
+  - link "본문으로 바로가기" [ref=f12e2] [cursor=pointer]:
+    - /url: "#content"
+  - generic [ref=f12e3]:
+    - generic [ref=f12e4]:
+      - generic [ref=f12e6]:
+        - link "NAVER" [ref=f12e7] [cursor=pointer]:
+          - /url: https://www.naver.com
+        - heading [level=1] [ref=f12e10]:
+          - link "DataLab" [ref=f12e11] [cursor=pointer]:
+            - /url: /
+      - list [ref=f12e15]:
+        - listitem [ref=f12e16]:
+          - link "데이터랩 홈" [ref=f12e17] [cursor=pointer]:
+            - /url: /
+        - listitem [ref=f12e20]:
+          - link "검색어트렌드" [ref=f12e21] [cursor=pointer]:
+            - /url: /keyword/trendSearch.naver
+        - listitem [ref=f12e24]:
+          - link "쇼핑인사이트" [ref=f12e25] [cursor=pointer]:
+            - /url: /shoppingInsight/sCategory.naver
+        - listitem [ref=f12e28]:
+          - link "지역통계" [ref=f12e29] [cursor=pointer]:
+            - /url: /local/trend.naver
+        - listitem [ref=f12e32]:
+          - link "뉴스댓글통계" [ref=f12e33] [cursor=pointer]:
+            - /url: /commentStat/news.naver
+    - main [ref=f12e36]:
+      - generic [ref=f12e38]:
+        - generic [ref=f12e39]:
+          - generic [ref=f12e45]:
+            - generic [ref=f12e46]:
+              - img [ref=f12e48]:
+                - generic [ref=f12e49]:
+                  - generic [ref=f12e1060]:
+                    - generic [ref=f12e1061]: 1.1.2024
+                    - generic [ref=f12e1063]: 7.21.
+                    - generic [ref=f12e1065]: 2.8.2025
+                    - generic [ref=f12e1067]: 8.29.
+                    - generic [ref=f12e1069]: 3.19.2026
+                  - generic [ref=f12e1072]:
+                    - generic [ref=f12e1073]: "0"
+                    - generic [ref=f12e1075]: "25"
+                    - generic [ref=f12e1077]: "50"
+                    - generic [ref=f12e1079]: "75"
+                    - generic [ref=f12e1081]: "100"
+              - generic [ref=f12e1083]:
+                - generic [ref=f12e1084]:
+                  - generic [ref=f12e1085]:
+                    - checkbox "디마프" [checked] [ref=f12e1086]
+                    - generic [ref=f12e1088] [cursor=pointer]: 디마프
+                  - generic [ref=f12e1089]: 디마프
+                - generic [ref=f12e1091]:
+                  - generic [ref=f12e1092]:
+                    - checkbox "넘버즈인" [checked] [ref=f12e1093]
+                    - generic [ref=f12e1095] [cursor=pointer]: 넘버즈인
+                  - generic [ref=f12e1096]: 넘버즈인
+                - generic [ref=f12e1098]:
+                  - generic [ref=f12e1099]:
+                    - checkbox "파티온" [checked] [ref=f12e1100]
+                    - generic [ref=f12e1102] [cursor=pointer]: 파티온
+                  - generic [ref=f12e1103]: 파티온
+              - link "다운로드" [ref=f12e1108] [cursor=pointer]:
+                - /url: /qcExcel.naver?hashKey=N_34feb7a84a07cdc687ff44fa9130b7f5
+            - list [ref=f12e1110]:
+              - listitem [ref=f12e1111]: 일별 데이터는 익일 8~10시간 후 결과에 반영됩니다.
+              - listitem [ref=f12e1112]: 그래프는 네이버에서 해당 검색어가 검색된 횟수를 일별/주별/월별 각각 합산하여 조회기간 내 최다 검색량을 100으로 설정하여 상대적인 변화를 나타냅니다.
+              - listitem [ref=f12e1113]:
+                - strong [ref=f12e1114]: 데이터랩의 통계데이터는 쇼핑 랭킹과 무관합니다. 쇼핑 랭킹은 별도의 데이터 수집 및 집계 로직에 따라 산정됩니다.
+          - generic [ref=f12e1115]:
+            - heading "다시 조회 하기" [level=3] [ref=f12e1117]
+            - group "검색어 트렌드 조회" [ref=f12e1120]:
+              - paragraph [ref=f12e1122]: "궁금한 주제어를 설정하고, 하위 주제어에 해당하는 검색어를 콤마(,)로 구분입력해 주세요. 입력한 단어의 추이를 하나로 합산하여 해당 주제가 네이버에서 얼마나 검색되는지 조회할 수 있습니다. 예) 주제어 캠핑 : 캠핑, Camping, 캠핑용품, 겨울캠핑, 캠핑장, 글램핑, 오토캠핑, 캠핑카, 텐트, 캠핑요리"
+              - generic [ref=f12e1123]:
+                - generic [ref=f12e1124]:
+                  - strong [ref=f12e1125]: 주제어1
+                  - generic [ref=f12e1126]:
+                    - textbox "주제어1" [ref=f12e1127]:
+                      - /placeholder: 주제어 1 입력
+                      - text: 디마프
+                    - button "입력 내용 삭제" [ref=f12e1128] [cursor=pointer]
+                  - generic [ref=f12e1131]:
+                    - generic [ref=f12e1132]: 주제어1 하위 주제어
+                    - textbox "주제어 1에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f12e1133]: 디마프
+                    - button "입력 내용 삭제" [ref=f12e1134] [cursor=pointer]
+                - generic [ref=f12e1137]:
+                  - strong [ref=f12e1138]: 주제어2
+                  - generic [ref=f12e1139]:
+                    - textbox "주제어2" [ref=f12e1140]:
+                      - /placeholder: 주제어 2 입력
+                      - text: 넘버즈인
+                    - button "입력 내용 삭제" [ref=f12e1141] [cursor=pointer]
+                  - generic [ref=f12e1144]:
+                    - generic [ref=f12e1145]: 주제어2 하위 주제어
+                    - textbox "주제어 2에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f12e1146]: 넘버즈인
+                    - button "입력 내용 삭제" [ref=f12e1147] [cursor=pointer]
+                - generic [ref=f12e1150]:
+                  - strong [ref=f12e1151]: 주제어3
+                  - generic [ref=f12e1152]:
+                    - textbox "주제어3" [ref=f12e1153]:
+                      - /placeholder: 주제어 3 입력
+                      - text: 파티온
+                    - button "입력 내용 삭제" [ref=f12e1154] [cursor=pointer]
+                  - generic [ref=f12e1157]:
+                    - generic [ref=f12e1158]: 주제어3 하위 주제어
+                    - textbox "주제어 3에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f12e1159]: 파티온
+                    - button "입력 내용 삭제" [ref=f12e1160] [cursor=pointer]
+                - generic [ref=f12e1163]:
+                  - strong [ref=f12e1164]: 주제어4
+                  - generic [ref=f12e1165]:
+                    - textbox "주제어4" [ref=f12e1166]:
+                      - /placeholder: 주제어 4 입력
+                    - button "입력 내용 삭제" [ref=f12e1167] [cursor=pointer]
+                  - generic [ref=f12e1170]:
+                    - generic [ref=f12e1171]: 주제어4 하위 주제어
+                    - textbox "주제어 4에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f12e1172]
+                    - button "입력 내용 삭제" [ref=f12e1173] [cursor=pointer]
+                - generic [ref=f12e1176]:
+                  - strong [ref=f12e1177]: 주제어5
+                  - generic [ref=f12e1178]:
+                    - textbox "주제어5" [ref=f12e1179]:
+                      - /placeholder: 주제어 5 입력
+                    - button "입력 내용 삭제" [ref=f12e1180] [cursor=pointer]
+                  - generic [ref=f12e1183]:
+                    - generic [ref=f12e1184]: 주제어5 하위 주제어
+                    - textbox "주제어 5에 해당하는 모든 검색어를 컴마(,)로 구분하여 최대 20개까지 입력" [ref=f12e1185]
+                    - button "입력 내용 삭제" [ref=f12e1186] [cursor=pointer]
+                - generic [ref=f12e1189]:
+                  - strong [ref=f12e1190]: 기간
+                  - generic [ref=f12e1191]:
+                    - radio "전체" [ref=f12e1192]
+                    - generic [ref=f12e1193] [cursor=pointer]: 전체
+                    - radio "1개월" [ref=f12e1194]
+                    - generic [ref=f12e1195] [cursor=pointer]: 1개월
+                    - radio "3개월" [ref=f12e1196]
+                    - generic [ref=f12e1197] [cursor=pointer]: 3개월
+                    - radio "1년" [ref=f12e1198]
+                    - generic [ref=f12e1199] [cursor=pointer]: 1년
+                    - radio "직접입력" [ref=f12e1200]
+                    - generic [ref=f12e1201] [cursor=pointer]: 직접입력
+                    - link "일간" [ref=f12e1203] [cursor=pointer]:
+                      - /url: "#"
+                  - generic [ref=f12e1204]:
+                    - link "2024" [ref=f12e1206] [cursor=pointer]:
+                      - /url: "#"
+                    - link "01" [ref=f12e1208] [cursor=pointer]:
+                      - /url: "#"
+                    - link "01" [ref=f12e1210] [cursor=pointer]:
+                      - /url: "#"
+                    - generic [ref=f12e1211]: 부터
+                    - link "2026" [ref=f12e1214] [cursor=pointer]:
+                      - /url: "#"
+                    - link "09" [ref=f12e1216] [cursor=pointer]:
+                      - /url: "#"
+                    - link "28" [ref=f12e1218] [cursor=pointer]:
+                      - /url: "#"
+                  - paragraph [ref=f12e1219]: 2016년 1월 이후 조회할 수 있습니다.
+                - generic [ref=f12e1220]:
+                  - strong [ref=f12e1221]: 범위
+                  - generic [ref=f12e1223]:
+                    - generic [ref=f12e1224]:
+                      - checkbox "전체" [ref=f12e1225] [cursor=pointer]
+                      - generic [ref=f12e1226] [cursor=pointer]: 전체
+                    - generic [ref=f12e1227]:
+                      - generic [ref=f12e1228]:
+                        - checkbox "모바일" [ref=f12e1229] [cursor=pointer]
+                        - generic [ref=f12e1230] [cursor=pointer]: 모바일
+                      - generic [ref=f12e1231]:
+                        - checkbox "PC" [ref=f12e1232] [cursor=pointer]
+                        - generic [ref=f12e1233] [cursor=pointer]: PC
+                - generic [ref=f12e1234]:
+                  - strong [ref=f12e1235]: 성별
+                  - generic [ref=f12e1237]:
+                    - generic [ref=f12e1238]:
+                      - checkbox "전체" [ref=f12e1239] [cursor=pointer]
+                      - generic [ref=f12e1240] [cursor=pointer]: 전체
+                    - generic [ref=f12e1241]:
+                      - generic [ref=f12e1242]:
+                        - checkbox "여성" [ref=f12e1243] [cursor=pointer]
+                        - generic [ref=f12e1244] [cursor=pointer]: 여성
+                      - generic [ref=f12e1245]:
+                        - checkbox "남성" [ref=f12e1246] [cursor=pointer]
+                        - generic [ref=f12e1247] [cursor=pointer]: 남성
+                - generic [ref=f12e1248]:
+                  - strong [ref=f12e1249]: 연령선택
+                  - generic [ref=f12e1250]:
+                    - generic [ref=f12e1252]:
+                      - checkbox "전체" [ref=f12e1253] [cursor=pointer]
+                      - generic [ref=f12e1254] [cursor=pointer]: 전체
+                    - generic [ref=f12e1255]:
+                      - generic [ref=f12e1256]:
+                        - checkbox "~12" [ref=f12e1257] [cursor=pointer]
+                        - generic [ref=f12e1258] [cursor=pointer]: ~12
+                      - generic [ref=f12e1259]:
+                        - checkbox "13~18" [ref=f12e1260] [cursor=pointer]
+                        - generic [ref=f12e1261] [cursor=pointer]: 13~18
+                      - generic [ref=f12e1262]:
+                        - checkbox "19~24" [ref=f12e1263] [cursor=pointer]
+                        - generic [ref=f12e1264] [cursor=pointer]: 19~24
+                      - generic [ref=f12e1265]:
+                        - checkbox "25~29" [ref=f12e1266] [cursor=pointer]
+                        - generic [ref=f12e1267] [cursor=pointer]: 25~29
+                      - generic [ref=f12e1268]:
+                        - checkbox "30~34" [ref=f12e1269] [cursor=pointer]
+                        - generic [ref=f12e1270] [cursor=pointer]: 30~34
+                      - generic [ref=f12e1271]:
+                        - checkbox "35~39" [ref=f12e1272] [cursor=pointer]
+                        - generic [ref=f12e1273] [cursor=pointer]: 35~39
+                      - generic [ref=f12e1274]:
+                        - checkbox "40~44" [ref=f12e1275] [cursor=pointer]
+                        - generic [ref=f12e1276] [cursor=pointer]: 40~44
+                      - generic [ref=f12e1277]:
+                        - checkbox "45~49" [ref=f12e1278] [cursor=pointer]
+                        - generic [ref=f12e1279] [cursor=pointer]: 45~49
+                      - generic [ref=f12e1280]:
+                        - checkbox "50~54" [ref=f12e1281] [cursor=pointer]
+                        - generic [ref=f12e1282] [cursor=pointer]: 50~54
+                      - generic [ref=f12e1283]:
+                        - checkbox "55~59" [ref=f12e1284] [cursor=pointer]
+                        - generic [ref=f12e1285] [cursor=pointer]: 55~59
+                      - generic [ref=f12e1286]:
+                        - checkbox "60~" [ref=f12e1287] [cursor=pointer]
+                        - generic [ref=f12e1288] [cursor=pointer]: 60~
+              - link "네이버 검색 데이터 조회" [ref=f12e1289] [cursor=pointer]:
+                - /url: "#"
+        - generic [ref=f12e1291]:
+          - generic [ref=f12e1292]:
+            - link "이용약관" [ref=f12e1293] [cursor=pointer]:
+              - /url: https://policy.naver.com/rules/service.html
+            - link [ref=f12e1294] [cursor=pointer]:
+              - /url: https://policy.naver.com/rules/privacy.html
+              - strong [ref=f12e1295]: 개인정보처리방침
+            - link "책임의 한계와 법적고지" [ref=f12e1296] [cursor=pointer]:
+              - /url: https://policy.naver.com/rules/disclaimer.html
+            - link "고객센터" [ref=f12e1297] [cursor=pointer]:
+              - /url: https://help.naver.com/alias/datalab/main.naver
+          - generic [ref=f12e1298]:
+            - link "NAVER" [ref=f12e1299] [cursor=pointer]:
+              - /url: https://www.naver.com/
+            - emphasis [ref=f12e1301]: Copyright ©
+            - strong [ref=f12e1302]:
+              - link "NAVER Corp." [ref=f12e1303] [cursor=pointer]:
+                - /url: https://www.navercorp.com/ko/index.nhn
+            - text: All Rights Reserved.

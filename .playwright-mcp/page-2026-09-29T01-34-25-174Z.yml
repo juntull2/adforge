@@ -1,0 +1,26 @@
+- generic [active] [ref=f31e1]:
+  - main [ref=f31e405]:
+    - generic [ref=f31e407]:
+      - link [ref=f31e408] [cursor=pointer]:
+        - /url: /
+        - img "아이템스카우트 로고 심볼" [ref=f31e409]
+        - img "아이템스카우트 로고 텍스트" [ref=f31e410]
+      - button [ref=f31e411] [cursor=pointer]:
+        - img "kakao-logo" [ref=f31e412]
+        - paragraph [ref=f31e413]: 카카오 로그인
+      - generic [ref=f31e414]:
+        - generic [ref=f31e415]:
+          - textbox "이메일" [ref=f31e417]
+          - textbox "비밀번호" [ref=f31e419]
+        - button "이메일 로그인" [ref=f31e420] [cursor=pointer]
+      - generic [ref=f31e421]:
+        - link "아이디 찾기" [ref=f31e422] [cursor=pointer]:
+          - /url: /find/id
+        - link "비밀번호 찾기" [ref=f31e423] [cursor=pointer]:
+          - /url: /find/password
+      - link [ref=f31e424] [cursor=pointer]:
+        - /url: /signup
+        - button "회원가입" [ref=f31e425]
+  - button [ref=f31e402] [cursor=pointer]:
+    - img "채널톡 상담" [ref=f31e403]
+  - alert [ref=f31e404]: 로그인

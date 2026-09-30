@@ -1,0 +1,5 @@
+[     596ms] TypeError: Cannot read properties of undefined (reading 'top')
+    at https://ship.itemscout.io/:117:46
+    at dispatch (https://ship.itemscout.io/js/jquery-1.8.3.min.js:2:38053)
+    at u (https://ship.itemscout.io/js/jquery-1.8.3.min.js:2:33916)
+[     719ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://api.channel.io/front/v8/elastic/plugins/ecf66917-8a8f-49f5-b990-49b8f779b074/boot:0

@@ -1,0 +1,104 @@
+- generic [active] [ref=f43e1]:
+  - banner [ref=f43e2]:
+    - navigation [ref=f43e3]:
+      - link [ref=f43e4] [cursor=pointer]:
+        - /url: /
+        - img "아이템스카우트 로고 심볼" [ref=f43e5]
+      - list [ref=f43e6]:
+        - listitem [ref=f43e7]:
+          - generic [ref=f43e8]: BETA
+          - link "아이템등록" [ref=f43e9] [cursor=pointer]:
+            - /url: /register/home
+        - listitem [ref=f43e10]:
+          - link "아이템발굴" [ref=f43e11] [cursor=pointer]:
+            - /url: /category
+        - listitem [ref=f43e12]:
+          - link "키워드분석" [ref=f43e13] [cursor=pointer]:
+            - /url: /keyword
+        - listitem [ref=f43e14]:
+          - generic [ref=f43e15]: 랭킹추적
+          - link "일간" [ref=f43e16] [cursor=pointer]:
+            - /url: /tracking/daily
+          - generic [ref=f43e17]: "|"
+          - link "실시간" [ref=f43e18] [cursor=pointer]:
+            - /url: /tracking/realtime
+        - listitem [ref=f43e19]:
+          - link "유틸리티" [ref=f43e20] [cursor=pointer]:
+            - /url: /utility
+      - generic [ref=f43e21]:
+        - list [ref=f43e22]:
+          - listitem [ref=f43e23]:
+            - link "멤버십" [ref=f43e24] [cursor=pointer]:
+              - /url: /membership
+          - listitem [ref=f43e25]:
+            - link "가이드" [ref=f43e26] [cursor=pointer]:
+              - /url: https://school.itemscout.io/
+        - link [ref=f43e28] [cursor=pointer]:
+          - /url: /signin
+          - button "로그인" [ref=f43e29]
+  - main [ref=f43e30]:
+    - generic [ref=f43e31]:
+      - generic [ref=f43e33]:
+        - heading "유틸리티" [level=1] [ref=f43e34]
+        - generic [ref=f43e35]:
+          - link "출석체크" [ref=f43e36] [cursor=pointer]:
+            - /url: /credit/charge?tab=attendance
+          - link "충전하기 " [ref=f43e37] [cursor=pointer]:
+            - /url: /credit/charge
+            - text: 충전하기
+            - generic [ref=f43e38]: 
+      - generic [ref=f43e39]:
+        - img "banner" [ref=f43e40]
+        - generic [ref=f43e41]:
+          - paragraph [ref=f43e42]:
+            - generic [ref=f43e43]: 🎉
+            - generic [ref=f43e44]: 아이템스카우트 반자동 서비스 정식 오픈!
+          - link "바로가기" [ref=f43e45] [cursor=pointer]:
+            - /url: /register/home
+          - generic [ref=f43e46]: 
+        - generic [ref=f43e47]:
+          - heading "🎮 AI 서비스" [level=2] [ref=f43e48]
+          - button "사이렌 아이콘 오작동 제보" [ref=f43e49] [cursor=pointer]:
+            - img "사이렌 아이콘" [ref=f43e50]
+            - generic [ref=f43e51]: 오작동 제보
+        - list [ref=f43e52]:
+          - listitem [ref=f43e53]:
+            - link "BEST 업데이트 이미지 번역기 일일이 문의하기 어려웠던 번역이 필요한 상품 이미지들 많죠? 간편하게 번역 해보세요. 5 크레딧3 크레딧" [ref=f43e54] [cursor=pointer]:
+              - /url: /utility/translate-image
+              - generic [ref=f43e58]:
+                - generic [ref=f43e59]:
+                  - generic [ref=f43e60]:
+                    - generic [ref=f43e61]: BEST
+                    - generic [ref=f43e63]: 업데이트
+                  - paragraph [ref=f43e65]: 이미지 번역기
+                  - paragraph [ref=f43e66]: 일일이 문의하기 어려웠던번역이 필요한 상품 이미지들 많죠?간편하게 번역 해보세요.
+                - paragraph [ref=f43e67]: 5 크레딧3 크레딧
+          - listitem [ref=f43e68]:
+            - link [ref=f43e69] [cursor=pointer]:
+              - /url: /utility/remove-bg
+              - generic [ref=f43e73]:
+                - generic [ref=f43e74]:
+                  - paragraph [ref=f43e76]: 이미지 배경 제거/편집기
+                  - paragraph [ref=f43e77]: 필요없는 부분을 감쪽같이이미지만 올리면 깔끔하게 지워줘요.간단한 추가 편집기능도 있어요.
+                - paragraph [ref=f43e78]: 7 크레딧4 크레딧
+          - listitem [ref=f43e79]:
+            - link "쇼츠 생성기 업데이트 쇼츠 생성기 매출 수직 상승하는 쇼츠 마케팅! 인스타그램, 페이스북 등 기타 SNS에 바로 사용 할 수 있도록 생성 해보세요. 40 크레딧부터" [ref=f43e80] [cursor=pointer]:
+              - /url: /utility/shorts-generator
+              - generic [ref=f43e81]:
+                - img "쇼츠 생성기" [ref=f43e83]
+                - generic [ref=f43e84]:
+                  - generic [ref=f43e85]:
+                    - generic [ref=f43e86]: 업데이트
+                    - paragraph [ref=f43e89]: 쇼츠 생성기
+                    - paragraph [ref=f43e90]: 매출 수직 상승하는 쇼츠 마케팅!인스타그램, 페이스북 등 기타 SNS에바로 사용 할 수 있도록 생성 해보세요.
+                  - paragraph [ref=f43e91]: 40 크레딧부터
+          - listitem [ref=f43e92]:
+            - generic [ref=f43e93]:
+              - img "상품 댓글 분석기" [ref=f43e95]
+              - generic [ref=f43e97]:
+                - generic [ref=f43e98]: SOON
+                - paragraph [ref=f43e101]: 상품 댓글 분석기
+                - paragraph [ref=f43e102]: 댓글/리뷰 하나하나 읽을 필요없이구매자의 평가를 모아 핵심만 보기 좋게!판매 전략에 참고 해보세요.
+  - button [ref=f43e103] [cursor=pointer]:
+    - img "채널톡 상담" [ref=f43e104]
+  - alert [ref=f43e105]

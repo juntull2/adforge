@@ -4,6 +4,7 @@ import csv
 import json
 import glob
 import asyncio
+import tempfile
 import edge_tts
 import pycapcut as cc
 
@@ -67,6 +68,7 @@ class CustomFont:
         self.path = font_path
         self.resource_id = ""
         self.value = EffectMeta(font_name, False, "", "", "", [])
+        self.value.path = font_path
 
 PRETENDARD_FONT = CustomFont(PRETENDARD_NAME, PRETENDARD_PATH)
 
@@ -238,19 +240,45 @@ def load_naver_clip_keywords() -> list:
 NAVER_CLIP_TOP_KEYWORDS = load_naver_clip_keywords()
 
 # -------------------------------------------------------------------
-# 3. 오디오 앞/뒤 무음 공백 제거(Silence Trimming)
+# 3. 오디오 시작 무음 제거 (문장 끝은 보존)
 # -------------------------------------------------------------------
 def trim_audio_silence(mp3_path: str, silence_thresh_db: int = -42):
     try:
         audio = PydubAudio.from_file(mp3_path)
         nonsilent = detect_nonsilent(audio, min_silence_len=10, silence_thresh=silence_thresh_db)
         if nonsilent:
-            start_trim = max(0, nonsilent[0][0] - 20)
-            end_trim = min(len(audio), nonsilent[-1][1] + 20)
-            trimmed_audio = audio[start_trim:end_trim]
+            start_trim = max(0, nonsilent[0][0] - 50)
+            trimmed_audio = audio[start_trim:]
             trimmed_audio.export(mp3_path, format="mp3")
     except Exception as e:
         print(f"Audio trim warning: {e}")
+
+
+def preserve_tts_ending(mp3_path: str, tail_ms: int = 300):
+    """Keep the final phoneme intact and leave decode room at a CapCut cut."""
+    if PydubAudio is None:
+        return mp3_path
+    try:
+        audio = PydubAudio.from_file(mp3_path)
+    except Exception as exc:
+        print(f"TTS 끝 여백 추가 건너뜀: {exc}")
+        return mp3_path
+    if len(audio) == 0:
+        raise ValueError(f"빈 TTS 오디오: {mp3_path}")
+    fd, candidate = tempfile.mkstemp(suffix=".mp3", dir=os.path.dirname(os.path.abspath(mp3_path)))
+    os.close(fd)
+    try:
+        tail = PydubAudio.silent(duration=tail_ms, frame_rate=audio.frame_rate)
+        (audio + tail).export(candidate, format="mp3")
+        if os.path.getsize(candidate) < 100:
+            raise ValueError("인코딩된 TTS 파일이 비어 있습니다")
+        os.replace(candidate, mp3_path)
+    except Exception as exc:
+        print(f"TTS 끝 여백 추가 건너뜀: {exc}")
+    finally:
+        if os.path.exists(candidate):
+            os.remove(candidate)
+    return mp3_path
 
 # -------------------------------------------------------------------
 # 4. 한국어 정밀 발음 가중치 및 문장 구조화
@@ -380,6 +408,64 @@ def split_script_by_sentences_and_phrases(script_text: str, max_chars_per_phrase
         
     return sentence_structures
 
+
+# 컷 후보(의미 단위) 한 덩어리의 최대 글자 수. 자막 한 줄과 비슷한 길이다.
+SHOT_UNIT_CHARS = 18
+
+
+def plan_script_shots(script_text: str, speech_speed: float = 1.0, measured_seconds: dict = None,
+                      max_shot_sec: float = None) -> list:
+    """문장마다 의미 단위를 묶어 컷(컷당 최대 max_shot_sec초)을 계획한다.
+
+    Streamlit 미리보기와 CapCut 빌더가 같은 컷을 쓰도록 텍스트와, 있으면 실측 TTS 길이만으로
+    계산한다. 실제 음성이 더 길어 3초를 넘는 컷은 빌더가 한 번 더 나눈다.
+    반환: [{"index", "sentence", "role", "duration_sec", "measured",
+            "shots": [{"text", "weight", "duration_sec"}]}]
+    """
+    from pipeline.capcut_native_style import classify_sentence
+    from pipeline.shot_planner import MAX_SHOT_SEC, estimate_sentence_seconds, group_units_into_shots
+
+    cap = max_shot_sec or MAX_SHOT_SEC
+    measured_seconds = measured_seconds or {}
+    plans = []
+    structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=SHOT_UNIT_CHARS)
+    for idx, struct in enumerate(structures):
+        sentence = struct["full_sentence"]
+        units = []
+        for phrase in struct["phrases"] or [sentence]:
+            units.extend(u.strip() for u in split_sentence_naturally(phrase.strip(), max_chars=SHOT_UNIT_CHARS)
+                         if u.strip())
+        units = units or [sentence]
+        weights = [calculate_effective_speech_length(u) for u in units]
+        measured = measured_seconds.get(idx)
+        total_sec = float(measured) if measured else estimate_sentence_seconds(sum(weights), speech_speed)
+        total_weight = sum(weights) or 1.0
+        shots = []
+        for group in group_units_into_shots(weights, total_sec, cap):
+            weight = sum(weights[i] for i in group)
+            shots.append({
+                "text": " ".join(units[i] for i in group),
+                "weight": weight,
+                "duration_sec": round(total_sec * weight / total_weight, 2),
+            })
+        plans.append({
+            "index": idx,
+            "sentence": sentence,
+            "role": classify_sentence(sentence, idx),
+            "duration_sec": round(total_sec, 2),
+            "measured": bool(measured),
+            "shots": shots,
+        })
+    return plans
+
+
+def _resolve_media_path(path: str, local_media_folder: str = "") -> str:
+    if not path:
+        return ""
+    if os.path.isabs(path) or not local_media_folder:
+        return path
+    return os.path.join(local_media_folder, path)
+
 # -------------------------------------------------------------------
 # 5. 스톡 비디오 소스 헬퍼
 # -------------------------------------------------------------------
@@ -467,6 +553,8 @@ FISH_VOICE_LIST = [
     ("🐟 [Fish Audio] 봉미선 (짱구 엄마) (개성 넘치는 훅)", "fish_b6198ce983784d8db3456c062250cc5a"),
     ("🐟 [Fish Audio] 소심한 개구리", "fish_eaa6afb386c84964b8347eea590f7064"),
     ("🐟 [Fish Audio] 케로로 나레이션", "fish_da6796ba493b43828ff4107889937fe6"),
+    ("🐟 [Fish Audio] 라영님", "fish_acd596a6cb6a43d6bf4b2a5585743c2c"),
+    ("🐟 [Fish Audio] 맑고 생기 있는 여성", "fish_ff61737dc0614062ba8bc5d0abb63b3a"),
     ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom")
 ]
 
@@ -530,7 +618,7 @@ def generate_fish_audio_tts(text: str, output_path: str, reference_id: str = "",
             if chunk:
                 f.write(chunk)
                 
-    trim_audio_silence(output_path)
+    preserve_tts_ending(output_path)
     return output_path
 
 def generate_single_sentence_tts(text: str, output_path: str, voice: str = DEFAULT_FISH_VOICE, speed: float = 1.0, fish_api_key: str = "", max_retries: int = 2) -> str:
@@ -592,7 +680,7 @@ def generate_elevenlabs_tts(text: str, output_path: str, voice_id: str, api_key:
             raise Exception(f"ElevenLabs API Error ({response.status_code}): {response.text}")
     with open(output_path, "wb") as f:
         f.write(response.content)
-    trim_audio_silence(output_path)
+    preserve_tts_ending(output_path)
     return output_path
 
 async def generate_tts_audio(text: str, output_path: str, voice_config: str = "ko-KR-SunHiNeural", speed: float = 1.0):
@@ -601,7 +689,7 @@ async def generate_tts_audio(text: str, output_path: str, voice_config: str = "k
     rate_str = f"{rate_percent:+d}%"
     communicate = edge_tts.Communicate(text, voice_config, rate=rate_str)
     await communicate.save(output_path)
-    trim_audio_silence(output_path)
+    preserve_tts_ending(output_path)
     return output_path
 
 def generate_voice_for_text(
@@ -694,8 +782,27 @@ def build_capcut_project_for_naver_clip(
     voice_overrides: dict = None,
     precomputed_audio: dict = None,
     preset_id: str = None,
+    hook_font_name: str = "양굵은구조폰트",
+    body_font_name: str = "메모먼트꾹꾹체",
+    result_font_name: str = "상상토끼 꽃집막내딸",
+    cta_font_name: str = "김씨와일드각체",
+    reference_sfx_project: str = "",
+    shot_plan: dict = None,
+    max_shot_sec: float = None,
     **kwargs
 ):
+    """대본으로 CapCut 초안을 만든다.
+
+    shot_plan: {문장 인덱스: [{"text", "weight", "sources": [경로, 대체 경로...]}]}.
+        plan_script_shots()의 컷마다 고른 소스(첫 번째)와 대체 후보를 넘긴다. 없으면
+        media_mapping의 문장별 소스(str 또는 list)를 문장 전체 컷 하나로 쓴다.
+    max_shot_sec: 소스 하나가 타임라인에 머무는 최대 길이. 기본 3초.
+    """
+    from pipeline.capcut_native_style import (
+        classify_sentence, apply_text_animation, apply_video_style,
+    )
+    from pipeline.capcut_font_catalog import available_user_fonts, caption_rotation
+    from pipeline.shot_planner import MAX_SHOT_SEC, resolve_shot_placements, split_shot_timeline
     import time
     import uuid
     import shutil
@@ -735,28 +842,74 @@ def build_capcut_project_for_naver_clip(
         script_file.add_track(TrackType.video, track_name="메인_비디오_트랙")
         script_file.add_track(TrackType.text, track_name="자막_트랙")
         script_file.add_track(TrackType.audio, track_name="더빙_트랙")
+        if reference_sfx_project:
+            script_file.add_track(TrackType.audio, track_name="효과음_트랙")
 
     temp_dir = os.path.join(os.getcwd(), "temp_audio")
     os.makedirs(temp_dir, exist_ok=True)
 
     sentence_structures = split_script_by_sentences_and_phrases(script_text, max_chars_per_phrase=40)
+    installed_fonts = available_user_fonts()
 
     print(f"\n========================================================")
     print(f"[네이버 클립 프로젝트 생성 시작] {project_name}")
     
     current_time_us = 0
+    scene_cues = []
     video_usage_tracker = {v_file: 0 for v_file in stock_videos}
     last_used_video = ""
 
     if media_mapping is None:
         media_mapping = {}
 
+    # 컷 계획: 문장마다 [{"text", "weight", "sources"}]. 소스 하나는 max_shot_sec을 넘지 않는다.
+    max_shot_us = int((max_shot_sec or MAX_SHOT_SEC) * SEC)
+    shot_plan = shot_plan or {}
+
+    def planned_cuts_for(idx: int, sentence: str) -> list:
+        planned = shot_plan.get(idx) or shot_plan.get(str(idx))
+        if planned:
+            return [{
+                "text": cut.get("text") or sentence,
+                "weight": float(cut.get("weight") or 1.0),
+                "sources": [_resolve_media_path(p, local_media_folder) for p in cut.get("sources") or [] if p],
+            } for cut in planned]
+        target = media_mapping.get(idx)
+        targets = list(target) if isinstance(target, (list, tuple)) else ([target] if target else [])
+        return [{"text": sentence, "weight": 1.0,
+                 "sources": [_resolve_media_path(p, local_media_folder) for p in targets if p]}]
+
+    sentence_cut_plans = [planned_cuts_for(i, s["full_sentence"]) for i, s in enumerate(sentence_structures)]
+    # 문장 i 뒤에 영상이 이어지는지 (문장 경계에만 전환을 넣기 위해)
+    media_follows = [False] * len(sentence_cut_plans)
+    later_media = bool(stock_videos)
+    for i in range(len(sentence_cut_plans) - 1, -1, -1):
+        media_follows[i] = later_media
+        later_media = later_media or any(cut["sources"] for cut in sentence_cut_plans[i])
+
+    video_materials = {}
+
+    def media_duration_us(path: str):
+        if path not in video_materials:
+            material = None
+            if path and os.path.isfile(path):
+                try:
+                    material = VideoMaterial(path)
+                except Exception as e:
+                    print(f"  (소스 읽기 실패: {os.path.basename(path)} - {e})")
+            video_materials[path] = material
+        material = video_materials[path]
+        return material.duration if material else None
+
+    last_placed_path = None
+    sentence_end_segment_ids = set()
+
     for s_idx, struct in enumerate(sentence_structures, 1):
         full_sentence = struct["full_sentence"]
         phrases = struct["phrases"]
         mapping_idx = s_idx - 1
+        scene_role = classify_sentence(full_sentence, mapping_idx)
 
-        target_media_filename = media_mapping.get(mapping_idx)
         clean_sentence = full_sentence.strip()
         cleaned_phrases = [p.strip() for p in phrases if p.strip()]
 
@@ -769,7 +922,7 @@ def build_capcut_project_for_naver_clip(
         # 1. 사전 검수/생성된 캐시 오디오 확인
         cached_audio = None
         if precomputed_audio:
-            candidate = precomputed_audio.get(mapping_idx) or precomputed_audio.get(s_idx)
+            candidate = precomputed_audio.get(mapping_idx)
             if candidate and os.path.exists(candidate) and os.path.getsize(candidate) > 100:
                 cached_audio = candidate
 
@@ -793,66 +946,64 @@ def build_capcut_project_for_naver_clip(
                 except Exception as e2:
                     raise Exception(f"오디오 생성 완전 실패: {e}")
 
-        trim_audio_silence(mp3_path)
-
         audio_mat = AudioMaterial(mp3_path)
         sentence_duration_us = audio_mat.duration
+        scene_cues.append({"role": scene_role, "start_us": current_time_us,
+                           "duration_us": sentence_duration_us})
 
         audio_timerange = Timerange(current_time_us, sentence_duration_us)
         script_file.add_segment(AudioSegment(audio_mat, audio_timerange), track_name="더빙_트랙")
 
-        v_file_to_use = None
-        is_local_media = False
+        # 컷 단위 소스 배치: 소스 하나가 max_shot_us를 넘지 않게 문장을 여러 컷으로 채운다.
+        cut_plan = sentence_cut_plans[mapping_idx]
+        if not any(cut["sources"] for cut in cut_plan) and stock_videos:
+            stock_pick = find_best_video_for_sentence(clean_sentence, stock_videos, last_used_video=last_used_video)
+            last_used_video = stock_pick
+            cut_plan = [{"text": clean_sentence, "weight": 1.0, "sources": [stock_pick] if stock_pick else []}]
 
-        if target_media_filename and local_media_folder:
-            potential_path = os.path.join(local_media_folder, target_media_filename)
-            if os.path.exists(potential_path):
-                v_file_to_use = potential_path
-                is_local_media = True
-
-        if not v_file_to_use and stock_videos:
-            v_file_to_use = find_best_video_for_sentence(clean_sentence, stock_videos, last_used_video=last_used_video)
-            last_used_video = v_file_to_use
-
-        if v_file_to_use:
+        next_plan = sentence_cut_plans[mapping_idx + 1] if mapping_idx + 1 < len(sentence_cut_plans) else []
+        following_path = next_plan[0]["sources"][0] if next_plan and next_plan[0]["sources"] else None
+        timeline_cuts = split_shot_timeline(sentence_duration_us, [cut["weight"] for cut in cut_plan], max_shot_us)
+        placements = resolve_shot_placements(
+            timeline_cuts, [cut["sources"] for cut in cut_plan], media_duration_us,
+            usage=video_usage_tracker, previous_path=last_placed_path, following_path=following_path,
+        )
+        cut_logs = []
+        for p_idx, placement in enumerate(placements):
             try:
-                v_mat = VideoMaterial(v_file_to_use)
-                
-                if is_local_media:
-                    ext = os.path.splitext(v_file_to_use)[1].lower()
-                    if ext in ['.jpg', '.jpeg', '.png']:
-                        clip_dur = sentence_duration_us
-                        start_offset = 0
-                    else:
-                        clip_dur = min(v_mat.duration, sentence_duration_us)
-                        start_offset = 0
-                else:
-                    clip_dur = min(v_mat.duration, sentence_duration_us)
-                    start_offset = video_usage_tracker.get(v_file_to_use, 0)
-                    if start_offset + clip_dur > v_mat.duration:
-                        start_offset = 0
-                        clip_dur = min(v_mat.duration, sentence_duration_us)
-                    video_usage_tracker[v_file_to_use] = start_offset + clip_dur
-                    
-                src_timerange = Timerange(start_offset, clip_dur)
-                tgt_timerange = Timerange(current_time_us, clip_dur)
-                
+                v_mat = video_materials[placement.path]
+                tgt_timerange = Timerange(current_time_us + placement.start_us, placement.duration_us)
+                src_timerange = Timerange(placement.source_start_us, placement.source_duration_us)
+
                 v_width = getattr(v_mat, 'width', 0)
                 v_height = getattr(v_mat, 'height', 0)
                 if v_width and v_height:
                     scale_factor = max(1080.0 / v_width, 1920.0 / v_height)
                 else:
                     scale_factor = 1.0
-                    
+
                 clip_settings = ClipSettings(scale_x=scale_factor, scale_y=scale_factor)
-                
+
                 v_seg = VideoSegment(v_mat, tgt_timerange, source_timerange=src_timerange, clip_settings=clip_settings)
+                cut_text = cut_plan[placement.shot_index]["text"]
                 try:
-                    apply_context_aware_keyframes(v_seg, clean_sentence, scale_factor, duration_us=tgt_timerange.duration)
+                    apply_context_aware_keyframes(v_seg, cut_text, scale_factor, duration_us=tgt_timerange.duration)
                 except Exception as e:
                     print(f"  (키프레임 애니메이션 적용 오류: {e})")
 
+                # 문장 안의 컷끼리는 하드컷, 다음 문장으로 넘어가는 마지막 컷에만 전환을 둔다.
+                ends_sentence = (p_idx == len(placements) - 1
+                                 and placement.start_us + placement.duration_us == sentence_duration_us)
+                if not preset_id:
+                    apply_video_style(v_seg, scene_role, ends_sentence and media_follows[mapping_idx],
+                                      tgt_timerange.duration)
+
                 script_file.add_segment(v_seg, track_name="메인_비디오_트랙")
+                if ends_sentence:
+                    sentence_end_segment_ids.add(v_seg.segment_id)
+                last_placed_path = placement.path
+                slow = f" x{placement.speed:.2f}" if placement.speed < 0.99 else ""
+                cut_logs.append(f"{placement.duration_us / SEC:.2f}s {os.path.basename(placement.path)}{slow}")
             except Exception as ve:
                 print(f"  (비디오 소스 연동 알림: {ve})")
 
@@ -878,8 +1029,21 @@ def build_capcut_project_for_naver_clip(
                 align=1
             )
             border = TextBorder(color=(0.0, 0.0, 0.0), width=55.0 if is_hook else 25.0)
-            clip_settings = ClipSettings(transform_x=0.0, transform_y=0.0)
-            active_font = BLACK_HAN_SANS_FONT if is_hook else PRETENDARD_FONT
+            if scene_role == "hook":
+                selected_font_name = hook_font_name
+            elif scene_role == "cta":
+                selected_font_name = cta_font_name
+            elif scene_role == "result":
+                selected_font_name = result_font_name
+            else:
+                selected_font_name = body_font_name
+            font_path = installed_fonts.get(selected_font_name)
+            active_font = CustomFont(selected_font_name, font_path) if font_path else PRETENDARD_FONT
+            clip_settings = ClipSettings(
+                transform_x=0.0,
+                transform_y=-200 / (1920 / 2),
+                rotation=caption_rotation(selected_font_name) if font_path else 0.0,
+            )
 
             text_seg = TextSegment(
                 text=phrase,
@@ -890,11 +1054,7 @@ def build_capcut_project_for_naver_clip(
                 clip_settings=clip_settings
             )
 
-            if is_hook:
-                try:
-                    text_seg.add_animation(TextIntro.pop_up)
-                except Exception:
-                    pass
+            apply_text_animation(text_seg, scene_role, phrase_duration_us)
 
             script_file.add_segment(text_seg, track_name="자막_트랙")
             phrase_start_us += phrase_duration_us
@@ -902,6 +1062,7 @@ def build_capcut_project_for_naver_clip(
         sec_val = sentence_duration_us / SEC
         phrases_str = " -> ".join(cleaned_phrases)
         print(f"  [문장 {s_idx}] 오디오 ({sec_val:.2f}s) 생성 완료 | 자막 싱크(10자): {phrases_str}")
+        print(f"      컷 {len(cut_logs)}개: {' | '.join(cut_logs) if cut_logs else '소스 없음'}")
 
         current_time_us += sentence_duration_us
 
@@ -915,7 +1076,9 @@ def build_capcut_project_for_naver_clip(
             target_preset = next((p for p in presets if p.get("id") == preset_id), None)
             if target_preset:
                 draft_full_path = os.path.join(draft_folder_path, project_name)
-                success = capcut_tracker.apply_preset_to_draft(draft_full_path, target_preset)
+                success = capcut_tracker.apply_preset_to_draft(
+                    draft_full_path, target_preset, transition_segment_ids=sentence_end_segment_ids
+                )
                 if success:
                     print(f"  [프리셋 적용 성공] '{target_preset.get('name')}' 효과 및 전환이 초안에 주입되었습니다.")
                 else:
@@ -923,7 +1086,22 @@ def build_capcut_project_for_naver_clip(
         except Exception as e:
             print(f"⚠️ 스타일 프리셋 적용 중 오류: {e}")
 
-    print(f"\n[완료] [AI더빙 + 비디오 컷 + 잘난체 자막] 100% 자동 완성! 초안: '{project_name}'")
+    if reference_sfx_project:
+        from pipeline.capcut_reference_sfx import apply_reference_sfx
+
+        added_sfx = apply_reference_sfx(
+            os.path.join(draft_folder_path, project_name), reference_sfx_project, scene_cues
+        )
+        print(f"[CapCut 내장 효과음] {', '.join(added_sfx) if added_sfx else '적용 항목 없음'}")
+
+    from pipeline.capcut_draft_audit import audit_draft
+
+    audit = audit_draft(os.path.join(draft_folder_path, project_name))
+    print(f"[초안 검사] 클립 {audit['clips']} / 적용 효과 {audit['effects']} / "
+          f"최장 컷 {audit['longest_video_clip_sec']:.2f}s")
+    if not audit["ok"]:
+        raise RuntimeError(f"CapCut 초안 연결 검사 실패: {audit}")
+    print(f"\n[완료] CapCut 편집 초안 생성: '{project_name}'")
     return project_name
 
 from caption_engine import generate_plan_json, render_caption_frames, composite_final_video
