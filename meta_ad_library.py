@@ -110,7 +110,7 @@ def _make_session():
 
 
 def _get_page(sess, url, max_retry: int = 2):
-    """페이지 GET + /__rd_verify 챌린지 자동 처리"""
+    """페이지 GET + /__rd_verify 챌린지 자동 처리 (타임아웃 및 네트워크 오류 안전 처리)"""
     hdrs = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "ko-KR,ko;q=0.9,en;q=0.8",
@@ -119,22 +119,31 @@ def _get_page(sess, url, max_retry: int = 2):
         "Sec-Fetch-Site": "none",
         "Upgrade-Insecure-Requests": "1",
     }
-    for _ in range(max_retry):
-        r = sess.get(url, headers=hdrs, timeout=30)
-        if "rd_verify" in r.text or "executeChallenge" in r.text:
-            m = re.search(r"fetch\('([^']+)'", r.text)
-            if m:
-                sess.post(
-                    f"https://www.facebook.com{m.group(1)}",
-                    headers={"Origin": "https://www.facebook.com", "Content-Length": "0"},
-                    timeout=15,
-                )
-                time.sleep(1.5)
-                continue
-        if r.status_code == 200:
-            return r
-        time.sleep(1)
-    return r
+    for attempt in range(max_retry):
+        try:
+            r = sess.get(url, headers=hdrs, timeout=15)
+            if "rd_verify" in r.text or "executeChallenge" in r.text:
+                m = re.search(r"fetch\('([^']+)'", r.text)
+                if m:
+                    try:
+                        sess.post(
+                            f"https://www.facebook.com{m.group(1)}",
+                            headers={"Origin": "https://www.facebook.com", "Content-Length": "0"},
+                            timeout=10,
+                        )
+                        time.sleep(1.0)
+                        continue
+                    except Exception:
+                        pass
+            if r.status_code == 200:
+                return r
+        except Exception:
+            if attempt == max_retry - 1:
+                return None
+            time.sleep(1.0)
+            continue
+        time.sleep(1.0)
+    return None
 
 
 def _extract_lsd(html: str) -> str:
@@ -168,6 +177,8 @@ def _scrape_ads_public(keyword: str, country: str = "KR", limit: int = 30) -> li
         f"&q={quote_plus(keyword)}&media_type=all&search_type=keyword_unordered"
     )
     lib_resp = _get_page(sess, lib_url)
+    if not lib_resp:
+        return []
 
     lsd = _extract_lsd(lib_resp.text)
     if not lsd:
@@ -670,6 +681,19 @@ RATE_LIMIT_MESSAGE = ("메타 광고 라이브러리 요청 한도를 넘었습�
                       "한동안 기다린 뒤 다시 시도하세요. 그동안 찾은 결과는 유지합니다.")
 
 
+class AdCollection(list):
+    """기존 목록 인터페이스를 유지하면서 부분 수집 여부를 전달합니다."""
+    def __init__(self):
+        super().__init__()
+        self.has_next_page = False
+        self.stop_reason = ""
+        self.pages_collected = 0
+
+    @property
+    def incomplete(self):
+        return bool(self.stop_reason)
+
+
 def _library_variables(
     query: str,
     country: str,
@@ -747,11 +771,15 @@ class AdLibraryClient:
 
     def _connect(self):
         sess = _make_session()
-        _get_page(sess, "https://www.facebook.com/")
-        time.sleep(1.5)
         referer = _build_search_url("영양제", self.country)
         resp = _get_page(sess, referer)
-        self.request_count += 2
+        if resp is None:
+            # 직접 연결 실패 시 페이스북 메인 페이지를 거쳐 1회 재시도
+            _get_page(sess, "https://www.facebook.com/")
+            time.sleep(1.0)
+            resp = _get_page(sess, referer)
+
+        self.request_count += 1
         lsd = _extract_lsd(resp.text if resp is not None else "")
         if not lsd:
             raise AdLibraryBlocked(
@@ -828,24 +856,31 @@ class AdLibraryClient:
             return None
 
     def _collect(self, make_variables, max_pages: int, label: str) -> list:
-        ads = []
+        ads = AdCollection()
         cursor = None
         for _ in range(max(1, int(max_pages))):
             try:
                 conn = self._try_post(make_variables(cursor))
-            except AdLibraryRateLimited:
+            except AdLibraryBlocked as exc:
                 self.failed_queries.append(label)
-                raise
+                if not ads:
+                    raise
+                ads.stop_reason = "rate_limit" if isinstance(exc, AdLibraryRateLimited) else "blocked"
+                break
             if conn is None:
                 self.failed_queries.append(label)
                 self._consecutive_failures += 1
+                ads.stop_reason = "failed"
                 if self._consecutive_failures >= self.max_consecutive_failures:
                     # 계속 두드리면 차단이 길어지므로 멈춥니다 (호출한 쪽에서 이전 결과를 유지)
-                    raise AdLibraryBlocked(
-                        f"메타가 잠시 접속을 막았습니다 (연속 {self._consecutive_failures}회 실패). 몇 분 뒤 다시 시도하세요."
-                    )
+                    if not ads:
+                        raise AdLibraryBlocked(
+                            f"메타가 잠시 접속을 막았습니다 (연속 {self._consecutive_failures}회 실패). 몇 분 뒤 다시 시도하세요."
+                        )
+                    ads.stop_reason = "blocked"
                 break
             self._consecutive_failures = 0
+            ads.pages_collected += 1
             for edge in conn.get("edges") or []:
                 node = (edge or {}).get("node") or {}
                 collated = node.get("collated_results") or []
@@ -854,8 +889,14 @@ class AdLibraryClient:
                 ads.extend(collated)
             info = conn.get("page_info") or {}
             cursor = info.get("end_cursor")
-            if not info.get("has_next_page") or not cursor:
+            ads.has_next_page = bool(info.get("has_next_page"))
+            if not ads.has_next_page:
                 break
+            if not cursor:
+                ads.stop_reason = "missing_cursor"
+                break
+        if ads.has_next_page and not ads.stop_reason:
+            ads.stop_reason = "page_limit"
         return ads
 
     def search(

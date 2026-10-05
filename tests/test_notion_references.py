@@ -39,7 +39,7 @@ def test_ad_schema_has_human_columns_and_valid_formula():
     schema = nr.ad_schema("brand-ds", {"소재링크": "rich_text", "편집일": "date", "대표님 피드백": "rich_text"})
     for name in nr.HUMAN_ONLY:
         assert name in schema
-    assert schema["편집일"] == {"date": {}}
+    assert schema[nr.H_EDITED] == {"date": {}}
     assert f'prop("{nr.A_START}")' in schema[nr.A_DAYS]["formula"]["expression"]
     assert nr.A_START in schema
     groups = {o["group"] for o in schema[nr.A_STATUS]["status"]["options"]}
@@ -48,8 +48,8 @@ def test_ad_schema_has_human_columns_and_valid_formula():
 
 
 def test_human_schema_falls_back_to_defaults():
-    assert nr.human_schema({"소재링크": "formula"})["소재링크"] == {"rich_text": {}}
-    assert nr.human_schema({})["편집일"] == {"date": {}}
+    assert nr.human_schema({"소재링크": "formula"})[nr.H_MATERIAL] == {"url": {}}
+    assert nr.human_schema({})[nr.H_EDITED] == {"date": {}}
 
 
 def test_rollup_points_at_existing_columns():
@@ -67,10 +67,10 @@ def test_plan_is_read_only_and_lists_steps():
     plan = nr.plan_setup(fake, "legacy-db")
     assert not plan.problems
     assert plan.parent_page_id == "parent-page"
-    assert plan.human_types["소재링크"] == "rich_text"
+    assert plan.human_types[nr.H_MATERIAL] == "rich_text"
     assert all(method in ("GET", "CHILDREN", "QUERY") for method, _, _ in fake.requests)
     text = nr.format_plan(plan)
-    assert nr.PAGE_TITLE in text and "소재링크(rich_text)" in text
+    assert nr.PAGE_TITLE in text and "제작 영상 링크(rich_text)" in text
 
 
 def test_plan_stops_on_duplicate_page():
@@ -94,9 +94,7 @@ def test_apply_creates_page_tables_relation_rollup_views():
     assert ad_props[nr.A_STATUS]["type"] == "status"
     for name in nr.HUMAN_ONLY:
         assert name in ad_props
-    assert {v["name"] for v in fake.views} == {"📋 검토 보드", "🏢 브랜드별", "⏳ 롱런 순", "🚀 급상승 순"}
-    board = next(v for v in fake.views if v["type"] == "board")
-    assert board["configuration"]["group_by"]["property_id"] == ad_props[nr.A_STATUS]["id"]
+    assert fake.views == []  # 기본 보기만 사용; 추가 탭 없음
     # 기존 DB에는 쓰지 않음
     assert not any(path.startswith(("databases/legacy", "data_sources/legacy")) for m, path, _ in fake.requests
                    if m in ("PATCH", "POST"))
@@ -151,7 +149,8 @@ def test_upsert_twice_keeps_one_row_and_never_writes_human_columns():
 
     # 사람이 노션에서 칸을 채움
     fake.pages[aid]["properties"]["대표님 피드백"] = {"type": "rich_text", "rich_text": [{"plain_text": "좋아요"}]}
-    fake.pages[aid]["properties"]["편집일"] = {"type": "date", "date": {"start": "2026-10-01"}}
+    fake.pages[aid]["properties"][nr.H_EDITED] = {"type": "date", "date": {"start": "2026-10-01"}}
+    fake.pages[aid]["properties"][nr.H_MATERIAL] = {"type": "rich_text", "rich_text": [{"plain_text": "https://my-video.example/edited"}]}
     fake.pages[aid]["properties"][nr.A_TITLE] = {"type": "title", "title": [{"plain_text": "사람이 고친 제목"}]}
 
     store2 = make_store(fake)
@@ -163,13 +162,20 @@ def test_upsert_twice_keeps_one_row_and_never_writes_human_columns():
     assert len(fake.rows(os.environ[nr.ENV_BRAND_DS])) == 1
 
     for _, names in fake.written_properties():
-        assert not names & set(nr.HUMAN_ONLY), names
+        assert not names & nr.HUMAN_PROTECTED, names
     page = fake.pages[aid]["properties"]
     assert page["대표님 피드백"]["rich_text"][0]["plain_text"] == "좋아요"
-    assert page["편집일"]["date"]["start"] == "2026-10-01"
+    assert page[nr.H_EDITED]["date"]["start"] == "2026-10-01"
+    assert page[nr.H_MATERIAL]["rich_text"][0]["plain_text"] == "https://my-video.example/edited"
     assert page[nr.A_TITLE]["title"][0]["plain_text"] == "사람이 고친 제목"
     assert page[nr.A_STATUS]["status"]["name"] == "진행"
     assert page[nr.A_VIDEO]["url"] == "https://drive.google.com/file/1"
+
+
+def test_strip_human_protects_current_and_legacy_names():
+    props = {name: {"rich_text": []} for name in nr.HUMAN_PROTECTED}
+    props[nr.A_TITLE] = {"title": []}
+    assert nr.strip_human(props) == {nr.A_TITLE: {"title": []}}
 
 
 def test_update_request_has_no_create_only_columns():

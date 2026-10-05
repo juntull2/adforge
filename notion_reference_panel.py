@@ -2,7 +2,7 @@
 노션 A급 소재 기록 패널 (A급 탭 아래 '📝 노션에 기록')
 
 - 🏢 브랜드 표 + 🎬 소재 표(notion_references)에 저장합니다. 같은 브랜드·광고는 새로 만들지 않고 갱신합니다.
-- 사람 전용 칸(소재링크 · 편집일 · 대표님 피드백)은 쓰지 않습니다. 제목·진행 여부는 처음 저장할 때만 씁니다.
+- 사람 전용 칸(제작 영상 링크 · 제작 날짜 · 대표님 피드백)은 쓰지 않습니다. 제목·진행 여부는 처음 저장할 때만 씁니다.
 - 구글 드라이브 폴더가 연결돼 있으면 원본 영상을 드라이브에 올리고 '영상 원본' 칸에 링크를 남깁니다.
 """
 
@@ -39,7 +39,7 @@ def open_store() -> nr.ReferenceStore:
     """노션 표를 읽어 둔 저장소 (세션에 보관). 테스트에서 이 함수를 바꿔 끼웁니다."""
     token = os.environ.get("NOTION_TOKEN", "").strip()
     ids = nr.configured_ids()
-    signature = (token, ids[nr.ENV_BRAND_DS], ids[nr.ENV_AD_DS])
+    signature = (token, ids[nr.ENV_BRAND_DS], ids[nr.ENV_AD_DS], nr.B_PEAK, nr.B_JUMP)
     cached = st.session_state.get(_STORE_KEY)
     if cached and cached[0] == signature:
         return cached[1]

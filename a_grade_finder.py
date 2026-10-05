@@ -3,7 +3,7 @@ A급 소재 탐색 & 브랜드 연결 계정 추적
 ======================================
 
 A급 소재 = 아래 3가지를 모두 충족하는 메타 광고
-  ① 최근 1년 안에 브랜드(또는 제품) 키워드의 월간 검색량이 1만 이상으로 올라간 달이 있다
+  ① 최근 1년 안에 브랜드(또는 제품) 키워드의 30일 검색량 1만 건 이상인 이력과 직전 60일 대비 60일 증가폭 7천 건 이상인 이력이 있다
      - 아이템스카우트와 같은 산출 방식: 네이버 검색광고 최근 30일 검색수 × 네이버 데이터랩 일간 추이
   ② 메타 광고 라이브러리에서 60일(2개월) 이상 게재 중이다
   ③ 우리 제품과 연관된다 (광고 문구·페이지명·랜딩 주소에 연관 키워드 포함, 제외 키워드 없음)
@@ -79,16 +79,17 @@ DEFAULT_RELEVANCE_TERMS = ["여드름", "트러블", "피지", "좁쌀", "뾰루
 DEFAULT_EXCLUDE_TERMS = ["강아지", "반려", "애완", "고양이", "펫", "애견", "댕댕"]
 
 MIN_RUNNING_DAYS = 60          # ② 최소 게재 일수 (2개월)
-MIN_PEAK_VOLUME = 10_000       # ① 월간 검색량 기준
+MIN_PEAK_VOLUME = 10_000       # ① 연속 30일 검색량 기준
+SEARCH_WINDOW_DAYS = 30
+RISE_WINDOW_DAYS = 60
 LOOKBACK_DAYS = 365            # ① 확인 기간 (최근 1년)
-MIN_VOLUME_FOR_TREND = 300     # 최근 30일 검색수가 이보다 적으면 월별 환산을 건너뜀 (1만까지 30배 이상 필요)
 MAX_TREND_KEYWORDS = 2         # 브랜드당 데이터랩 추이를 확인할 최대 키워드 수
 MAX_VERIFY_PAGES = 30          # 브랜드당 광고를 직접 열어 확인할 최대 페이지 수
 MAX_TRACK_ROUNDS = 2           # 찾은 숨은 계정의 이름·광고 문구로 다시 검색하는 단계 수
 MAX_EXPAND_QUERIES = 24        # 브랜드당 추가 검색(숨은 계정 이름·문구) 최대 횟수
-SPIKE_MIN_JUMP = 7_000         # 🚀 급상승: 30일 증가폭
-SPIKE_MIN_RATIO = 3.0          # 🚀 급상승: 직전 30일 대비 배수
-TREND_EXTRA_DAYS = 60          # 1년 전 구간도 직전 30일과 비교할 수 있도록 더 받아오는 날수
+SPIKE_MIN_JUMP = 7_000         # 🚀 급상승: 60일 증가폭
+SPIKE_MIN_RATIO = 3.0          # 🚀 급상승: 직전 60일 대비 배수
+TREND_EXTRA_DAYS = 120         # 1년 전 60일 구간과 직전 60일도 비교하도록 추가 조회
 
 ACCOUNT_ARABIC = "아랍어 계정"
 ACCOUNT_FOREIGN = "외국어 계정"
@@ -120,10 +121,11 @@ class ScanSettings:
     min_peak_volume: int = MIN_PEAK_VOLUME
     lookback_days: int = LOOKBACK_DAYS
     pages_per_keyword: int = 3
+    account_pages: int = 20
     country: str = "KR"
     track_accounts: bool = True
-    spike_min_jump: int = SPIKE_MIN_JUMP       # 🚀 30일 증가폭 기준
-    spike_min_ratio: float = SPIKE_MIN_RATIO   # 🚀 직전 30일 대비 배수 기준
+    spike_min_jump: int = SPIKE_MIN_JUMP       # 🚀 60일 증가폭 기준
+    spike_min_ratio: float = SPIKE_MIN_RATIO   # 🚀 직전 60일 대비 배수 기준
 
     @classmethod
     def from_dict(cls, data: dict) -> "ScanSettings":
@@ -153,31 +155,36 @@ class AdSummary:
     fingerprint: str = ""         # 첫 문장 지문
     variants: int = 1             # 스캔에서 합친 변형 광고 수
     recorded: str = ""            # 노션에 이미 기록된 소재면 그 이유
+    variant_ids: list = field(default_factory=list)
 
 
 @dataclass
 class VolumeCheck:
     passed: Optional[bool] = None      # ① True 충족 / False 미달 / None 확인 불가
     keyword: str = ""                  # 대표 키워드 (① 통과 키워드 중 가장 가파르게 오른 것)
-    peak_month: str = ""               # 최고 30일 구간 표시 ("~2026-07-21" 또는 "최근 30일")
-    peak_volume: int = 0               # 최근 1년 30일 검색량 최고값
+    peak_month: str = ""               # 최고 판정 구간 표시 (새 결과: 60일)
+    peak_volume: int = 0               # search_window_days 기준 검색량 최고값
     prev_month_volume: int = 0         # (예전 저장 결과 호환용)
     recent_30d: int = 0
     recent_pc: int = 0
     recent_mobile: int = 0
     months: list = field(default_factory=list)    # 대표 키워드의 달력 월별 추정 검색량 (참고용)
-    windows: list = field(default_factory=list)   # 대표 키워드의 30일 롤링 검색량 [{"end": "YYYY-MM-DD", "volume"}]
+    windows: list = field(default_factory=list)   # rise_window_days 기준 롤링 검색량
+    search_window_days: int = 30    # 검색량 판정은 30일
+    grade_windows: list = field(default_factory=list)
+    peak_is_lower_bound: bool = False
     checked: list = field(default_factory=list)   # 확인한 키워드별 결과
     note: str = ""
-    # 30일 급상승 (순위·표시용. A급 조건은 아님)
+    # 급상승 (검색량과 증가폭을 함께 A급 판정에 사용)
+    rise_window_days: int = 30    # 기존 결과 호환; 새 계산은 60일
     rise_level: str = ""               # RISE_ROCKET / RISE_UP / RISE_FLAT, 추이가 없으면 ""
     rise_start: str = ""
     rise_end: str = ""
-    rise_volume: int = 0               # 급상승 구간 30일 검색량
-    rise_prev: int = 0                 # 직전 30일 검색량
-    rise_jump: int = 0                 # 30일 증가폭
+    rise_volume: int = 0               # 급상승 구간 검색량
+    rise_prev: int = 0                 # 직전 구간 검색량
+    rise_jump: int = 0                 # 증가폭
     rise_ratio: Optional[float] = None  # 증가 배수 (직전이 0이면 None)
-    rise_baseline: int = 0             # 급상승 전 평소 30일 검색량 (중앙값)
+    rise_baseline: int = 0             # 급상승 전 평소 검색량 (중앙값)
 
     @property
     def rise(self) -> dict:
@@ -228,6 +235,8 @@ class BrandCandidate:
     tracked: bool = False
     tracking_note: str = ""
     tracking_failed: int = 0                       # 마지막 추적에서 실패한 메타 검색 수
+    tracking_incomplete: bool = False
+    tracking_limits: list = field(default_factory=list)
     audience: dict = field(default_factory=dict)   # 성별·연령 비중 (naver_datalab.get_shopping_audience)
 
 
@@ -765,6 +774,7 @@ def summarize_ad(ad: dict, today: date, resolver: Optional[LinkResolver], keys: 
         video_asset_id=video_asset_id(ad),
         fingerprint=creative_fingerprint(raw_body),
         variants=int(ad.get("_variants") or 1),
+        variant_ids=list(ad.get("_variant_ids") or [ad_id]),
     )
 
 
@@ -870,6 +880,7 @@ def merge_collations(ads: list) -> list:
         members = groups[cid]
         keep = min(members, key=lambda a: ad_start_date(a) or date.max)
         keep["_variants"] = len(members)
+        keep["_variant_ids"] = [str(a.get("ad_archive_id") or "") for a in members]
         merged.append(keep)
     return merged
 
@@ -1129,24 +1140,25 @@ def check_search_spike(keywords: list, naver_creds: tuple, min_volume: int = MIN
                        datalab: Optional[DataLabTrends] = None, min_jump: int = SPIKE_MIN_JUMP,
                        min_ratio: float = SPIKE_MIN_RATIO) -> VolumeCheck:
     """
-    ① 판정과 30일 급상승 계산.
+    ① 판정과 60일 급상승 계산.
     - 키워드별 최근 30일 검색수(검색광고 API)를 받고, 검색수 상위 키워드 최대 2개는 데이터랩 일간 추이로
-      최근 1년의 30일 롤링 검색량을 만듭니다.
-    - ① 통과: 최근 1년 30일 검색량 최고값 ≥ min_volume (추이가 없으면 최근 30일 검색수로 판정)
-    - 급상승: 각 30일 구간을 직전 30일과 비교해 🚀/📈/➖ 중 가장 좋은 구간 (순위·표시용)
+      최근 1년의 60일 롤링 검색량과 급상승 추이를 만듭니다.
+    - ① 통과: 동일 키워드의 최근 1년 30일 검색량 ≥ min_volume 및 60일 증가폭 ≥ min_jump.
+      추이가 없으면 급상승 이력을 확인할 수 없어 판정을 보류합니다.
+    - 급상승: 각 60일 구간을 직전 60일과 비교해 🚀/📈/➖ 중 가장 좋은 구간 (순위·표시용)
     - 대표 키워드: ① 통과 키워드 중 가장 가파르게 오른 키워드 (없으면 최고값이 가장 큰 키워드)
     """
     keywords = [k for k in dict.fromkeys(str(k).strip() for k in (keywords or [])) if k]
     if not keywords:
-        return VolumeCheck(passed=None, note="검색량을 확인할 키워드가 없습니다")
+        return VolumeCheck(passed=None, search_window_days=SEARCH_WINDOW_DAYS, note="검색량을 확인할 키워드가 없습니다")
     customer_id, access_license, secret_key = (naver_creds or ("", "", ""))[:3]
     if not (customer_id and access_license and secret_key):
-        return VolumeCheck(passed=None, note="네이버 검색광고 API 키가 없어 확인하지 못했습니다")
+        return VolumeCheck(passed=None, search_window_days=SEARCH_WINDOW_DAYS, note="네이버 검색광고 API 키가 없어 확인하지 못했습니다")
 
     today = today or date.today()
     volumes = get_naver_search_volumes(keywords, customer_id, access_license, secret_key)
     if all(volumes.get(k, {}).get("error") for k in keywords):
-        return VolumeCheck(passed=None, note="네이버 검색광고 API 호출에 실패했습니다")
+        return VolumeCheck(passed=None, search_window_days=SEARCH_WINDOW_DAYS, note="네이버 검색광고 API 호출에 실패했습니다")
 
     end = today - timedelta(days=1)
     since = today - timedelta(days=lookback_days)
@@ -1162,43 +1174,50 @@ def check_search_spike(keywords: list, naver_creds: tuple, min_volume: int = MIN
         recent = int(info.get("total", 0))
         entry = {"keyword": kw, "recent_30d": recent, "peak_month": "", "peak_volume": 0,
                  "rise_level": "", "rise_jump": 0, "note": ""}
-        rise, windows, months = None, [], []
+        rise, windows, grade_windows, months = None, [], [], []
         if info.get("error"):
             entry["note"] = "검색수 조회 실패"
-        elif recent < MIN_VOLUME_FOR_TREND:
-            entry["note"] = "최근 30일 검색수 적음" if info.get("found") else "검색수 데이터 없음"
+        elif recent <= 0:
+            entry["note"] = "검색수 데이터 없음"
         elif trend_budget > 0:
             trend_budget -= 1
             daily = datalab.daily(kw, fetch_start, end)
-            windows = rolling_30d_volumes(daily, recent, start=fetch_start, end=end)
+            windows = rolling_30d_volumes(daily, recent, start=fetch_start, end=end, window=RISE_WINDOW_DAYS)
+            grade_windows = [w for w in rolling_30d_volumes(daily, recent, start=fetch_start, end=end,
+                                                          window=SEARCH_WINDOW_DAYS) if w["end"] >= since]
             if windows:
-                rise = find_steepest_rise(windows, min_jump=min_jump, min_ratio=min_ratio, since=since)
+                rise = find_steepest_rise(windows, min_jump=min_jump, min_ratio=min_ratio, since=since,
+                                          window=RISE_WINDOW_DAYS)
                 months = estimate_monthly_volumes(daily, recent, start=month_start, end=end)
             else:
-                entry["note"] = "데이터랩 추이 없음 (최근 30일 기준)"
+                entry["note"] = "데이터랩 추이 없음 (30일 실측 검색량만 확인; 60일 증가폭 확인 불가)"
         else:
-            entry["note"] = "추이 확인 생략 (최근 30일 기준)"
+            entry["note"] = "추이 확인 생략 (30일 실측 검색량만 확인; 60일 증가폭 확인 불가)"
 
         if info.get("error"):
             checked.append(entry)
             continue
-        if rise and rise.get("peak_end"):
-            peak = max(int(rise["peak_volume"]), recent)
-            label = "최근 30일" if rise["peak_end"] >= end else f"~{rise['peak_end'].isoformat()}"
+        if grade_windows:
+            peak_window = max(grade_windows, key=lambda w: (w["volume"], w["end"]))
+            peak = int(peak_window["volume"])
+            label = "최근 30일" if peak_window["end"] >= end else f"~{peak_window['end'].isoformat()}"
         else:
-            peak, label = recent, "최근 30일"
+            peak, label = recent, "최근 30일 실측"
         entry.update(peak_month=label, peak_volume=peak)
         if rise and rise.get("end"):
             entry.update(rise_level=rise["level"], rise_jump=int(rise["jump"]))
         checked.append(entry)
         if peak > 0:
             candidates.append({"keyword": kw, "peak": peak, "label": label, "recent": recent, "rise": rise,
-                               "windows": windows, "months": months, "info": info})
+                               "windows": windows, "grade_windows": grade_windows, "months": months, "info": info})
 
     if not candidates:
-        return VolumeCheck(passed=False, checked=checked, note="확인한 키워드에 검색수가 없습니다")
+        return VolumeCheck(passed=None, checked=checked, search_window_days=SEARCH_WINDOW_DAYS,
+                           note="확인한 키워드의 60일 검색량을 산출할 수 없습니다")
 
-    passing = [c for c in candidates if c["peak"] >= min_volume]
+    passing = [c for c in candidates if c["rise"] and c["rise"].get("end")
+               and c["peak"] >= min_volume and c["rise"]["jump"] >= min_jump]
+    incomplete = any(not c["grade_windows"] for c in candidates) or any(volumes.get(k, {}).get("error") for k in keywords)
     if passing:
         def steepness(c):
             rise = c["rise"] or {}
@@ -1210,7 +1229,12 @@ def check_search_spike(keywords: list, naver_creds: tuple, min_volume: int = MIN
     rise = best["rise"] or {}
     has_rise = bool(rise.get("end"))
     return VolumeCheck(
-        passed=best["peak"] >= min_volume,
+        passed=True if passing else (None if incomplete else False),
+        search_window_days=SEARCH_WINDOW_DAYS,
+        rise_window_days=RISE_WINDOW_DAYS,
+        peak_is_lower_bound=False,
+        grade_windows=[{"end": w["end"].isoformat(), "volume": w["volume"]} for w in best["grade_windows"]],
+        note="일부 키워드의 60일 검색량 확인 불가" if not passing and incomplete else "",
         keyword=best["keyword"],
         peak_month=best["label"],
         peak_volume=int(best["peak"]),
@@ -1234,9 +1258,11 @@ def check_search_spike(keywords: list, naver_creds: tuple, min_volume: int = MIN
 
 def rise_summary(volume: Optional[VolumeCheck]) -> str:
     """'🚀 급상승 · 3,100 → 10,200 (+7,100, 3.3배) · 6/3~7/2 · 평소 2,900'"""
-    if volume is None or not volume.rise_end:
+    if volume is None or not getattr(volume, "rise_end", ""):
         return "추이 없음"
-    return f"{volume.rise_level} · {format_rise(volume.rise)}"
+    r_days = getattr(volume, "rise_window_days", 30)
+    level = getattr(volume, "rise_level", "")
+    return f"{level} · {r_days}일 기준 · {format_rise(volume.rise)}"
 
 
 def audience_keyword(brand: BrandCandidate) -> str:
@@ -1259,15 +1285,16 @@ def fetch_brand_audience(brand: BrandCandidate) -> None:
 
 
 def volume_summary(volume: Optional[VolumeCheck]) -> str:
-    """'최고 30일 24,350건 (~2026-07-21) · 리포데이'"""
+    """검색량 판정에 사용한 기간과 최고값을 표시합니다."""
     if volume is None:
         return "미확인"
     if volume.passed is None:
         return f"확인 불가 ({volume.note})" if volume.note else "확인 불가"
     if not volume.keyword:
         return volume.note or "검색수 없음"
-    when = volume.peak_month or "최근 30일"
-    return f"최고 30일 {volume.peak_volume:,}건 ({when}) · {volume.keyword}"
+    when = volume.peak_month or f"최근 {getattr(volume, 'search_window_days', 30)}일"
+    label = f"{getattr(volume, 'search_window_days', 30)}일 검색량 최소" if getattr(volume, 'peak_is_lower_bound', False) else f"최고 {getattr(volume, 'search_window_days', 30)}일"
+    return f"{label} {volume.peak_volume:,}건 ({when}) · {volume.keyword}"
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -1277,6 +1304,12 @@ def volume_summary(volume: Optional[VolumeCheck]) -> str:
 def grade_brand(brand: BrandCandidate, settings: ScanSettings) -> None:
     volume = brand.volume
     c1 = volume.passed if volume else None
+    if volume and (getattr(volume, 'search_window_days', 30) != SEARCH_WINDOW_DAYS
+                   or getattr(volume, 'rise_window_days', 30) != RISE_WINDOW_DAYS):
+        c1 = None
+    elif volume and c1 is not None:
+        c1 = bool(c1 and volume.rise_end and volume.peak_volume >= settings.min_peak_volume
+                  and volume.rise_jump >= settings.spike_min_jump)
     c2 = any(ad.running_days >= settings.min_running_days for ad in brand.ads)
     c3 = bool(brand.relevance_terms)
     reasons = []
@@ -1285,8 +1318,8 @@ def grade_brand(brand: BrandCandidate, settings: ScanSettings) -> None:
     elif not c1:
         if volume.keyword:
             reasons.append(
-                f"① 최근 1년 30일 검색량 최고 {volume.peak_volume:,}건 ('{volume.keyword}', {volume.peak_month})"
-                f" < {settings.min_peak_volume:,}건"
+                f"① 최근 1년 30일 검색량 {settings.min_peak_volume:,}건 이상 및 "
+                f"직전 60일 대비 증가폭 {settings.spike_min_jump:,}건 이상인 이력 없음 ('{volume.keyword}')"
             )
         else:
             reasons.append(f"① {volume.note or '검색수 없음'}")
@@ -1300,13 +1333,14 @@ def grade_brand(brand: BrandCandidate, settings: ScanSettings) -> None:
 
 
 def sort_brands(brands: list) -> list:
-    """A급 → 급상승 등급(🚀 > 📈 > ➖ > 추이 없음) → 30일 증가폭 → 최고 검색량 → 최장 게재일"""
+    """A급 → 급상승 등급(🚀 > 📈 > ➖ > 추이 없음) → 60일 증가폭 → 최고 검색량 → 최장 게재일"""
     def key(b):
         v = b.volume
+        has_current_rise = bool(v and getattr(v, 'rise_window_days', 30) == RISE_WINDOW_DAYS)
         return (
             not b.is_a_grade,
-            _rise_rank(v.rise_level if v else ""),
-            -(v.rise_jump if v else 0),
+            _rise_rank(v.rise_level if has_current_rise else ""),
+            -(v.rise_jump if has_current_rise else 0),
             -(v.peak_volume if v else 0),
             -max((a.running_days for a in b.ads), default=0),
         )
@@ -1419,6 +1453,32 @@ def _expansion_queries(candidates: dict, brand_terms: list) -> list:
     return names + phrases
 
 
+def _eligible_ad(ad: dict, settings: ScanSettings, today: date) -> bool:
+    """최초 검색과 계정 추적에서 동일한 기간·제품 연관성 조건을 적용합니다."""
+    text = ad_text(ad)
+    if ad_running_days(ad, today) < settings.min_running_days or match_terms(text, settings.exclude_terms):
+        return False
+    hits = match_terms(text, settings.relevance_terms)
+    if not hits:
+        return False
+    ad["_relevance"] = hits
+    return True
+
+
+def _merge_brand_ad(brand: BrandCandidate, ad: AdSummary) -> None:
+    """동일 광고·묶음은 합치고 재추적해도 변형 수가 늘지 않게 합니다."""
+    for i, existing in enumerate(brand.ads):
+        if existing.ad_id == ad.ad_id or (ad.collation_id and existing.collation_id == ad.collation_id):
+            ids = set(existing.variant_ids or [existing.ad_id]) | set(ad.variant_ids or [ad.ad_id])
+            keep = ad if ad.running_days > existing.running_days else existing
+            keep.variant_ids = sorted(ids)
+            keep.variants = max(existing.variants, ad.variants, len(ids))
+            keep.relevance = list(dict.fromkeys(existing.relevance + ad.relevance))
+            brand.ads[i] = keep
+            return
+    brand.ads.append(ad)
+
+
 def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand: BrandCandidate,
                          settings: ScanSettings, progress: ProgressFn = _no_progress,
                          today: Optional[date] = None) -> list:
@@ -1436,6 +1496,23 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
     candidates: dict = {}
     searched: set = set()
     verified = [0]
+    brand.tracking_incomplete = False
+    brand.tracking_limits = []
+
+    def collection_status(raw, label):
+        if getattr(raw, "incomplete", False):
+            reason = getattr(raw, "stop_reason", "failed")
+            reasons = {"page_limit": "페이지 제한 도달", "failed": "검색 실패", "blocked": "접속 차단",
+                       "rate_limit": "요청 한도 초과", "missing_cursor": "다음 페이지 주소 없음"}
+            brand.tracking_limits.append(f"{label}: {reasons.get(reason, reason)}")
+            brand.tracking_incomplete = True
+
+    def summary_for(ad, keys):
+        eligible = _eligible_ad(ad, settings, today)
+        summary = summarize_ad(ad, today, resolver, keys)
+        if eligible:
+            _merge_brand_ad(brand, summary)
+        return summary
 
     def note(page_id: str, page_name: str, evidence: str, landing_match: bool, summary: Optional[AdSummary],
              via: str, depth: int):
@@ -1461,13 +1538,14 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
             searched.add(key)
             progress(base + span * i / max(len(queries), 1), f"🔎 {brand.name}: {label} 검색 중")
             raw = client.search(query, search_type=search_type, active_status="active", max_pages=pages)
+            collection_status(raw, label)
             resolver.resolve_many(u for ad in raw for u in ad_link_urls(ad))
             for ad in raw:
                 page_id, page_name = ad_page(ad)
                 keys = ad_store_keys(ad, resolver)
                 if target in keys:
                     note(page_id, page_name, f"랜딩 동일 ({target}) · {label}", True,
-                         summarize_ad(ad, today, resolver, keys), label, depth)
+                         summary_for(ad, keys), label, depth)
                 elif search_type == "keyword_exact_phrase" and not keys and _compact(query) in _compact(_body_text(ad)):
                     note(page_id, page_name, f"광고 문구 동일 · {label} (랜딩 확인 불가)", False, None, label, depth)
                 if page_id in candidates and not candidates[page_id]["profile"]:
@@ -1478,17 +1556,22 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
                       key=lambda pid: (not candidates[pid]["landing"], -len(candidates[pid]["ads"])))
         for i, page_id in enumerate(todo):
             if verified[0] >= MAX_VERIFY_PAGES:
+                brand.tracking_incomplete = True
+                limit = f"계정 확인 {MAX_VERIFY_PAGES}개 제한 도달"
+                if limit not in brand.tracking_limits:
+                    brand.tracking_limits.append(limit)
                 return
             cand = candidates[page_id]
             progress(base + span * i / max(len(todo), 1), f"🕵️ {brand.name}: '{cand['name']}' 광고 확인 중")
-            page_raw = client.page_ads(page_id, active_status="active", max_pages=1)
+            page_raw = client.page_ads(page_id, active_status="active", max_pages=settings.account_pages)
+            collection_status(page_raw, cand["name"])
             resolver.resolve_many(u for ad in page_raw for u in ad_link_urls(ad))
             cand["checked"], cand["verified"] = len(page_raw), True
             verified[0] += 1
             for ad in page_raw:
                 keys = ad_store_keys(ad, resolver)
                 if target in keys:
-                    cand["ads"].setdefault(str(ad.get("ad_archive_id") or ""), summarize_ad(ad, today, resolver, keys))
+                    cand["ads"].setdefault(str(ad.get("ad_archive_id") or ""), summary_for(ad, keys))
                     cand["landing"] = True
                 elif keys:
                     cand["other"][keys[0]] += 1
@@ -1504,19 +1587,26 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
     rounds = MAX_TRACK_ROUNDS + 1
     budget = MAX_EXPAND_QUERIES
     queries, depth = _tracking_queries(brand), 0
-    while True:
-        base, span = depth / rounds, 1 / rounds
-        run(queries, depth, base, span * 0.5)
-        verify(base + span * 0.5, span * 0.5)
-        if depth >= MAX_TRACK_ROUNDS or budget <= 0:
-            break
-        queries = [q for q in _expansion_queries(candidates, brand_terms)
-                   if (_compact(q[0]), q[1]) not in searched][:budget]
-        if not queries:
-            break
-        budget -= len(queries)
-        depth += 1
-        progress(depth / rounds, f"🔁 {brand.name}: 찾은 숨은 계정 {len(queries)}건으로 다시 검색 ({depth}단계)")
+    try:
+        while True:
+            base, span = depth / rounds, 1 / rounds
+            run(queries, depth, base, span * 0.5)
+            verify(base + span * 0.5, span * 0.5)
+            if depth >= MAX_TRACK_ROUNDS or budget <= 0:
+                break
+            queries = [q for q in _expansion_queries(candidates, brand_terms)
+                       if (_compact(q[0]), q[1]) not in searched][:budget]
+            if not queries:
+                break
+            budget -= len(queries)
+            depth += 1
+            progress(depth / rounds, f"🔁 {brand.name}: 찾은 숨은 계정 {len(queries)}건으로 다시 검색 ({depth}단계)")
+    except AdLibraryBlocked as exc:
+        brand.tracking_incomplete = True
+        brand.tracking_limits.append(f"추적 중단: {exc}")
+        brand.tracking_failed = max(brand.tracking_failed, 1)
+    brand.ads.sort(key=lambda a: -a.running_days)
+    brand.relevance_terms = list(dict.fromkeys(t for a in brand.ads for t in a.relevance))
 
     accounts = []
     for page_id, cand in candidates.items():
@@ -1561,21 +1651,38 @@ def track_brand(brand: BrandCandidate, settings: ScanSettings, progress: Progres
         client = client or AdLibraryClient(country=settings.country)
         resolver = resolver or LinkResolver()
         failed_before = len(client.failed_queries)
+        brand.tracking_failed = 0
         accounts = track_brand_accounts(client, resolver, brand, settings, progress)
         failed = client.failed_queries[failed_before:]
-        if failed and brand.accounts:
+        if (failed or brand.tracking_incomplete) and brand.accounts:
             merged = {a.page_id: a for a in brand.accounts}
-            merged.update({a.page_id: a for a in accounts})
+            for account in accounts:
+                old = merged.get(account.page_id)
+                if old:
+                    account.brand_ads = max(old.brand_ads, account.brand_ads)
+                    account.checked_ads = max(old.checked_ads, account.checked_ads)
+                    account.max_running_days = max(old.max_running_days, account.max_running_days)
+                    if old.confidence == CONFIRMED:
+                        account.confidence = CONFIRMED
+                    account.evidence = list(dict.fromkeys(old.evidence + account.evidence))
+                    samples = {a.ad_id: a for a in old.sample_ads}
+                    samples.update({a.ad_id: a for a in account.sample_ads})
+                    account.sample_ads = sorted(samples.values(), key=lambda a: -a.running_days)[:5]
+                merged[account.page_id] = account
             accounts = _sort_accounts(list(merged.values()))
         brand.accounts = accounts
         brand.tracked = True
-        brand.tracking_failed = len(failed)
+        brand.tracking_failed = max(brand.tracking_failed, len(failed))
+        brand.tracking_incomplete = brand.tracking_incomplete or bool(failed)
         counts = Counter(a.account_type for a in brand.accounts)
         brand.tracking_note = " · ".join(f"{t} {counts[t]}" for t in ACCOUNT_ORDER if counts.get(t))
         if failed:
             brand.tracking_note += f" · ⚠️ 메타 검색 {len(failed)}건 실패 (이전에 찾은 계정 유지)"
+        if brand.tracking_limits:
+            brand.tracking_note += " · 부분 수집: " + " / ".join(dict.fromkeys(brand.tracking_limits))
     except AdLibraryBlocked as exc:
         brand.tracking_failed = max(getattr(brand, "tracking_failed", 0), 1)
+        brand.tracking_incomplete = True
         brand.tracking_note = f"추적 중단: {exc}" + (" (이전에 찾은 계정 유지)" if brand.accounts else "")
         brand.tracked = bool(brand.accounts)
 
@@ -1652,7 +1759,11 @@ def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: Progr
     try:
         for i, kw in enumerate(keywords):
             progress(0.40 * i / len(keywords), f"📡 메타 광고 라이브러리 검색: '{kw}' ({i + 1}/{len(keywords)})")
-            for ad in client.search(kw, started_before=started_before, max_pages=settings.pages_per_keyword):
+            found = client.search(kw, started_before=started_before, max_pages=settings.pages_per_keyword)
+            if getattr(found, "incomplete", False):
+                reason = "페이지 제한 도달" if found.stop_reason == "page_limit" else "검색 중단"
+                report.warnings.append(f"'{kw}' 부분 수집: {reason} (수집한 광고는 유지)")
+            for ad in found:
                 ad_id = str(ad.get("ad_archive_id") or "")
                 if ad_id and ad_id not in collected:
                     ad["_search_keyword"] = kw
@@ -1671,9 +1782,7 @@ def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: Progr
         if match_terms(text, settings.exclude_terms):
             report.excluded_ads += 1
             continue
-        hits = match_terms(text, settings.relevance_terms)
-        if hits:
-            ad["_relevance"] = hits
+        if _eligible_ad(ad, settings, today):
             relevant.append(ad)
     report.relevant_ads = len(relevant)
     relevant = merge_collations(relevant)   # 같은 소재의 변형 광고는 하나로

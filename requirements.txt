@@ -14,8 +14,9 @@ pymediainfo
 pycapcut==0.0.3
 edge-tts
 pydub
-audioop-lts
+audioop-lts; python_version >= "3.13"
 opencv-python-headless
+scenedetect==0.6.7.1
 comtypes==1.4.16; sys_platform == 'win32'
 uiautomation==2.0.29; sys_platform == 'win32'
 google-api-python-client>=2.100.0

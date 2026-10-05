@@ -1,19 +1,18 @@
+import base64
 import json
-import os
 from dataclasses import replace
 
 import a_grade_finder as g
 from factories import make_ad, make_brand, make_report
 
-RAW = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scratch", "raw_response.json")
-
-
 def raw_sample_ad():
-    data = json.load(open(RAW, encoding="utf-8"))
-    return data["data"]["ad_library_main"]["search_results_connection"]["edges"][0]["node"]["collated_results"][0]
+    efg = base64.b64encode(json.dumps({"xpv_asset_id": "1049710707770329"}).encode()).decode()
+    return {"ad_archive_id": "sample", "collation_id": "1625301855796543",
+            "snapshot": {"body": {"text": "에너지 넘치는 찌남매랑 함께하는 하루"},
+                         "videos": [{"video_hd_url": f"https://video.example/video.mp4?efg={efg}"}]}}
 
 
-def test_video_asset_id_from_real_sample():
+def test_video_asset_id_from_efg_sample():
     assert g.video_asset_id(raw_sample_ad()) == "1049710707770329"
 
 

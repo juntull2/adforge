@@ -1,7 +1,5 @@
 """연결 계정 추적: 찾은 숨은 계정의 이름·광고 문구로 다시 검색 (가짜 메타 클라이언트)"""
 import copy
-import json
-import os
 import time
 from datetime import datetime, timedelta
 
@@ -10,14 +8,12 @@ import pytest
 import a_grade_finder as g
 from factories import make_ad, make_brand
 
-ROOT = os.path.dirname(os.path.dirname(__file__))
 TARGET = "https://www.re4day.co.kr/goods/1"
 OTHER = "https://other-brand.example.com/p/1"
 
 
 def raw_ad(ad_id, page_id, page_name, link=TARGET, body="여드름 속관리 하루 한 알 루틴 공개합니다", days=90):
-    sample = json.load(open(os.path.join(ROOT, "scratch", "raw_response.json"), encoding="utf-8"))
-    ad = copy.deepcopy(sample["data"]["ad_library_main"]["search_results_connection"]["edges"][0]["node"]["collated_results"][0])
+    ad = {"snapshot": {}}
     ad.update(ad_archive_id=ad_id, collation_id=f"c-{ad_id}", page_id=page_id, page_name=page_name,
               start_date=int(time.mktime((datetime.now() - timedelta(days=days)).timetuple())))
     ad["snapshot"].update(link_url=link, caption="", body={"text": body}, page_id=page_id, page_name=page_name)
@@ -137,3 +133,87 @@ def test_failed_searches_keep_previously_found_accounts(brand):
     assert {a.page_id for a in brand.accounts} == before
     assert brand.tracking_failed > 0
     assert "이전에 찾은 계정 유지" in brand.tracking_note
+
+
+def test_for_is_materials_are_merged_beyond_preview_and_retracking_is_idempotent():
+    brand = make_brand(key="i-hi.co.kr", name="아이하이", ads=[make_ad(ad_id="seed", key="i-hi.co.kr")])
+    ads = [raw_ad(str(i), "177441688795472", "For is", link="https://i-hi.co.kr/p",
+                  body=f"여드름 영양제 후기 {i}") for i in range(8)]
+    ads += [raw_ad("short", "177441688795472", "For is", link="https://i-hi.co.kr/p", days=10),
+            raw_ad("irrelevant", "177441688795472", "For is", link="https://i-hi.co.kr/p", body="키 성장"),
+            raw_ad("excluded", "177441688795472", "For is", link="https://i-hi.co.kr/p", body="강아지 영양제"),
+            raw_ad("other", "177441688795472", "For is", link=OTHER)]
+    class DeepMeta(FakeMeta):
+        def page_ads(self, page_id, active_status="active", max_pages=1):
+            assert max_pages == 20
+            return super().page_ads(page_id, active_status, max_pages)
+    meta = DeepMeta({"i-hi.co.kr": ads[:1]}, {"177441688795472": ads})
+    g.track_brand(brand, g.ScanSettings(), client=meta, resolver=g.LinkResolver())
+    assert {a.ad_id for a in brand.ads} == {"seed"} | {str(i) for i in range(8)}
+    assert all(a.relevance for a in brand.ads)
+    assert len(next(a for a in brand.accounts if a.page_name == "For is").sample_ads) == 5
+    from a_grade_view import _export_ads, _visible_ads
+    from notion_reference_panel import saver_rows
+    from factories import make_report
+    report = make_report([brand])
+    assert len(_visible_ads(brand, False)) == 9
+    assert len(_export_ads(report)) == 9
+    assert len(saver_rows(report, False)) == 9
+    before = [(a.ad_id, a.variants) for a in brand.ads]
+    g.track_brand(brand, g.ScanSettings(), client=meta, resolver=g.LinkResolver())
+    assert [(a.ad_id, a.variants) for a in brand.ads] == before
+
+
+def test_interrupted_tracking_keeps_new_accounts_and_materials(brand):
+    ad = raw_ad("new", "p-new", "For is")
+    class Interrupted(FakeMeta):
+        def page_ads(self, *args, **kwargs):
+            raise g.AdLibraryBlocked("blocked")
+    meta = Interrupted({"re4day.co.kr": [ad]}, {})
+    g.track_brand(brand, g.ScanSettings(), client=meta, resolver=g.LinkResolver())
+    assert "new" in {a.ad_id for a in brand.ads}
+    assert "p-new" in {a.page_id for a in brand.accounts}
+    assert brand.tracking_failed and brand.tracking_incomplete
+
+
+def test_collation_variants_are_merged_without_double_counting(brand):
+    ads = [raw_ad(str(i), "p-h", "For is", days=90+i) for i in range(3)]
+    for ad in ads:
+        ad["collation_id"] = "shared"
+    meta = FakeMeta({"re4day.co.kr": ads}, {"p-h": ads})
+    for _ in range(2):
+        g.track_brand(brand, g.ScanSettings(), client=meta, resolver=g.LinkResolver())
+        material = [a for a in brand.ads if a.collation_id == "shared"]
+        assert len(material) == 1 and material[0].ad_id == "2" and material[0].variants == 3
+
+
+@pytest.mark.parametrize("page_limit", [1, 20])
+def test_real_client_second_page_reaches_material_list(brand, page_limit):
+    import meta_ad_library as m
+    brand = make_brand(key="i-hi.co.kr", name="아이하이", ads=[make_ad(ad_id="seed", key="i-hi.co.kr")])
+    first = raw_ad("1015790094846837", "177441688795472", "For is", days=132,
+                   link="https://i-hi.co.kr/p",
+                   body="요즘 엄마들 사이에서 아이그램 유산균 얘기 진짜 많이 나오더라구요")
+    second = raw_ad("955367360732844", "177441688795472", "For is", days=132,
+                    link="https://i-hi.co.kr/p",
+                    body="국내 유일! 특허 항비만 유산균으로 설계된")
+    client = m.AdLibraryClient(min_interval=0)
+    client.search = lambda *args, **kwargs: [first]
+    def post(v):
+        if v["viewAllPageID"] != "177441688795472":
+            return {"edges": [], "page_info": {"has_next_page": False}}
+        next_page = v["cursor"] is None
+        return {"edges": [{"node": {"collated_results": [first if next_page else second]}}],
+                "page_info": {"has_next_page": next_page, "end_cursor": "next" if next_page else None}}
+    client._post = post
+    g.track_brand(brand, g.ScanSettings(account_pages=page_limit), client=client, resolver=g.LinkResolver())
+    ids = {a.ad_id for a in brand.ads}
+    assert first["ad_archive_id"] in ids
+    assert (second["ad_archive_id"] in ids) == (page_limit == 20)
+    assert brand.tracking_incomplete == (page_limit == 1)
+    if page_limit == 1:
+        assert "페이지 제한" in brand.tracking_note
+
+
+def test_old_settings_use_twenty_account_pages():
+    assert g.ScanSettings.from_dict({"pages_per_keyword": 3}).account_pages == 20

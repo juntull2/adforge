@@ -11,29 +11,20 @@ DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 def run_oauth_flow():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    client_secrets_path = os.path.join(base_dir, "client_secrets.json")
-    token_path = os.path.join(base_dir, "token.json")
+    project_root = os.path.dirname(base_dir)
+    client_secrets_path = os.path.join(project_root, "client_secrets.json")
+    token_path = os.path.join(project_root, "token.json")
 
     if not os.path.exists(client_secrets_path):
         print("client_secrets.json not found", flush=True)
-        return False
-
     flow = InstalledAppFlow.from_client_secrets_file(client_secrets_path, DRIVE_SCOPES)
-    auth_url, _ = flow.authorization_url(prompt="consent", access_type="offline")
-
-    print(f"\n--- [AUTH_URL] ---\n{auth_url}\n--- [END_AUTH_URL] ---\n", flush=True)
-
-    try:
-        os.system(f'start "" "{auth_url}"')
-    except Exception:
-        pass
 
     creds = flow.run_local_server(
         host="localhost",
         port=8080,
-        prompt="consent",
-        access_type="offline",
-        open_browser=False,
+        authorization_prompt_message="\n--- [AUTH_URL] ---\n{url}\n--- [END_AUTH_URL] ---\n",
+        success_message="인증이 완료되었습니다! 이 창을 닫으셔도 좋습니다.",
+        open_browser=True,
     )
 
     with open(token_path, "w", encoding="utf-8") as f:

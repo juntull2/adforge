@@ -287,7 +287,7 @@ WINDOW_DAYS = 30
 def rolling_30d_volumes(daily: list, recent_30d_total: int, start: date = None, end: date = None,
                         window: int = WINDOW_DAYS) -> list:
     """
-    데이터랩 일간 상대지수를 최근 30일 실측 검색수로 환산한 뒤, 끝나는 날마다 30일 합계를 구합니다.
+    데이터랩 일간 상대지수를 최근 30일 실측 검색수로 환산한 뒤, 끝나는 날마다 window일 합계를 구합니다.
     달력 월로 자르지 않기 때문에 달 경계에 걸친 급상승도 한 구간으로 잡힙니다.
     데이터랩이 뺀 날(검색이 거의 없는 날)은 0으로 채웁니다.
 
@@ -302,7 +302,7 @@ def rolling_30d_volumes(daily: list, recent_30d_total: int, start: date = None, 
         return []
     days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
     series = [values.get(d, 0.0) for d in days]
-    anchor = sum(series[-window:])
+    anchor = sum(series[-WINDOW_DAYS:])
     if anchor <= 0:
         return []
     scale = recent_30d_total / anchor
@@ -328,16 +328,16 @@ def _rise_level(jump: int, ratio, min_jump: int, min_ratio: float) -> str:
 
 
 def find_steepest_rise(windows: list, min_jump: int = 7000, min_ratio: float = 3.0,
-                       since: date = None, window: int = WINDOW_DAYS) -> dict:
+                       since: date = None, window: int = WINDOW_DAYS, min_volume: int = 0) -> dict:
     """
-    30일 롤링 검색량에서 가장 가파른 상승 구간을 찾습니다.
-    각 30일 구간을 바로 앞 30일(겹치지 않는 구간)과 비교해 증가폭·배수를 구하고,
+    window일 롤링 검색량에서 가장 가파른 상승 구간을 찾습니다.
+    각 window일 구간을 바로 앞 window일(겹치지 않는 구간)과 비교해 증가폭·배수를 구하고,
     🚀(증가폭 ≥ min_jump 그리고 배수 ≥ min_ratio) > 📈(증가폭 ≥ min_jump/2 또는 배수 ≥ 1.5) > ➖ 순으로
     가장 좋은 구간을 고릅니다. 같은 등급이면 증가폭이 큰 구간입니다.
 
-    since: 이 날짜 이후에 끝나는 구간만 봅니다 (최근 1년). 직전 30일 비교에는 그 이전 데이터도 씁니다.
+    since: 이 날짜 이후에 끝나는 구간만 봅니다 (최근 1년). 직전 구간 비교에는 그 이전 데이터도 씁니다.
     반환: {"level", "start", "end", "volume", "prev_volume", "jump", "ratio"(직전이 0이면 None),
-           "baseline"(급상승 전 30일 검색량 중앙값), "peak_volume", "peak_end"}
+           "baseline"(급상승 전 window일 검색량 중앙값), "peak_volume", "peak_end"}
     """
     result = {"level": RISE_FLAT, "start": None, "end": None, "volume": 0, "prev_volume": 0, "jump": 0,
               "ratio": None, "baseline": 0, "peak_volume": 0, "peak_end": None}
@@ -358,7 +358,10 @@ def find_steepest_rise(windows: list, min_jump: int = 7000, min_ratio: float = 3
         jump = volume - prev
         ratio = round(volume / prev, 2) if prev > 0 else None
         level = _rise_level(jump, ratio, min_jump, min_ratio)
-        rank = (RISE_LEVELS.index(level), -jump)
+        qualifies = volume >= min_volume and jump >= min_jump
+        if min_volume and qualifies:
+            level = RISE_ROCKET
+        rank = (not qualifies, RISE_LEVELS.index(level), -jump)
         if best is None or rank < best[0]:
             best = (rank, i, j, volume, prev, jump, ratio, level)
     if best is None:

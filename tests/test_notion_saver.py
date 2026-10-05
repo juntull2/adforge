@@ -119,3 +119,22 @@ def test_same_video_on_other_page_is_treated_as_recorded(notion, monkeypatch):
     ads = second.a_grade_brands[0].ads
     assert ads[0].recorded == "같은 영상"
     assert ads[1].recorded == ""
+
+
+def test_retracking_checks_new_materials_against_notion(notion, monkeypatch):
+    first = build_report()
+    first.a_grade_brands[0].ads[0].video_asset_id = "recorded-asset"
+    at = open_app(monkeypatch, first)
+    at.button(key=f"{TOKEN}_save").click().run()
+    report = build_report()
+    at = open_app(monkeypatch, report)
+    brand = report.a_grade_brands[0]
+    def track(b, settings, progress=None):
+        b.ads.append(make_ad(ad_id="new-id", video_asset_id="recorded-asset", copy="다른 계정에서 수집한 문구"))
+        b.tracked = True
+    monkeypatch.setattr(v, "track_brand", track)
+    token = report.generated_at.replace(":", "")
+    at.button(key=f"ag_track_{token}_{brand.key}").click().run()
+    assert not at.exception
+    assert brand.ads[-1].recorded == "같은 영상"
+    assert panel.saver_rows(report, False) == []

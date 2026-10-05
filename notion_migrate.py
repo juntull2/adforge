@@ -13,7 +13,7 @@
 - 광고 문구에 제품 연관 키워드가 있어야 합니다.
 - 브랜드의 최근 1년 30일 검색량 최고값이 1만 이상이어야 합니다 (제품명도 함께 확인).
 - 확인할 수 없는 광고·브랜드는 옮기지 않습니다.
-- 소재링크 · 편집일 · 대표님 피드백은 읽지도 옮기지도 않습니다. 진행 여부는 '검토중'으로 시작합니다.
+- 제작 영상 링크 · 제작 날짜 · 대표님 피드백 (이전 칸 이름 포함)은 읽지도 옮기지도 않습니다. 진행 여부는 '검토중'으로 시작합니다.
 - 기존 표의 행은 고치거나 지우지 않습니다.
 """
 
@@ -139,7 +139,7 @@ def _first_landing(props: dict) -> str:
 
 
 def build_row(source: str, page: dict, body: str) -> LegacyRow:
-    props = {k: _plain_value(p) for k, p in (page.get("properties") or {}).items() if k not in nr.HUMAN_ONLY}
+    props = {k: _plain_value(p) for k, p in (page.get("properties") or {}).items() if k not in nr.HUMAN_PROTECTED}
     title = next((_plain_value(p) for p in (page.get("properties") or {}).values() if p.get("type") == "title"), "")
     parsed = parse_title(title)
     texts = [v for v in props.values() if isinstance(v, str)] + [body]
@@ -404,7 +404,7 @@ def format_report(plan: MigrationPlan) -> str:
         "# 기존 노션 레퍼런스 옮기기 보고서 (미리보기)", "",
         f"- 만든 시각: {plan.generated_at}",
         f"- 기존 행 {len(plan.rows)}개 → 옮길 브랜드 {len(moving)}곳 · 소재 {len(moving_ads)}개",
-        "- 노션·메타에는 아무것도 쓰지 않았습니다. 소재링크·편집일·대표님 피드백은 옮기지 않습니다.",
+        "- 노션·메타에는 아무것도 쓰지 않았습니다. 제작 영상 링크·제작 날짜·대표님 피드백은 옮기지 않습니다.",
     ]
     for w in plan.warnings:
         lines.append(f"- ⚠️ {w}")

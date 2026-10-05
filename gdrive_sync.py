@@ -78,11 +78,20 @@ def test_gdrive_folder_access(folder_id_or_url: str, credentials_path: str = "se
 
     try:
         service = get_drive_service(credentials_path)
-        folder = service.files().get(
-            fileId=folder_id,
-            fields="id, name, capabilities, shared, driveId, owners",
-            supportsAllDrives=True
-        ).execute()
+        try:
+            folder = service.files().get(
+                fileId=folder_id,
+                fields="id,name,capabilities,shared,driveId,owners",
+                supportsAllDrives=True
+            ).execute()
+        except Exception:
+            # 구글 드라이브 API 서버의 간헐적 500 에러 및 필드 비호환성 방지
+            time.sleep(0.5)
+            folder = service.files().get(
+                fileId=folder_id,
+                fields="id,name,capabilities",
+                supportsAllDrives=True
+            ).execute()
 
         can_add = folder.get("capabilities", {}).get("canAddChildren", False)
         folder_name = folder.get("name", "Unknown Folder")

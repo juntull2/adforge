@@ -78,3 +78,28 @@ def test_rate_limit_stops_immediately_without_retry(monkeypatch):
     with pytest.raises(m.AdLibraryRateLimited):
         client.page_ads("123")
     assert client._sess.posts == 1                           # 한도 초과 뒤에는 요청 자체를 보내지 않음
+
+
+def test_page_pagination_and_limit_metadata(monkeypatch):
+    first = {"edges": OK["edges"], "page_info": {"has_next_page": True, "end_cursor": "next"}}
+    client, _ = make_client([first, OK], monkeypatch)
+    variables = []
+    original = client._post
+    def post(v):
+        variables.append(v)
+        return original(v)
+    client._post = post
+    result = client.page_ads("123", max_pages=20)
+    assert len(result) == 2 and not result.incomplete
+    assert variables[1]["cursor"] == "next"
+    client, _ = make_client([first], monkeypatch)
+    result = client.page_ads("123", max_pages=1)
+    assert result.incomplete and result.has_next_page and result.stop_reason == "page_limit"
+
+
+def test_partial_page_results_survive_rate_limit_and_failure(monkeypatch):
+    first = {"edges": OK["edges"], "page_info": {"has_next_page": True, "end_cursor": "next"}}
+    for failure in ([m.AdLibraryRateLimited("limited")], [None, None]):
+        client, _ = make_client([first] + failure, monkeypatch)
+        result = client.page_ads("123", max_pages=20)
+        assert len(result) == 1 and result.incomplete and result.stop_reason

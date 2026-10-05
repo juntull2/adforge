@@ -1,0 +1,2 @@
+# Install into a separate venv; the Streamlit application does not import these.
+whisperx>=3.3,<4

@@ -1,7 +1,7 @@
 """
 🏆 A급 소재 탐색 & 브랜드 연결 계정 추적 화면 (app.py 탭)
 
-A급 = ① 최근 1년 안에 브랜드·제품 월간 검색량 1만+ ② 메타 60일+ 게재 중 ③ 우리 제품 연관
+A급 = ① 최근 1년 안에 브랜드·제품 30일 검색량 1만+ 및 직전 60일 대비 증가폭 7천+ ② 메타 60일+ 게재 중 ③ 우리 제품 연관
 A급 브랜드는 같은 자사몰로 광고하는 아랍어·외국어·위장·숨은 계정까지 추적합니다.
 브랜드별 네이버 검색량·연령·성별층을 보여주고, A급 소재를 노션에 기록합니다.
 """
@@ -87,6 +87,8 @@ def _type_counts(accounts) -> str:
 
 
 def _rise_badge(volume) -> str:
+    if volume and volume.rise_end and getattr(volume, "rise_window_days", 30) != 60:
+        return "30일 기록 · 재확인 필요"
     level = getattr(volume, "rise_level", "") if volume else ""
     return level or "추이 없음"
 
@@ -94,27 +96,36 @@ def _rise_badge(volume) -> str:
 def _rise_jump_text(volume) -> str:
     if not volume or not getattr(volume, "rise_end", ""):
         return "-"
-    ratio = volume.rise_ratio
+    if getattr(volume, "rise_window_days", 30) != 60:
+        return "30일 기록 · 재확인 필요"
+    ratio = getattr(volume, "rise_ratio", None)
     ratio_text = "신규" if ratio is None else f"{ratio:.1f}배"
-    return f"{volume.rise_jump:+,} ({ratio_text})"
+    return f"{getattr(volume, 'rise_jump', 0):+,} ({ratio_text})"
 
 
-def _trend_chart(volume, settings):
-    """30일 롤링 검색량 선 + 급상승 구간(음영) + ① 기준선"""
-    data = pd.DataFrame(volume.windows)
+def _trend_chart(volume, settings, days=30, show_rise=False):
+    """60일 판정·급상승 그래프와 기존 기록을 기간에 맞게 표시합니다."""
+    data = pd.DataFrame(volume.windows if show_rise else getattr(volume, "grade_windows", []))
     data["end"] = pd.to_datetime(data["end"])
-    line = alt.Chart(data).mark_line(color="#00C73C").encode(
-        x=alt.X("end:T", title="30일 구간 끝나는 날"),
-        y=alt.Y("volume:Q", title="30일 검색량"),
-        tooltip=[alt.Tooltip("end:T", title="끝나는 날"), alt.Tooltip("volume:Q", title="30일 검색량", format=",")],
+    line = alt.Chart(data).mark_line(color="#00A651", strokeWidth=3).encode(
+        x=alt.X("end:T", title=f"{days}일 구간 끝나는 날"),
+        y=alt.Y("volume:Q", title=f"{days}일 검색량"),
+        tooltip=[alt.Tooltip("end:T", title="끝나는 날"), alt.Tooltip("volume:Q", title=f"{days}일 검색량", format=",")],
     )
     layers = [line]
-    if volume.rise_end:
+    if show_rise and volume.rise_end:
         band = pd.DataFrame([{"start": pd.to_datetime(volume.rise_start), "end": pd.to_datetime(volume.rise_end)}])
         layers.insert(0, alt.Chart(band).mark_rect(color="#FF6D00", opacity=0.15).encode(x="start:T", x2="end:T"))
-    rule = pd.DataFrame([{"y": settings.min_peak_volume}])
-    layers.append(alt.Chart(rule).mark_rule(color="#9E9E9E", strokeDash=[4, 4]).encode(y="y:Q"))
-    return alt.layer(*layers).properties(height=190)
+    if days == 30:
+        rule = pd.DataFrame([{"y": settings.min_peak_volume, "label": f"A급 검색량 기준 {settings.min_peak_volume:,}건"}])
+        layers.append(alt.Chart(rule).mark_rule(color="#D32F2F", strokeDash=[6, 4]).encode(y="y:Q"))
+        layers.append(alt.Chart(rule).mark_text(align="left", dx=8, dy=-10, color="#D32F2F").encode(y="y:Q", text="label:N"))
+    if show_rise and volume.rise_end:
+        point = pd.DataFrame([{"end": pd.to_datetime(volume.rise_end), "volume": volume.rise_volume,
+                               "label": f"{volume.rise_volume:,}건 · +{volume.rise_jump:,}건"}])
+        layers.append(alt.Chart(point).mark_point(color="#FF6D00", filled=True, size=110).encode(x="end:T", y="volume:Q"))
+        layers.append(alt.Chart(point).mark_text(dy=-18, color="#B34700", fontSize=14).encode(x="end:T", y="volume:Q", text="label:N"))
+    return alt.layer(*layers).properties(height=320).interactive()
 
 
 # ─────────────────────────────────────────────────────────────────
@@ -193,7 +204,7 @@ def _summary_rows(report) -> list:
         rows.append({
             "등급": "🏆 A급" if b.is_a_grade else "—",
             "급상승": _rise_badge(b.volume),
-            "30일 증가": _rise_jump_text(b.volume),
+            "60일 증가": _rise_jump_text(b.volume),
             "브랜드": b.name,
             "식별(랜딩)": b.key,
             "① 검색량 (최근 1년 최고)": volume_summary(b.volume),
@@ -294,7 +305,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
             )
         c1, c2, c3 = st.columns(3)
         with c1:
-            st.markdown(f"**① 검색량 1만+** {_mark(brand.criteria.get('search_spike'))}")
+            st.markdown(f"**① 30일 검색량 1만+ · 증가폭 7천+** {_mark(brand.criteria.get('search_spike'))}")
             st.caption(volume_summary(brand.volume))
         with c2:
             st.markdown(f"**② {settings.min_running_days}일+ 게재** {_mark(brand.criteria.get('long_running'))}")
@@ -309,17 +320,24 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
 
         volume = brand.volume
         windows = getattr(volume, "windows", None) if volume else None
-        if volume and (windows or volume.months):
-            tab_trend, tab_month = st.tabs(["📈 30일 검색량 추이", "📊 달력 월별 (참고)"])
+        if volume and (windows or getattr(volume, "grade_windows", []) or volume.months):
+            tab_grade, tab_trend, tab_month = st.tabs(["✅ 30일 검색량 판정", "📈 60일 급상승 추이", "📊 달력 월별 (참고)"])
+            with tab_grade:
+                if getattr(volume, "grade_windows", []):
+                    st.altair_chart(_trend_chart(volume, settings), width="stretch")
+                    st.caption(f"연속 30일 검색량 합계 · 점선 = ① 기준 {settings.min_peak_volume:,}건. "
+                               "네이버 최근 30일 실측 검색수로 데이터랩 일간 추이를 환산합니다.")
+                else:
+                    st.caption("30일 추이가 없습니다. 검색량 다시 확인으로 새 기준을 조회하세요.")
             with tab_trend:
                 if windows:
-                    st.altair_chart(_trend_chart(volume, settings), width="stretch")
+                    st.altair_chart(_trend_chart(volume, settings, days=getattr(volume, 'rise_window_days', 60), show_rise=True), width="stretch")
                     st.caption(
-                        f"'{volume.keyword}' 끝나는 날마다 직전 30일 검색량 (네이버 검색광고 최근 30일 {volume.recent_30d:,}건 × "
-                        f"데이터랩 일간 추이) · 주황 음영 = 가장 가파른 30일 · 점선 = ① 기준 {settings.min_peak_volume:,}건"
+                        f"'{volume.keyword}' 연속 {getattr(volume, 'rise_window_days', 60)}일 검색량을 직전 {getattr(volume, 'rise_window_days', 60)}일과 비교 · "
+                        "주황 음영 = 60일 증가폭을 확인한 구간 · A급 증가폭 기준 7,000건"
                     )
                 else:
-                    st.caption("30일 추이가 없습니다.")
+                    st.caption("60일 추이가 없습니다.")
             with tab_month:
                 if volume.months:
                     chart = pd.DataFrame([
@@ -332,7 +350,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
         if volume and volume.checked:
             st.caption("확인한 키워드: " + " · ".join(
                 f"{c['keyword']} 최근 30일 {c['recent_30d']:,}건"
-                + (f" / 최고 {c['peak_volume']:,}건" if c.get("peak_volume") else "")
+                + (f" / {getattr(volume, 'search_window_days', 30)}일 기준 {c['peak_volume']:,}건 ({c.get('peak_month', '')})" if c.get("peak_volume") else "")
                 + (f" / {c['rise_level']} {c['rise_jump']:+,}" if c.get("rise_level") else "")
                 + (f" ({c['note']})" if c.get("note") else "")
                 for c in volume.checked
@@ -341,7 +359,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
         kc1, kc2 = st.columns([4, 1])
         with kc1:
             new_keywords = st.text_input(
-                "① 검색량 확인 키워드 (쉼표 구분 · 브랜드명·제품명, 검색수 상위 2개는 30일 추이까지 확인)",
+                "① 검색량 확인 키워드 (쉼표 구분 · 브랜드명·제품명, 검색수 상위 2개는 30일 검색량과 60일 증가폭까지 확인)",
                 value=", ".join(brand.keywords),
                 key=f"ag_kw_{wkey}",
                 help="자사몰 이름·영문 도메인·페이지 이름에서 자동으로 골랐습니다. 제품명으로도 확인하려면 추가하세요.",
@@ -365,6 +383,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
             if brand.is_a_grade and settings.track_accounts and not brand.tracked:
                 bar = st.progress(0.0, text="연결 계정 추적 준비 중…")
                 track_brand(brand, settings, progress=_progress_bar(bar))
+                report._recorded_done = False
             report.brands = sort_brands(report.brands)
             _persist(report)
             st.rerun()
@@ -390,7 +409,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
             extra = sum(1 for a in brand.accounts if getattr(a, "depth", 0))
             st.markdown(f"**🕵️ 연결 계정 {len(brand.accounts)}개** — {_type_counts(brand.accounts)}"
                         + (f" · 🔁 숨은 계정 재검색으로 {extra}개 추가" if extra else ""))
-            if getattr(brand, "tracking_failed", 0):
+            if getattr(brand, "tracking_failed", 0) or getattr(brand, "tracking_incomplete", False):
                 st.warning(f"추적이 일부만 끝났습니다: {brand.tracking_note}")
             if brand.accounts:
                 st.dataframe(
@@ -411,6 +430,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
             if st.button(label, key=f"ag_track_{wkey}"):
                 bar = st.progress(0.0, text="연결 계정 추적 준비 중…")
                 track_brand(brand, settings, progress=_progress_bar(bar))
+                report._recorded_done = False
                 _persist(report)
                 st.rerun()
 
@@ -420,6 +440,9 @@ def _render_report(report) -> None:
     check_recorded(report)
     for warning in report.warnings:
         st.warning(warning)
+    if any(b.volume and b.volume.keyword and (getattr(b.volume, "search_window_days", 30) != 30 or getattr(b.volume, "rise_window_days", 30) != 60)
+           for b in report.brands):
+        st.info("기존 결과에는 현재 판정 기간과 다른 기록이 남아 있습니다. 새로 탐색하거나 검색량 다시 확인을 누르면 검색량은 30일, 급상승 증가폭은 60일 기준으로 재계산합니다.")
     ready, _ = notion_ready()
     if report.recorded_error and ready:
         st.warning(f"{report.recorded_error} — 노션에 있는 소재를 제외하지 않고 보여줍니다.")
@@ -435,6 +458,8 @@ def _render_report(report) -> None:
     m[5].metric("🕵️ 찾은 연결 계정", f"{sum(len(b.accounts) for b in report.brands):,}")
     saved = f" · 저장: `{report.saved_path}`" if report.saved_path else ""
     st.caption(f"{report.generated_at} 기준 · 메타 요청 {report.meta_requests}회{saved}")
+    st.caption(f"광고 검색·기간·연관성 집계는 최초 키워드 검색 기준입니다. "
+               f"연결 계정에서 추가한 소재를 포함한 A급 소재는 {sum(len(b.ads) for b in a_brands):,}개입니다.")
 
     if not report.brands:
         if report.scanned_ads == 0:
@@ -518,9 +543,9 @@ def _render_report(report) -> None:
 def render_a_grade_view() -> None:
     st.subheader("🏆 A급 소재 탐색 & 브랜드 계정 추적")
     st.caption(
-        "A급 = ① 최근 1년 안에 브랜드·제품 30일 검색량 1만 이상 (아이템스카우트와 같은 방식: 네이버 검색광고 최근 30일 검색수 × 데이터랩 추이) "
+        "A급 = ① 최근 1년 안에 동일한 브랜드·제품 키워드의 30일 검색량이 1만 건 이상인 이력과, 직전 60일 대비 60일 검색량 증가폭이 7,000건 이상인 이력 (네이버 검색광고 최근 30일 검색수로 데이터랩 일간 추이를 환산) "
         "② 메타 광고 라이브러리 60일 이상 게재 중 ③ 우리 제품 연관. "
-        "결과는 30일 만에 가파르게 오른 브랜드(🚀)부터 보여주고, A급 브랜드는 같은 자사몰로 광고하는 아랍어·위장·숨은 계정까지 찾아냅니다."
+        "결과는 60일 검색량이 가파르게 오른 브랜드(🚀)부터 보여주고, A급 브랜드는 같은 자사몰로 광고하는 아랍어·위장·숨은 계정까지 찾아냅니다."
     )
 
     report = st.session_state.get(_STATE_KEY)
@@ -542,24 +567,26 @@ def render_a_grade_view() -> None:
             )
             n1, n2 = st.columns(2)
             with n1:
-                min_volume = st.number_input("① 30일 검색량 기준", min_value=1000, max_value=500000,
+                min_volume = st.number_input("① 30일 검색량 합계 기준", min_value=1000, max_value=500000,
                                              value=MIN_PEAK_VOLUME, step=1000, key="ag_min_volume")
             with n2:
                 min_days = st.number_input("② 최소 게재 일수", min_value=7, max_value=365,
                                            value=MIN_RUNNING_DAYS, step=1, key="ag_min_days")
             r1, r2 = st.columns(2)
             with r1:
-                spike_jump = st.number_input("🚀 급상승: 30일 증가폭", min_value=500, max_value=500000,
+                spike_jump = st.number_input("🚀 급상승: 60일 증가폭", min_value=500, max_value=500000,
                                              value=SPIKE_MIN_JUMP, step=500, key="ag_spike_jump")
             with r2:
-                spike_ratio = st.number_input("🚀 급상승: 직전 30일 대비 배수", min_value=1.1, max_value=20.0,
+                spike_ratio = st.number_input("🚀 급상승: 직전 60일 대비 배수", min_value=1.1, max_value=20.0,
                                               value=SPIKE_MIN_RATIO, step=0.5, key="ag_spike_ratio")
-            st.caption("급상승은 A급 조건이 아니라 순위·표시에만 씁니다. 📈 상승 = 증가폭이 기준의 절반 이상이거나 1.5배 이상.")
+            st.caption("A급: 최근 1년 안에 동일 키워드의 30일 검색량 1만 건 이상 + 직전 60일 대비 7천 건 이상 증가. 배수는 참고 표시이며 A급 필수 조건이 아닙니다.")
             track = st.checkbox("A급 브랜드를 찾으면 연결 계정(아랍어·위장·숨은 계정)까지 자동 추적",
                                 value=True, key="ag_track")
+            account_pages = st.number_input("연결 계정당 최대 수집 페이지", min_value=1, max_value=100,
+                                            value=20, step=1, key="ag_account_pages")
         if not all(_naver_creds()):
             st.warning("네이버 검색광고 API 키(NAVER_CUSTOMER_ID · NAVER_ACCESS_LICENSE · NAVER_SECRET_KEY)가 없으면 ① 검색량을 확인할 수 없습니다.")
-        st.caption("기본 설정(검색어 7개 · 3페이지)으로 4분 안팎 걸립니다. 진행 중에 다른 버튼을 누르면 탐색이 멈춥니다.")
+        st.caption("연결 계정은 기본 최대 20페이지까지 정밀 탐색하므로 광고 수에 따라 시간이 늘어납니다. 진행 중에 다른 버튼을 누르면 탐색이 멈춥니다.")
 
     if st.button("🏆 A급 소재 찾기", type="primary", key="ag_run"):
         settings = ScanSettings(
@@ -570,6 +597,7 @@ def render_a_grade_view() -> None:
             min_peak_volume=int(min_volume),
             pages_per_keyword=int(pages),
             track_accounts=bool(track),
+            account_pages=int(account_pages),
             spike_min_jump=int(spike_jump),
             spike_min_ratio=float(spike_ratio),
         )

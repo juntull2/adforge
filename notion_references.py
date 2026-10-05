@@ -8,7 +8,7 @@
 - ReferenceStore: 브랜드는 '브랜드 키'(자사몰 도메인 등)로, 소재는 '광고 ID'로 찾아서 있으면 갱신, 없으면 만듭니다.
 
 칸 소유 규칙
-- 사람 전용(HUMAN_ONLY): 소재링크 · 편집일 · 대표님 피드백 → adforge는 어떤 요청에도 넣지 않습니다.
+- 사람 전용: 제작 영상 링크 · 제작 날짜 · 대표님 피드백 (이전 칸 이름도 보호) → 자동 저장 요청에 넣지 않습니다.
 - 처음만(CREATE_ONLY): 제목 · 진행 여부 · 소구 포인트 · 소재 본문 → 처음 만들 때만 쓰고 다시 저장할 때는 건드리지 않습니다.
 - 비어 있을 때만(EMPTY_ONLY): 영상 원본 → 구글 드라이브 링크를 덮어쓰지 않습니다.
 - 그 밖의 칸은 저장할 때마다 최신 값으로 갱신합니다.
@@ -50,11 +50,11 @@ B_PRODUCT = "제품"
 B_KEYWORD = "판정 키워드"
 B_PEAK = "최고 30일 검색량"
 B_RECENT = "최근 30일 검색량"
-B_RISE = "급상승"
-B_RISE_RANGE = "급상승 구간"
-B_JUMP = "30일 증가폭"
-B_RATIO = "증가 배수"
-B_BASELINE = "평소 수준"
+B_RISE = "급상승(60일)"
+B_RISE_RANGE = "급상승 구간(60일)"
+B_JUMP = "60일 증가폭"
+B_RATIO = "60일 증가 배수"
+B_BASELINE = "평소 60일 검색량"
 B_FEMALE = "여성 비중(%)"
 B_4050 = "4050 비중(%)"
 B_ACCOUNTS = "연결 계정 수"
@@ -82,10 +82,12 @@ A_COLLATION = "묶음 ID"
 A_ASSET = "영상 자산 ID"
 A_FINGERPRINT = "소재 지문"
 
-H_MATERIAL = "소재링크"
-H_EDITED = "편집일"
+H_MATERIAL = "제작 영상 링크"
+H_EDITED = "제작 날짜"
 H_FEEDBACK = "대표님 피드백"
 HUMAN_ONLY = (H_MATERIAL, H_EDITED, H_FEEDBACK)
+HUMAN_ALIASES = {"소재링크": H_MATERIAL, "편집일": H_EDITED}
+HUMAN_PROTECTED = frozenset((*HUMAN_ONLY, *HUMAN_ALIASES))
 AD_CREATE_ONLY = (A_TITLE, A_STATUS, A_APPEAL)
 BRAND_CREATE_ONLY = (B_TITLE,)
 EMPTY_ONLY = (A_VIDEO,)
@@ -98,7 +100,7 @@ ACCOUNT_OPTIONS = [("공식 계정", "green"), ("숨은 계정", "blue"), ("위�
                    ("아랍어 계정", "red"), ("외국어 계정", "orange")]
 MEDIA_OPTIONS = [("영상", "purple"), ("이미지", "blue"), ("캐러셀", "pink")]
 # 사람 전용 칸을 기존 기획표에서 읽지 못했을 때 쓸 종류
-HUMAN_DEFAULT_TYPES = {H_MATERIAL: "rich_text", H_EDITED: "date", H_FEEDBACK: "rich_text"}
+HUMAN_DEFAULT_TYPES = {H_MATERIAL: "url", H_EDITED: "date", H_FEEDBACK: "rich_text"}
 HUMAN_ALLOWED_TYPES = {"rich_text", "url", "date", "files", "people", "last_edited_time", "checkbox", "select"}
 DAYS_FORMULA = f'dateBetween(now(), prop("{A_START}"), "days")'
 
@@ -132,6 +134,7 @@ def brand_schema() -> dict:
 
 
 def human_schema(types: dict) -> dict:
+    types = {HUMAN_ALIASES.get(name, name): kind for name, kind in types.items()}
     out = {}
     for name in HUMAN_ONLY:
         kind = types.get(name) if types.get(name) in HUMAN_ALLOWED_TYPES else HUMAN_DEFAULT_TYPES[name]
@@ -254,12 +257,12 @@ def guide_blocks() -> list:
     """새 페이지 맨 위 안내"""
     return [
         callout("A급 기준", "🏆", "yellow_background", [
-            bullet("① 최근 1년 안에 브랜드·제품 30일 검색량 1만 이상 (네이버 검색광고 최근 30일 × 데이터랩 일간 추이)"),
+            bullet("① 최근 1년 안에 동일한 브랜드·제품 키워드의 30일 검색량이 1만 건 이상인 이력과, 직전 60일 대비 60일 검색량 증가폭이 7,000건 이상인 이력 (네이버 최근 30일 실측 검색수로 데이터랩 일간 추이를 환산)"),
             bullet("② 메타 광고 라이브러리에서 60일 이상 게재 중"),
             bullet("③ 우리 제품(여드름·영양제 등)과 연관"),
         ]),
-        callout("급상승 표시 (순위용, A급 조건 아님)", "🚀", "orange_background", [
-            bullet("🚀 급상승: 30일 증가폭 7,000건 이상 그리고 직전 30일의 3배 이상 (adforge 화면에서 기준 조정)"),
+        callout("급상승 판정 (A급 필수 조건)", "🚀", "orange_background", [
+            bullet("🚀 급상승: 30일 검색량 1만 건 이상 + 직전 60일 대비 60일 증가폭 7,000건 이상. 배수는 참고용"),
             bullet("📈 상승: 증가폭이 기준의 절반 이상이거나 1.5배 이상"),
             bullet("➖ 꾸준: 그 밖"),
         ]),
@@ -311,7 +314,8 @@ def plan_setup(client: NotionClient, legacy_db_id: str) -> SetupPlan:
 
     for ds in db.get("data_sources") or []:
         props = client.get(f"data_sources/{ds['id']}").get("properties") or {}
-        found = {name: props[name].get("type") for name in HUMAN_ONLY if name in props}
+        found = {HUMAN_ALIASES.get(name, name): meta.get("type") for name, meta in props.items()
+                 if name in HUMAN_PROTECTED}
         if found and len(found) > len(plan.human_types):
             plan.human_types, plan.human_source = found, ds.get("name", ds["id"])
     for block in client.block_children(plan.parent_page_id):
@@ -341,7 +345,7 @@ def plan_setup(client: NotionClient, legacy_db_id: str) -> SetupPlan:
         plan.steps.append(f"관계: {AD_DB_TITLE}.{A_BRAND} ↔ {BRAND_DB_TITLE}.{B_ADS} (양방향)")
         plan.steps.append(f"수식: {A_DAYS} = {DAYS_FORMULA}")
         plan.steps.append(f"롤업: {BRAND_DB_TITLE}.{B_MAX_DAYS} = {B_ADS}.{A_DAYS} 최댓값")
-        plan.steps.append("보기: 소재 — 📋 검토 보드(진행 여부별) · 🏢 브랜드별 · ⏳ 롱런 순 / 브랜드 — 🚀 급상승 순")
+        plan.steps.append("한 페이지에 브랜드·소재 표 배치; 추가 보기 탭은 만들지 않음")
     plan.steps.append(f".env에 저장: {ENV_PAGE}, {ENV_BRAND_DB}, {ENV_BRAND_DS}, {ENV_AD_DB}, {ENV_AD_DS} "
                       "(기존 NOTION_DATABASE_ID는 그대로)")
     plan.steps.append("기존 DB와 그 안의 행은 읽기만 하고 고치지 않습니다.")
@@ -374,37 +378,6 @@ def _create_database(client: NotionClient, page_id: str, title: str, emoji: str,
     if not sources:
         raise NotionError(0, "no_data_source", f"{title} 표의 데이터 소스 ID를 받지 못했습니다")
     return db["id"], sources[0]["id"]
-
-
-def _create_views(client: NotionClient, ids: dict, log: list) -> None:
-    ad_props = _prop_ids(client, ids[ENV_AD_DS])
-    brand_props = _prop_ids(client, ids[ENV_BRAND_DS])
-    status = ad_props.get(A_STATUS, {})
-    brand_rel = ad_props.get(A_BRAND, {})
-    rise = brand_props.get(B_RISE, {})
-    views = [
-        (ids[ENV_AD_DB], ids[ENV_AD_DS], "📋 검토 보드", "board", None,
-         {"type": "board", "group_by": {"type": status.get("type", "status"), "property_id": status.get("id"),
-                                        **({"group_by": "option"} if status.get("type") == "status" else {}),
-                                        "sort": {"type": "manual"}}}),
-        (ids[ENV_AD_DB], ids[ENV_AD_DS], "🏢 브랜드별", "table", None,
-         {"type": "table", "group_by": {"type": "relation", "property_id": brand_rel.get("id"),
-                                        "sort": {"type": "ascending"}}}),
-        (ids[ENV_AD_DB], ids[ENV_AD_DS], "⏳ 롱런 순", "table", [{"property": A_DAYS, "direction": "descending"}], None),
-        (ids[ENV_BRAND_DB], ids[ENV_BRAND_DS], "🚀 급상승 순", "table", [{"property": B_JUMP, "direction": "descending"}],
-         {"type": "table", "group_by": {"type": "select", "property_id": rise.get("id"), "sort": {"type": "manual"}}}),
-    ]
-    for db_id, ds_id, name, kind, sorts, config in views:
-        body = {"database_id": db_id, "data_source_id": ds_id, "name": name, "type": kind}
-        if sorts:
-            body["sorts"] = sorts
-        if config:
-            body["configuration"] = config
-        try:
-            client.post("views", json=body)
-            log.append(f"보기 만듦: {name}")
-        except NotionError as exc:
-            log.append(f"⚠️ 보기 '{name}' 만들기 실패 ({exc.message}) — 노션에서 '+ 보기 추가'로 직접 만들어 주세요.")
 
 
 def apply_setup(client: NotionClient, plan: SetupPlan, env_writer=write_env) -> list:
@@ -458,7 +431,7 @@ def apply_setup(client: NotionClient, plan: SetupPlan, env_writer=write_env) -> 
             log.append(f"롤업 만듦: {B_MAX_DAYS}")
         except NotionError as exc:
             log.append(f"⚠️ 롤업 '{B_MAX_DAYS}' 만들기 실패 ({exc.message}) — 노션에서 직접 추가해 주세요.")
-        _create_views(client, ids, log)
+        log.append("브랜드·소재 표의 기본 보기만 사용 (추가 탭 없음)")
     return log
 
 
@@ -515,7 +488,7 @@ def _option_name(name) -> str:
 
 def strip_human(props: dict) -> dict:
     """사람 전용 칸은 어떤 경우에도 요청에 넣지 않습니다."""
-    return {k: v for k, v in props.items() if k not in HUMAN_ONLY}
+    return {k: v for k, v in props.items() if k not in HUMAN_PROTECTED}
 
 
 def brand_key_of(brand) -> str:
@@ -526,7 +499,7 @@ def brand_properties(brand, today: date, create: bool) -> dict:
     from a_grade_finder import brand_mall_url
 
     v = brand.volume
-    has_rise = bool(v and v.rise_end)
+    has_rise = bool(v and v.rise_end and getattr(v, "rise_window_days", 30) == 60)
     audience = getattr(brand, "audience", None) or {}
     gender = audience.get("gender") or {}
     types = sorted({a.account_type for a in brand.accounts or []})
@@ -535,7 +508,7 @@ def brand_properties(brand, today: date, create: bool) -> dict:
         B_MALL: p_url(brand_mall_url(brand)),
         B_PRODUCT: p_text(brand.product_hint),
         B_KEYWORD: p_text(v.keyword if v else ""),
-        B_PEAK: p_number(v.peak_volume if v else None),
+        B_PEAK: p_number(v.peak_volume if v and getattr(v, "search_window_days", 30) == 30 and not getattr(v, "peak_is_lower_bound", False) else None),
         B_RECENT: p_number(v.recent_30d if v else None),
         B_RISE: p_select(v.rise_level if has_rise else ""),
         B_RISE_RANGE: p_text(f"{v.rise_start} ~ {v.rise_end}" if has_rise else ""),
@@ -604,7 +577,7 @@ def brand_auto_block(brand, today: date) -> dict:
     children.append(heading("검색량", 3))
     children.append(bullet(volume_summary(v)))
     if v and v.rise_end:
-        children.append(bullet(f"{v.rise_level} · {format_rise(v.rise)}"))
+        children.append(bullet(rise_summary(v)))
     for m in (v.months if v else [])[-12:]:
         children.append(bullet(f"{m['month']}{' (일부)' if m.get('partial') else ''}: {m['volume']:,}건"))
     audience = getattr(brand, "audience", None) or {}

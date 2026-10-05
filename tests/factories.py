@@ -22,7 +22,9 @@ def make_ad(ad_id="1", page_id="11", page_name="리포데이", key="re4day.co.kr
 def make_volume(passed=True, keyword="리포데이", peak=23810, level=g.RISE_ROCKET, jump=7100, ratio=3.3, **extra):
     today = date.today()
     base = dict(
-        passed=passed, keyword=keyword, peak_month="최근 30일", peak_volume=peak, recent_30d=peak,
+        passed=passed, keyword=keyword, peak_month="최근 60일", peak_volume=peak, recent_30d=peak,
+        search_window_days=30,
+        rise_window_days=60,
         recent_pc=3160, recent_mobile=peak - 3160,
         months=[{"month": "2026-06", "volume": peak, "days": 30, "partial": False}],
         windows=[{"end": (today - timedelta(days=60 - i)).isoformat(), "volume": 3000 + i * 100} for i in range(60)],

@@ -38,7 +38,7 @@ def test_results_sorted_by_rise_and_show_jump(report):
     summary = at.dataframe[0].value
     assert list(summary["브랜드"]) == ["리포데이", "디마프", "오르엔시아"]
     assert summary.iloc[0]["급상승"] == g.RISE_ROCKET
-    assert summary.iloc[0]["30일 증가"] == "+7,100 (3.3배)"
+    assert summary.iloc[0]["60일 증가"] == "+7,100 (3.3배)"
     assert summary.iloc[1]["급상승"] == g.RISE_FLAT
     labels = [e.label for e in at.expander]
     assert any("리포데이" in label and g.RISE_ROCKET in label for label in labels)
