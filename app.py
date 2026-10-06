@@ -796,6 +796,7 @@ with tab_video:
                                 ("🐟 20대 여성 쇼츠", "fish_54f52a4d2b994612a30306b4a2a95758"),
                                 ("🐟 진우-기쁨-", "fish_a9574d6184714eac96a0a892b719289f"),
                                 ("🐟 봉미선 (짱구엄마)", "fish_b6198ce983784d8db3456c062250cc5a"),
+                                ("🐟 보이스1 (남성, 중년, 대화체)", "fish_8cf5ee4cb0224c109852a206f185a05f"),
                                 ("👩‍💼 [무료] 선희", "ko-KR-SunHiNeural"),
                                 ("👨‍💼 [무료] 인준", "ko-KR-InJoonNeural")
                             ]
@@ -866,6 +867,7 @@ with tab_video:
                     ("🐟 [Fish Audio] 케로로 나레이션", "fish_da6796ba493b43828ff4107889937fe6"),
                     ("🐟 [Fish Audio] 라영님", "fish_acd596a6cb6a43d6bf4b2a5585743c2c"),
                     ("🐟 [Fish Audio] 맑고 생기 있는 여성", "fish_ff61737dc0614062ba8bc5d0abb63b3a"),
+                    ("🐟 [Fish Audio] 보이스1 (남성, 중년, 대화체)", "fish_8cf5ee4cb0224c109852a206f185a05f"),
                     ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom"),
                     ("---", ""),
                     ("👩‍💼 [무료] 마케팅 여성 - 선희", "ko-KR-SunHiNeural"),

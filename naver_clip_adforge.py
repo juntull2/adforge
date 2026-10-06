@@ -555,6 +555,7 @@ FISH_VOICE_LIST = [
     ("🐟 [Fish Audio] 케로로 나레이션", "fish_da6796ba493b43828ff4107889937fe6"),
     ("🐟 [Fish Audio] 라영님", "fish_acd596a6cb6a43d6bf4b2a5585743c2c"),
     ("🐟 [Fish Audio] 맑고 생기 있는 여성", "fish_ff61737dc0614062ba8bc5d0abb63b3a"),
+    ("🐟 [Fish Audio] 보이스1 (남성, 중년, 대화체)", "fish_8cf5ee4cb0224c109852a206f185a05f"),
     ("🐟 [Fish Audio] 커스텀 보이스 (Reference ID 직접 입력)", "fish_custom")
 ]
 
