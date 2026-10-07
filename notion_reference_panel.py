@@ -9,6 +9,7 @@
 import os
 import re
 import time
+from copy import deepcopy
 from datetime import date
 
 import pandas as pd
@@ -16,7 +17,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 import notion_references as nr
-from a_grade_finder import ad_account_type, mark_recorded
+from a_grade_finder import ad_account_type, mark_recorded, ScanSettings, grade_brand, match_terms, _merge_brand_ad
 from notion_sync import NotionClient, NotionError
 
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -132,6 +133,41 @@ def saver_rows(report, show_recorded: bool) -> list:
     return rows
 
 
+def retained_candidates(current, history):
+    """현재 판정을 우선하며, 재수집되지 않은 이전 소재를 출처와 함께 보존합니다."""
+    result = deepcopy(current)
+    settings = ScanSettings.from_dict(current.settings)
+    brands = {b.key: b for b in result.brands}
+    sources = {(b.key, a.ad_id): current.generated_at for b in result.brands for a in b.ads}
+    for old in sorted(history, key=lambda r: r.generated_at, reverse=True):
+        if old.generated_at >= current.generated_at or old.settings.get("country", "KR") != settings.country:
+            continue
+        for previous in old.brands:
+            if previous.key in brands and not brands[previous.key].is_a_grade:
+                continue  # 최신 결과에서 명시적으로 미달이면 예전 합격으로 덮지 않습니다.
+            if not previous.is_a_grade:
+                if previous.key not in brands:
+                    brands[previous.key] = deepcopy(previous)
+                continue
+            candidate = deepcopy(previous)
+            candidate.ads = [a for a in candidate.ads
+                             if a.running_days >= settings.min_running_days
+                             and match_terms(a.copy + " " + a.caption + " " + " ".join(a.relevance), settings.relevance_terms)
+                             and not match_terms(a.copy + " " + a.caption, settings.exclude_terms)]
+            grade_brand(candidate, settings)
+            if not candidate.is_a_grade:
+                continue
+            target = brands.setdefault(candidate.key, candidate)
+            for ad in candidate.ads:
+                sources.setdefault((candidate.key, ad.ad_id), old.generated_at)
+                if target is not candidate:
+                    _merge_brand_ad(target, ad)
+    result.brands = list(brands.values())
+    result._candidate_sources = sources
+    result._recorded_done = False
+    return result
+
+
 def _upload_video(ad, brand, folder: str, credentials_path: str, idx: int) -> tuple:
     """(드라이브 링크, 오류)"""
     from gdrive_sync import download_video_file, upload_video_to_gdrive
@@ -176,7 +212,13 @@ def save_rows(store: nr.ReferenceStore, rows: list, drive_ok: bool, folder: str,
     return result
 
 
-def render_notion_saver(report, key: str) -> None:
+def _set_saver_selection(key: str, mode: str) -> None:
+    st.session_state[f"{key}_default"] = mode
+    st.session_state[f"{key}_ver"] += 1
+
+
+@st.fragment
+def render_notion_saver(report, key: str, history=()) -> None:
     """A급 브랜드의 60일+ 게재 광고를 기획 표로 보여주고, 선택한 광고를 노션에 저장합니다."""
     ready, why = notion_ready()
     if not os.environ.get("NOTION_TOKEN", "").strip():
@@ -187,9 +229,20 @@ def render_notion_saver(report, key: str) -> None:
         _setup_guide()
         return
 
+    if history:
+        include_previous = st.checkbox("이전에 확인한 A급 소재도 포함", value=True, key=f"{key}_include_previous")
+        if include_previous:
+            report = retained_candidates(report, history)
+            check_recorded(report)
+        st.caption("이전 소재는 확인 시각을 표시합니다. 이번 검색에서 다시 확인되지 않았으므로 현재 게재 여부·검색량은 재확인이 필요합니다. 이번에 미달 판정을 받은 브랜드는 이전 합격으로 되살리지 않습니다.")
     show_recorded = st.checkbox("노션에 있는 소재도 보기", value=False, key=f"{key}_show_recorded")
     pairs = saver_rows(report, show_recorded)
     hidden = sum(1 for b in report.a_grade_brands for a in b.ads if a.recorded) if not show_recorded else 0
+    total = sum(len(b.ads) for b in report.a_grade_brands)
+    st.caption(f"키워드 검색 수집 {report.scanned_ads:,}개 → 제품 연관 {report.relevant_ads:,}개 "
+               f"→ A급 브랜드 {len(report.a_grade_brands)}곳의 소재 {total:,}개 "
+               f"→ 현재 저장 표 {len(pairs):,}개 (노션에 이미 있는 소재 {hidden:,}개 숨김). "
+               "동일 광고·소재 변형은 합치며, A급 미달·확인 불가 브랜드는 이 표에서 제외합니다.")
     if hidden:
         st.caption(f"노션에 있는 소재 {hidden}개 제외")
     if not pairs:
@@ -206,6 +259,8 @@ def render_notion_saver(report, key: str) -> None:
         "제목": nr.ad_title(ad, brand),
         "노션": "이미 있음 (갱신)" if ad.recorded else "새 소재",
         "브랜드": brand.name,
+        "확인 시각": getattr(report, "_candidate_sources", {}).get((brand.key, ad.ad_id), report.generated_at),
+        "검색 출처": "이번 검색" if getattr(report, "_candidate_sources", {}).get((brand.key, ad.ad_id), report.generated_at) == report.generated_at else "이전 검색에서 보존",
         "급상승": brand.volume.rise_level if brand.volume and brand.volume.rise_level else "-",
         "광고 계정": ad.page_name,
         "계정 유형": ad_account_type(brand, ad),
@@ -217,18 +272,18 @@ def render_notion_saver(report, key: str) -> None:
         "메타 광고": ad.library_url or None,
         "랜딩": ad.landing_url or None,
     } for brand, ad in pairs])
+    drafts = st.session_state.setdefault(f"{key}_drafts", {})
+    for i, (brand, ad) in enumerate(pairs):
+        for column, value in drafts.get((brand.key, ad.ad_id), {}).items():
+            table.at[i, column] = value
 
     b1, b2, _ = st.columns([1, 1, 4])
     with b1:
-        if st.button("☑️ 전체 선택", key=f"{key}_all", width="stretch"):
-            st.session_state[default_key] = "all"
-            st.session_state[version_key] += 1
-            st.rerun()
+        st.button("☑️ 전체 선택", key=f"{key}_all", width="stretch",
+                  on_click=_set_saver_selection, args=(key, "all"))
     with b2:
-        if st.button("◻️ 전체 해제", key=f"{key}_none", width="stretch"):
-            st.session_state[default_key] = "none"
-            st.session_state[version_key] += 1
-            st.rerun()
+        st.button("◻️ 전체 해제", key=f"{key}_none", width="stretch",
+                  on_click=_set_saver_selection, args=(key, "none"))
 
     locked = [c for c in table.columns if c not in ("선택", "제목", "진행 여부")]
     edited = st.data_editor(
@@ -248,6 +303,8 @@ def render_notion_saver(report, key: str) -> None:
         num_rows="fixed",
         key=f"{key}_table_{st.session_state[version_key]}",
     )
+    for i, (brand, ad) in enumerate(pairs):
+        drafts[(brand.key, ad.ad_id)] = {column: edited.iloc[i][column] for column in ("제목", "진행 여부")}
     st.caption(
         f"사람 전용 칸({' · '.join(nr.HUMAN_ONLY)})은 adforge가 쓰지 않습니다. "
         "이미 노션에 있는 소재는 제목·진행 여부·소구 포인트를 바꾸지 않고 나머지 칸만 갱신합니다."

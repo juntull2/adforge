@@ -8,6 +8,7 @@ import re
 import json
 import time
 import os
+from copy import deepcopy
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
@@ -21,7 +22,7 @@ except ImportError:
     CURL_CFFI_AVAILABLE = False
 
 # AdLibrarySearchPaginationQuery의 고정 doc_id (JS 번들에서 추출)
-_AD_LIB_DOC_ID = "24922295957467452"
+_AD_LIB_DOC_ID = "25464068859919530"
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -151,12 +152,27 @@ def _extract_lsd(html: str) -> str:
     for pat in [
         r'"LSD",\[\],\{"token":"([^"]+)"',
         r'"lsd"\s*:\s*"([^"]{6,})"',
-        r'"token":"([a-zA-Z0-9_\-]{8,})"',
+        r'name="lsd"\s+value="([^"]+)"',
     ]:
         m = re.search(pat, html)
         if m:
             return m.group(1)
     return ""
+
+
+def _session_fields(html: str) -> dict:
+    """현재 페이지에서 실제로 받은 세션 메타데이터만 전송합니다."""
+    fields = {}
+    for key in ("__spin_r", "__spin_t", "__spin_b", "__hsi"):
+        names = (key, "hsi") if key == "__hsi" else (key,)
+        for name in names:
+            match = re.search(r'"' + re.escape(name) + r'"\s*:\s*"?([A-Za-z0-9_]+)', html)
+            if match:
+                fields[key] = match.group(1)
+                break
+    if "__spin_r" in fields:
+        fields["__rev"] = fields["__spin_r"]
+    return fields
 
 
 def _scrape_ads_public(keyword: str, country: str = "KR", limit: int = 30) -> list:
@@ -677,8 +693,10 @@ class AdLibraryRateLimited(AdLibraryBlocked):
     """메타가 'Rate limit exceeded'(요청 한도 초과)를 돌려줄 때. 다시 시도해도 한동안 풀리지 않으므로 바로 멈춥니다."""
 
 
-RATE_LIMIT_MESSAGE = ("메타 광고 라이브러리 요청 한도를 넘었습니다 (Rate limit exceeded). "
-                      "한동안 기다린 뒤 다시 시도하세요. 그동안 찾은 결과는 유지합니다.")
+RATE_LIMIT_MESSAGE = ("메타가 AdForge의 자동 수집 요청을 거절했습니다 (Rate limit exceeded). "
+                      "이 수집 경로는 메타 웹사이트의 비공식 요청 방식이며, 첫 검색에서도 거절될 수 있습니다. "
+                      "사용자의 반복 검색이 원인인지, 기다리면 해제되는지는 이 응답만으로 확인할 수 없습니다. "
+                      "수집된 광고가 있으면 부분 결과로 표시합니다.")
 
 
 class AdCollection(list):
@@ -762,6 +780,10 @@ class AdLibraryClient:
         self._lsd = ""
         self._referer = ""
         self._last_request = 0.0
+        self._session_fields = {}
+        self._collections = {}
+        # 쿠키·토큰·원문 응답은 저장하지 않고 실패 유형과 코드만 남깁니다.
+        self.last_error = {}
 
     def _wait(self):
         gap = time.monotonic() - self._last_request
@@ -772,20 +794,19 @@ class AdLibraryClient:
     def _connect(self):
         sess = _make_session()
         referer = _build_search_url("영양제", self.country)
-        resp = _get_page(sess, referer)
-        if resp is None:
-            # 직접 연결 실패 시 페이스북 메인 페이지를 거쳐 1회 재시도
-            _get_page(sess, "https://www.facebook.com/")
-            time.sleep(1.0)
-            resp = _get_page(sess, referer)
-
+        # 광고 라이브러리 HTML은 비로그인 접속에 403을 반환할 수 있습니다.
+        # 같은 도메인의 홈에서 받은 실제 LSD와 쿠키로 세션을 시작합니다.
+        self._wait()
         self.request_count += 1
-        lsd = _extract_lsd(resp.text if resp is not None else "")
+        resp = _get_page(sess, "https://www.facebook.com/", max_retry=1)
+        html = resp.text if resp is not None else ""
+        lsd = _extract_lsd(html)
         if not lsd:
             raise AdLibraryBlocked(
                 "메타 광고 라이브러리 접속 토큰을 받지 못했습니다. 잠시 후 다시 시도하거나 네트워크를 확인하세요."
             )
         self._sess, self._lsd, self._referer = sess, lsd, referer
+        self._session_fields = _session_fields(html)
 
     def _post(self, variables: dict):
         """GraphQL 1회 호출. 정상 응답이면 search_results_connection, 실패하면 None."""
@@ -803,6 +824,7 @@ class AdLibraryClient:
             "Accept-Language": "ko-KR,ko;q=0.9",
         }
         form = {
+            **self._session_fields,
             "lsd": self._lsd,
             "variables": json.dumps(variables),
             "doc_id": _AD_LIB_DOC_ID,
@@ -814,6 +836,10 @@ class AdLibraryClient:
             r = self._sess.post(self.GRAPHQL_URL, data=form, headers=headers, timeout=25)
         except Exception:
             return None
+        if r.status_code == 429:
+            self.last_error = {"source": "web_graphql", "http_status": 429, "codes": []}
+            self.rate_limited = True
+            raise AdLibraryRateLimited(RATE_LIMIT_MESSAGE)
         if r.status_code != 200:
             return None
         text = r.text or ""
@@ -825,6 +851,8 @@ class AdLibraryClient:
             return None
         errors = data.get("errors") or []
         if any("rate limit" in str(e.get("message", "")).lower() or e.get("code") == 1675004 for e in errors):
+            self.last_error = {"source": "web_graphql", "http_status": r.status_code,
+                               "codes": [e["code"] for e in errors if isinstance(e.get("code"), int)]}
             self.rate_limited = True
             raise AdLibraryRateLimited(RATE_LIMIT_MESSAGE)
         main = (data.get("data") or {}).get("ad_library_main") or {}
@@ -856,6 +884,9 @@ class AdLibraryClient:
             return None
 
     def _collect(self, make_variables, max_pages: int, label: str) -> list:
+        cache_key = (json.dumps(make_variables(None), sort_keys=True), max(1, int(max_pages)))
+        if cache_key in self._collections:
+            return deepcopy(self._collections[cache_key])
         ads = AdCollection()
         cursor = None
         for _ in range(max(1, int(max_pages))):
@@ -897,6 +928,10 @@ class AdLibraryClient:
                 break
         if ads.has_next_page and not ads.stop_reason:
             ads.stop_reason = "page_limit"
+        # 같은 실행에서 여러 브랜드가 공유하는 계정을 다시 조회하지 않습니다.
+        # 오류·제한으로 중단된 응답은 캐시하지 않습니다.
+        if ads.stop_reason in ("", "page_limit"):
+            self._collections[cache_key] = deepcopy(ads)
         return ads
 
     def search(

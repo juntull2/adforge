@@ -9,10 +9,12 @@ A급 브랜드는 같은 자사몰로 광고하는 아랍어·외국어·위장�
 import json
 import os
 from dataclasses import asdict
+from pathlib import Path
 
 import altair as alt
 import pandas as pd
 import streamlit as st
+from meta_ad_library import _build_search_url
 
 from notion_reference_panel import check_recorded, notion_ready, render_notion_saver
 from a_grade_finder import (
@@ -35,6 +37,7 @@ from a_grade_finder import (
     audience_keyword,
     fetch_brand_audience,
     find_a_grade_ads,
+    load_report,
     parse_terms,
     recheck_brand_volume,
     rise_summary,
@@ -45,6 +48,18 @@ from a_grade_finder import (
 )
 
 _STATE_KEY = "a_grade_report"
+_ATTEMPT_KEY = "a_grade_failed_attempt"
+_REPORT_DIR = Path(__file__).resolve().parent / "outputs" / "a_grade"
+
+
+def _saved_reports():
+    reports = []
+    for path in sorted(_REPORT_DIR.glob("a_grade_*.json"), reverse=True):
+        try:
+            reports.append(load_report(str(path)))
+        except (OSError, ValueError, TypeError, KeyError):
+            continue
+    return reports
 
 TYPE_BADGE = {
     ACCOUNT_ARABIC: "🟥 아랍어",
@@ -435,7 +450,7 @@ def _render_brand(brand, report, settings, expanded: bool, show_recorded: bool =
                 st.rerun()
 
 
-def _render_report(report) -> None:
+def _render_report(report, history=()) -> None:
     settings = ScanSettings.from_dict(report.settings)
     check_recorded(report)
     for warning in report.warnings:
@@ -458,21 +473,31 @@ def _render_report(report) -> None:
     m[5].metric("🕵️ 찾은 연결 계정", f"{sum(len(b.accounts) for b in report.brands):,}")
     saved = f" · 저장: `{report.saved_path}`" if report.saved_path else ""
     st.caption(f"{report.generated_at} 기준 · 메타 요청 {report.meta_requests}회{saved}")
+    st.caption(f"이 결과의 검색 조건: {len(settings.scan_keywords)}개 키워드 · "
+               f"키워드당 최대 {settings.pages_per_keyword}화면 · "
+               f"연결 계정당 최대 {settings.account_pages}화면. "
+               f"검색어: {', '.join(settings.scan_keywords)}")
     st.caption(f"광고 검색·기간·연관성 집계는 최초 키워드 검색 기준입니다. "
                f"연결 계정에서 추가한 소재를 포함한 A급 소재는 {sum(len(b.ads) for b in a_brands):,}개입니다.")
 
     if not report.brands:
         if report.scanned_ads == 0:
-            st.info(
-                f"검색어에 걸린 광고 중 {settings.min_running_days}일 이상 게재 중인 광고가 없습니다. "
-                "최근에 시작한 광고만 있거나 검색 결과가 없는 경우입니다. 다른 검색어를 더해 보세요."
-            )
+            if report.scan_incomplete or report.warnings:
+                st.info("이번 검색은 완료되지 않았고 수집된 광고가 0개입니다. 유지할 새 결과가 없습니다. 저장된 이전 결과가 있으면 위에서 불러올 수 있습니다.")
+            else:
+                st.info(
+                    f"검색어에 걸린 광고 중 {settings.min_running_days}일 이상 게재 중인 광고가 없습니다. "
+                    "최근에 시작한 광고만 있거나 검색 결과가 없는 경우입니다. 다른 검색어를 더해 보세요."
+                )
         else:
             st.info(
                 f"{settings.min_running_days}일+ 게재 광고 {report.long_running_ads}개 중 제품 연관 키워드가 들어간 광고가 없습니다"
                 + (f" (제외 키워드로 {report.excluded_ads}개 제외)" if report.excluded_ads else "")
                 + ". 연관 키워드를 늘려 보세요."
             )
+        if any(r.a_grade_brands for r in history):
+            st.markdown("#### 📝 노션에 기록")
+            render_notion_saver(report, key=f"ag_notion_{report.generated_at.replace(':', '')}", history=history)
         return
 
     st.markdown("#### 📋 브랜드별 판정")
@@ -503,7 +528,7 @@ def _render_report(report) -> None:
                 "연결 계정 유형 — 🟥 아랍어: 아랍 문자 이름 · 🟧 외국어: 외국 문자만 쓴 이름 · "
                 "🟨 위장: 한글·영문에 외국 문자나 자음·모음을 섞은 이름 · 🟦 숨은: 브랜드명이 없는 이름 · 🟩 공식. "
                 "신뢰도 '확정'은 같은 자사몰로 광고를 보내는 계정, '유력'은 광고 문구만 같은 계정입니다. "
-                "확정된 숨은·위장·아랍어·외국어 계정은 그 계정 이름과 광고 문구로 메타 광고 라이브러리를 다시 검색해 "
+                "확정된 연결 계정은 공식 계정을 포함해 그 계정 이름과 광고 문구로 메타 광고 라이브러리를 다시 검색해 "
                 "연결 계정을 더 찾습니다 (🔁 표시)."
             )
         for i, brand in enumerate(a_brands):
@@ -514,9 +539,9 @@ def _render_report(report) -> None:
             _render_brand(brand, report, settings, expanded=False, show_recorded=show_recorded)
 
     st.markdown("#### 📝 노션에 기록")
-    if a_brands:
+    if a_brands or any(r.a_grade_brands for r in history):
         st.caption("A급 브랜드의 60일+ 게재 광고입니다. 저장할 광고를 고르고 처음 저장할 제목·진행 여부를 정하세요.")
-        render_notion_saver(report, key=f"ag_notion_{report.generated_at.replace(':', '')}")
+        render_notion_saver(report, key=f"ag_notion_{report.generated_at.replace(':', '')}", history=history)
     else:
         st.caption("A급 브랜드가 생기면 해당 광고를 노션에 기록할 수 있습니다.")
 
@@ -548,7 +573,29 @@ def render_a_grade_view() -> None:
         "결과는 60일 검색량이 가파르게 오른 브랜드(🚀)부터 보여주고, A급 브랜드는 같은 자사몰로 광고하는 아랍어·위장·숨은 계정까지 찾아냅니다."
     )
 
+    saved_reports = _saved_reports()
+    if _STATE_KEY not in st.session_state:
+        previous = next((r for r in saved_reports if r.brands), None)
+        if previous:
+            st.session_state[_STATE_KEY] = previous
     report = st.session_state.get(_STATE_KEY)
+    with st.expander("📂 저장된 탐색 결과", expanded=report is None):
+        if saved_reports:
+            options = {r.saved_path: r for r in saved_reports}
+            selected = st.selectbox(
+                "저장 결과 선택", list(options), key="ag_saved_report",
+                index=list(options).index(report.saved_path) if report and report.saved_path in options else 0,
+                format_func=lambda p: f"{options[p].generated_at} · 광고 {options[p].scanned_ads}개 · 브랜드 {len(options[p].brands)}곳",
+            )
+            if st.button("📂 선택한 결과 불러오기", key="ag_load_report") and selected in options:
+                report = options[selected]
+                st.session_state[_STATE_KEY] = report
+                st.session_state.pop(_ATTEMPT_KEY, None)
+        else:
+            st.caption("아직 저장된 탐색 결과가 없습니다.")
+    if report and report.saved_path:
+        st.caption(f"표시 중인 결과: {report.generated_at} · 브랜드 {len(report.brands)}곳. 저장된 결과는 현재 검색 조건과 다를 수 있습니다.")
+    st.caption("메타 수집: 실제 브라우저 검색 · 새 검색과 연결 계정 추적에 같은 브라우저를 재사용합니다.")
     with st.expander("⚙️ 탐색 조건", expanded=report is None):
         c1, c2 = st.columns(2)
         with c1:
@@ -556,7 +603,9 @@ def render_a_grade_view() -> None:
                 "🔍 메타 광고 라이브러리 검색어 (한 줄에 하나)",
                 value="\n".join(DEFAULT_SCAN_KEYWORDS), height=200, key="ag_scan_keywords",
             )
-            pages = st.slider("검색어당 조회 페이지 (1페이지 = 60일+ 광고 10개)", 1, 10, 3, key="ag_pages")
+            pages = st.number_input("키워드당 최대 수집 화면 수", min_value=1, max_value=100,
+                                    value=30, step=1, key="ag_pages")
+            st.caption("최초 키워드 검색에 적용됩니다. 화면마다 광고 수가 다르며, 추가 로딩이 중단되면 설정한 한도에 도달하지 못할 수 있습니다.")
         with c2:
             relevance_text = st.text_input(
                 "③ 제품 연관 키워드 (쉼표 구분 · 하나라도 있으면 연관)",
@@ -605,9 +654,34 @@ def render_a_grade_view() -> None:
             st.error("검색어와 제품 연관 키워드를 한 개 이상 입력하세요.")
         else:
             bar = st.progress(0.0, text="준비 중…")
-            report = find_a_grade_ads(settings, _naver_creds(), progress=_progress_bar(bar))
+            attempt = find_a_grade_ads(settings, _naver_creds(), progress=_progress_bar(bar))
             bar.empty()
+            if attempt.scan_incomplete and attempt.scanned_ads == 0 and report and report.brands:
+                st.session_state[_ATTEMPT_KEY] = attempt
+            else:
+                report = attempt
+                st.session_state.pop(_ATTEMPT_KEY, None)
             st.session_state[_STATE_KEY] = report
 
+    with st.expander("메타 웹에서 직접 검색"):
+        st.caption("현재 입력한 검색어로 메타 광고 라이브러리를 엽니다. 웹 검색 결과는 AdForge에 자동으로 가져오지 않습니다.")
+        for keyword in parse_terms(keywords_text):
+            st.link_button(f"{keyword} · 메타에서 검색", _build_search_url(keyword, "KR"))
+
+    failed_attempt = st.session_state.get(_ATTEMPT_KEY)
+    if failed_attempt:
+        for warning in failed_attempt.warnings:
+            st.warning(warning)
+        st.info(f"이번 검색은 광고를 수집하지 못해 중단했습니다. 아래에는 {report.generated_at}의 이전 결과(브랜드 {len(report.brands)}곳)를 유지합니다.")
+    diagnostic_report = failed_attempt or report
+    if diagnostic_report and diagnostic_report.scan_incomplete:
+        st.caption("한국 일반 상업 광고 전체 검색은 공식 광고 라이브러리 API의 제공 범위가 아닙니다. API 키 추가만으로 현재 수집 방식을 대체할 수 없습니다.")
+        st.link_button("메타 공식 API 지원 범위 확인", "https://www.facebook.com/ads/library/api/")
+        with st.expander("이번 자동 검색 진단"):
+            st.write({"검색 시각": diagnostic_report.generated_at,
+                      "검색어": diagnostic_report.settings.get("scan_keywords", []),
+                      "메타 요청 수 (접속 포함)": diagnostic_report.meta_requests,
+                      "이번에 수집한 광고": diagnostic_report.scanned_ads,
+                      **getattr(diagnostic_report, "meta_diagnostics", {})})
     if report is not None:
-        _render_report(report)
+        _render_report(report, saved_reports)

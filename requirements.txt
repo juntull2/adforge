@@ -5,6 +5,7 @@ pillow
 requests
 beautifulsoup4
 curl_cffi>=0.7.0
+playwright>=1.51,<2
 python-dotenv
 python-dateutil
 openai

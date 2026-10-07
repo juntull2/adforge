@@ -28,7 +28,7 @@ import re
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import date, datetime, timedelta
 from typing import Callable, Optional
 from urllib.parse import parse_qs, unquote, urlparse
@@ -74,6 +74,9 @@ DEFAULT_SCAN_KEYWORDS = [
     "여드름 유산균",
     "피부 영양제",
     "이너뷰티",
+    "여드름관리",
+    "남자피부관리",
+    "화농성여드름",
 ]
 DEFAULT_RELEVANCE_TERMS = ["여드름", "트러블", "피지", "좁쌀", "뾰루지", "영양제", "이너뷰티", "유산균", "건강기능식품"]
 DEFAULT_EXCLUDE_TERMS = ["강아지", "반려", "애완", "고양이", "펫", "애견", "댕댕"]
@@ -251,9 +254,11 @@ class AGradeReport:
     brands: list = field(default_factory=list)
     warnings: list = field(default_factory=list)
     meta_requests: int = 0
+    meta_diagnostics: dict = field(default_factory=dict)
     saved_path: str = ""
     recorded_checked: bool = False   # 노션 소재 표와 비교했는지
     recorded_error: str = ""
+    scan_incomplete: bool = False
 
     @property
     def a_grade_brands(self) -> list:
@@ -1430,7 +1435,7 @@ def _sort_accounts(accounts: list) -> list:
 
 def _expansion_queries(candidates: dict, brand_terms: list) -> list:
     """
-    같은 자사몰로 광고하는 게 확인된(확정) 숨은·위장·아랍어·외국어 계정의 이름과 그 계정 광고 문구로 다시 검색할 목록.
+    같은 자사몰로 광고하는 게 확인된 연결 계정의 이름과 그 계정 광고 문구로 다시 검색할 목록.
     이름 검색을 먼저, 광고가 많은 계정부터. 한 계정은 한 번만 넓혀 봅니다.
     """
     pending = []
@@ -1439,14 +1444,12 @@ def _expansion_queries(candidates: dict, brand_terms: list) -> list:
             continue
         cand["expanded"] = True
         account_type = classify_page_name(cand["name"], brand_terms)[0]
-        if account_type == ACCOUNT_OFFICIAL:
-            continue
         pending.append((cand, account_type))
     pending.sort(key=lambda item: -len(item[0]["ads"]))
     names, phrases = [], []
     for cand, account_type in pending:
         who = _account_label(account_type, cand["name"])
-        if len(_norm_name(cand["name"])) >= 3:
+        if len(_norm_name(cand["name"])) >= 2:
             names.append((cand["name"], "keyword_unordered", 2, f"{who} 이름"))
         for phrase in distinctive_phrases(list(cand["ads"].values())):
             phrases.append((phrase, "keyword_exact_phrase", 1, f"{who} 광고 문구 '{_shorten(phrase)}'"))
@@ -1487,7 +1490,7 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
       1) 도메인·브랜드명·제품명·같은 광고 문구로 검색
       2) 랜딩이 같으면 '확정', 문구만 같고 랜딩을 확인할 수 없으면 '유력' (다른 브랜드 랜딩이면 제외)
       3) 찾은 페이지의 게재 중 광고를 직접 열어 이 브랜드 광고 수와 다른 브랜드 광고를 확인
-      4) 확정된 숨은·위장·아랍어·외국어 계정은 그 계정 이름과 광고 문구로 다시 검색해 또 다른 계정을 찾습니다
+      4) 확정된 연결 계정은 공식 계정을 포함해 이름과 광고 문구로 다시 검색해 또 다른 계정을 찾습니다
          (최대 MAX_TRACK_ROUNDS 단계, 추가 검색 MAX_EXPAND_QUERIES회)
     """
     today = today or date.today()
@@ -1503,7 +1506,10 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
         if getattr(raw, "incomplete", False):
             reason = getattr(raw, "stop_reason", "failed")
             reasons = {"page_limit": "페이지 제한 도달", "failed": "검색 실패", "blocked": "접속 차단",
-                       "rate_limit": "요청 한도 초과", "missing_cursor": "다음 페이지 주소 없음"}
+                       "rate_limit": "요청 한도 초과", "missing_cursor": "다음 페이지 주소 없음",
+                       "pagination_stalled": "추가 화면에서 새 광고를 확인하지 못함",
+                       "account_name_fallback": "직접 계정 조회가 0개여서 계정명 검색으로 보완 (전체 확인 미완료)",
+                       "browser_error": "브라우저 수집 중단"}
             brand.tracking_limits.append(f"{label}: {reasons.get(reason, reason)}")
             brand.tracking_incomplete = True
 
@@ -1537,7 +1543,8 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
                 continue
             searched.add(key)
             progress(base + span * i / max(len(queries), 1), f"🔎 {brand.name}: {label} 검색 중")
-            raw = client.search(query, search_type=search_type, active_status="active", max_pages=pages)
+            limit = settings.account_pages if label.endswith(" 이름") else settings.pages_per_keyword
+            raw = client.search(query, search_type=search_type, active_status="active", max_pages=limit)
             collection_status(raw, label)
             resolver.resolve_many(u for ad in raw for u in ad_link_urls(ad))
             for ad in raw:
@@ -1563,6 +1570,8 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
                 return
             cand = candidates[page_id]
             progress(base + span * i / max(len(todo), 1), f"🕵️ {brand.name}: '{cand['name']}' 광고 확인 중")
+            if hasattr(client, "remember_page"):
+                client.remember_page(page_id, cand["name"])
             page_raw = client.page_ads(page_id, active_status="active", max_pages=settings.account_pages)
             collection_status(page_raw, cand["name"])
             resolver.resolve_many(u for ad in page_raw for u in ad_link_urls(ad))
@@ -1641,7 +1650,7 @@ def track_brand_accounts(client: AdLibraryClient, resolver: LinkResolver, brand:
     return accounts
 
 
-def track_brand(brand: BrandCandidate, settings: ScanSettings, progress: ProgressFn = _no_progress,
+def _track_brand(brand: BrandCandidate, settings: ScanSettings, progress: ProgressFn = _no_progress,
                 client: Optional[AdLibraryClient] = None, resolver: Optional[LinkResolver] = None) -> None:
     """
     한 브랜드의 연결 계정을 추적해 brand.accounts에 채웁니다.
@@ -1691,6 +1700,15 @@ def track_brand(brand: BrandCandidate, settings: ScanSettings, progress: Progres
 # 전체 흐름
 # ─────────────────────────────────────────────────────────────────
 
+def track_brand(brand: BrandCandidate, settings: ScanSettings, progress: ProgressFn = _no_progress,
+                client=None, resolver=None) -> None:
+    if client is not None:
+        return _track_brand(brand, settings, progress, client, resolver)
+    from meta_browser_client import BrowserAdLibraryClient
+    with BrowserAdLibraryClient(country=settings.country) as browser_client:
+        return _track_brand(brand, settings, progress, browser_client, resolver)
+
+
 def _page_names_by_frequency(ads: list) -> list:
     counts = Counter(a.page_name for a in ads if a.page_name)
     return [name for name, _ in counts.most_common()]
@@ -1735,7 +1753,7 @@ def group_brands(ads: list, resolver: LinkResolver, today: date) -> list:
     return list(groups.values())
 
 
-def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: ProgressFn = _no_progress,
+def _find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: ProgressFn = _no_progress,
                      client: Optional[AdLibraryClient] = None, resolver: Optional[LinkResolver] = None,
                      save: bool = True) -> AGradeReport:
     """메타 광고 라이브러리를 검색해 A급 소재를 찾고, 설정에 따라 A급 브랜드의 연결 계정까지 추적합니다."""
@@ -1749,27 +1767,39 @@ def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: Progr
     try:
         client = client or AdLibraryClient(country=settings.country)
     except AdLibraryBlocked as exc:
+        report.scan_incomplete = True
         report.warnings.append(str(exc))
         return report
     resolver = resolver or LinkResolver()
 
-    # ② 60일 이상 게재 중인 광고 수집 (시작일 필터는 메타 서버에서 먼저 적용)
+    # ② 60일 이상 게재 중인 광고 수집. 실패한 키워드 때문에 나머지를 건너뛰지 않습니다.
     started_before = today - timedelta(days=settings.min_running_days)
     collected: dict = {}
-    try:
-        for i, kw in enumerate(keywords):
+    query_results = []
+    for i, kw in enumerate(keywords):
+        try:
             progress(0.40 * i / len(keywords), f"📡 메타 광고 라이브러리 검색: '{kw}' ({i + 1}/{len(keywords)})")
             found = client.search(kw, started_before=started_before, max_pages=settings.pages_per_keyword)
+            query_results.append({"keyword": kw, "ads": len(found),
+                                  "screens": getattr(found, "pages_collected", None),
+                                  "limit": settings.pages_per_keyword,
+                                  "stop_reason": getattr(found, "stop_reason", "")})
             if getattr(found, "incomplete", False):
-                reason = "페이지 제한 도달" if found.stop_reason == "page_limit" else "검색 중단"
+                if found.stop_reason != "page_limit":
+                    report.scan_incomplete = True
+                reason = {"page_limit": "설정한 수집 화면 수에 도달",
+                          "pagination_stalled": "추가 화면에서 새 광고를 확인하지 못함"}.get(found.stop_reason, "검색 중단")
                 report.warnings.append(f"'{kw}' 부분 수집: {reason} (수집한 광고는 유지)")
             for ad in found:
                 ad_id = str(ad.get("ad_archive_id") or "")
                 if ad_id and ad_id not in collected:
                     ad["_search_keyword"] = kw
                     collected[ad_id] = ad
-    except AdLibraryBlocked as exc:
-        report.warnings.append(str(exc))
+        except AdLibraryBlocked as exc:
+            report.scan_incomplete = True
+            report.warnings.append(f"'{kw}' 검색 실패: {exc}")
+            query_results.append({"keyword": kw, "ads": 0, "limit": settings.pages_per_keyword,
+                                  "stop_reason": "failed"})
     raw_ads = list(collected.values())
     report.scanned_ads = len(raw_ads)
     long_ads = [ad for ad in raw_ads if ad_running_days(ad, today) >= settings.min_running_days]
@@ -1822,6 +1852,9 @@ def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: Progr
 
     report.brands = sort_brands(brands)
     report.meta_requests = client.request_count
+    report.meta_diagnostics = {"source": getattr(client, "collection_mode", "web_graphql"),
+                               "keywords": query_results,
+                               **(getattr(client, "last_error", {}) or {})}
     if client.failed_queries:
         failed = ", ".join(client.failed_queries[:5]) + (" …" if len(client.failed_queries) > 5 else "")
         report.warnings.append(f"메타 검색 {len(client.failed_queries)}건이 실패했습니다: {failed}")
@@ -1832,6 +1865,15 @@ def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: Progr
             report.warnings.append(f"결과 저장 실패: {exc}")
     progress(1.0, "✅ 완료")
     return report
+
+
+def find_a_grade_ads(settings: ScanSettings, naver_creds: tuple, progress: ProgressFn = _no_progress,
+                     client=None, resolver=None, save: bool = True) -> AGradeReport:
+    if client is not None:
+        return _find_a_grade_ads(settings, naver_creds, progress, client, resolver, save)
+    from meta_browser_client import BrowserAdLibraryClient
+    with BrowserAdLibraryClient(country=settings.country) as browser_client:
+        return _find_a_grade_ads(settings, naver_creds, progress, browser_client, resolver, save)
 
 
 def recheck_brand_volume(brand: BrandCandidate, keywords: list, settings: ScanSettings, naver_creds: tuple) -> None:
@@ -1851,3 +1893,28 @@ def save_report(report: AGradeReport, path: str = "") -> str:
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2, default=str)
     return path
+
+
+def load_report(path: str) -> AGradeReport:
+    """저장한 결과를 중첩된 광고·계정·검색량 객체까지 복원합니다."""
+    with open(path, encoding="utf-8") as source:
+        data = json.load(source)
+
+    def restore(cls, values):
+        allowed = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in values.items() if k in allowed})
+
+    report = restore(AGradeReport, data)
+    report.brands = []
+    for values in data.get("brands", []):
+        brand = restore(BrandCandidate, values)
+        brand.ads = [restore(AdSummary, ad) for ad in values.get("ads", [])]
+        brand.volume = restore(VolumeCheck, values["volume"]) if values.get("volume") else None
+        brand.accounts = []
+        for account_data in values.get("accounts", []):
+            account = restore(LinkedAccount, account_data)
+            account.sample_ads = [restore(AdSummary, ad) for ad in account_data.get("sample_ads", [])]
+            brand.accounts.append(account)
+        report.brands.append(brand)
+    report.saved_path = os.path.abspath(path)
+    return report

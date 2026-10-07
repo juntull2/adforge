@@ -80,38 +80,116 @@ def clone_material(source, material_id, destination, mapping=None):
     return clone(material_id)
 
 
-def select_resources(plan, catalog, selections=None):
-    """Explicit choices or role-compatible known materials; never invent native IDs."""
-    entries = catalog['entries']
+def _reference_scene(plan, shot):
+    scenes = plan.reference.get('scenes', [])
+    return scenes[shot.reference_scene] if shot.reference_scene < len(scenes) else {}
+
+
+def _dominant(values, minimum=1):
+    values = [v for v in values if v and v not in ('none', 'other', 'hard_cut')]
+    if not values:
+        return ''
+    top = max(set(values), key=values.count)
+    return top if values.count(top) >= minimum else ''
+
+
+def select_resources(plan, catalog, selections=None, fonts=None, prefer_pro=True):
+    """Reference-driven choice of effects, transitions, caption animation and font.
+
+    The reference's observed families (vision + pixel measurements) select the closest real CapCut resource,
+    paid ones first. An explicit ``selections`` entry always wins; ``'__disabled__'`` switches a kind off.
+    Every automatic pick is recorded in ``plan.reference['style_matches']`` with its honest match quality.
+    """
+    from .style_match import classify_family, pick_font, pick_resource, scan_fonts, style_catalog
     selections = selections or {}
-    def choose(kind, role, subtype='', observed=''):
-        requested = selections.get(f'{kind}:{role}') or selections.get(kind)
-        matches = [e for e in entries if e['kind'] == kind and (not subtype or e['subtype'] == subtype)]
-        if requested:
-            return next((e for e in matches if e['key'] == requested), None)
-        # Auto only reuses an identified observed resource; generic cache popularity
-        # cannot establish what effect the reference uses.
-        matches = [e for e in matches if e['name'] and e['name'].lower() in observed.lower()]
-        matches.sort(key=lambda e: (e['verification'] != 'verified', not e['cached'], -len(e['seen_in'])))
-        return matches[0] if matches else None
+    local = {e['key']: e for e in catalog.get('entries', [])}
+    pool = style_catalog(catalog)
+    by_key = {e['key']: e for e in pool}
+    matches, scenes = [], plan.reference.get('scenes', [])
+    cache = {}
+
+    def explicit(kind):
+        requested = selections.get(kind)
+        if requested == '__disabled__':
+            return 'disabled'
+        return (local.get(requested) or by_key.get(requested)) if requested else None
+
+    def automatic(kind, family, observed_text=''):
+        if not family or family in ('none', 'hard_cut'):
+            return None
+        if (kind, family) in cache:
+            return cache[(kind, family)]
+        # An exact, identified name from the reference beats a family guess.
+        exact = next((e for e in local.values() if e['kind'] == kind and e.get('name') and len(e['name']) > 1
+                      and e['name'].lower() in observed_text.lower()), None)
+        entry = dict(exact, match='exact_name', observed_family=family) if exact else \
+            pick_resource(kind, family, pool, avoid={m['key'] for m in matches if m['kind'] == kind and
+                                                    m['observed_family'] != family}, prefer_pro=prefer_pro)
+        cache[(kind, family)] = entry
+        if entry:
+            matches.append({'kind': kind, 'observed_family': family, 'key': entry['key'], 'name': entry['name'],
+                            'is_pro': bool(entry.get('is_pro')), 'match': entry['match']})
+        else:
+            matches.append({'kind': kind, 'observed_family': family, 'key': '', 'name': '', 'is_pro': False,
+                            'match': 'none'})
+        return entry
+
+    # Caption in-animation: the reference's dominant family (single editing language per video).
+    wanted = explicit('animation')
+    family = _dominant([x.get('caption_anim') for x in scenes], max(1, len(scenes) // 3))
     for caption in plan.captions:
-        role = plan.audio[caption.beat].role
-        shot = next((s for s in plan.shots if s.start <= (caption.start+caption.end)/2 < s.end), plan.shots[-1])
-        scenes = plan.reference.get('scenes', [])
-        observed = str(scenes[shot.reference_scene].get('editing', '')) if shot.reference_scene < len(scenes) else ''
-        entry = choose('animation', role, 'in', observed)
-        caption.animation_key = entry['key'] if entry else ''
+        if wanted == 'disabled':
+            caption.animation_key = ''
+        elif wanted:
+            caption.animation_key = wanted['key']
+        else:
+            entry = automatic('animation', family)
+            caption.animation_key = entry['key'] if entry else ''
+
+    wanted_fx, wanted_tr = explicit('effect'), explicit('transition')
     for i, shot in enumerate(plan.shots):
-        # Preserve hard cuts within a scene; effects follow editorial purpose.
-        kinds = ['effect'] if shot.role in ('hook', 'result') and i == 0 else []
-        if i + 1 < len(plan.shots) and plan.shots[i + 1].reference_scene != shot.reference_scene:
-            kinds.append('transition')
-        for kind in kinds:
-            scenes = plan.reference.get('scenes', [])
-            observed = str(scenes[shot.reference_scene].get('editing', '')) if shot.reference_scene < len(scenes) else ''
-            entry = choose(kind, shot.role, observed=observed)
+        scene = _reference_scene(plan, shot)
+        text = str(scene.get('editing', ''))
+        if wanted_fx != 'disabled':
+            entry = wanted_fx or automatic('effect', scene.get('effect_family'), text)
             if entry:
                 shot.resource_keys.append(entry['key'])
-    if any(s.get('editing') for s in plan.reference.get('scenes', [])):
-        plan.issues.append('관찰된 효과는 카탈로그 이름이 확인되는 항목만 자동 적용합니다. 미식별 효과·폰트는 수동 선택 후 실제 재생 확인이 필요합니다.')
+        nxt = plan.shots[i + 1] if i + 1 < len(plan.shots) else None
+        # Transitions follow the reference's cut points; extra cuts from the 3-second limit stay hard cuts.
+        if nxt and nxt.reference_scene != shot.reference_scene and wanted_tr != 'disabled':
+            incoming = _reference_scene(plan, nxt)
+            entry = wanted_tr or automatic('transition', incoming.get('transition_in'), str(incoming.get('editing', '')))
+            if entry:
+                shot.transition_key = entry['key']
+
+    # Font: user's explicit font wins; otherwise the installed font closest to the reference's feel.
+    if not any(c.font_path for c in plan.captions):
+        feel = _dominant([x.get('font_feel') for x in scenes])
+        if feel:
+            if fonts is None:
+                try:
+                    from pipeline.capcut_font_catalog import available_user_fonts
+                    fonts = scan_fonts(available_user_fonts())
+                except Exception:
+                    fonts = []
+            chosen = pick_font(feel, fonts)
+            if chosen:
+                for caption in plan.captions:
+                    caption.font_path = chosen['path']
+                matches.append({'kind': 'font', 'observed_family': feel, 'key': chosen['path'],
+                                'name': chosen['name'], 'is_pro': False, 'match': chosen['match']})
+
+    plan.reference['style_matches'] = matches
+    label = {'effect': '영상 효과', 'transition': '전환', 'animation': '자막 애니메이션', 'font': '폰트'}
+    quality = {'exact_name': '이름 일치', 'family_match': '유사 계열', 'fallback': '대체(계열 내 없음)', 'none': '매칭 실패'}
+    for m in matches:
+        if m['match'] == 'none':
+            plan.issues.append(f"{label[m['kind']]}: 레퍼런스의 '{m['observed_family']}' 계열에 맞는 리소스를 찾지 못했습니다.")
+        else:
+            plan.issues.append(f"{label[m['kind']]}: 레퍼런스 '{m['observed_family']}' → {m['name']} "
+                               f"({'Pro · ' if m['is_pro'] else ''}{quality[m['match']]})")
+    if any(m['is_pro'] for m in matches):
+        plan.issues.append('Pro 리소스가 포함됐습니다. CapCut Pro 계정으로 열어야 내보내기에 반영됩니다.')
+    if any(s.get('editing') for s in scenes):
+        plan.issues.append('효과·폰트는 레퍼런스와 같은 계열의 가장 가까운 CapCut 리소스입니다. 동일 리소스라는 보장은 없어 실제 재생 비교가 필요합니다.')
     return plan

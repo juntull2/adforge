@@ -15,6 +15,11 @@ APP = os.path.join(os.path.dirname(__file__), "apps", "a_grade_app.py")
 TOKEN = "ag_notion_2026-09-30T120000"
 
 
+@pytest.fixture(autouse=True)
+def isolated_saved_reports(monkeypatch, tmp_path):
+    monkeypatch.setattr(v, "_REPORT_DIR", tmp_path)
+
+
 @pytest.fixture
 def notion(monkeypatch):
     fake = FakeNotion()
@@ -43,6 +48,39 @@ def build_report():
     return make_report([rocket, miss])
 
 
+def test_retains_missing_previous_materials_with_source_without_mutating_reports():
+    old = make_report([make_brand(key="i-hi.co.kr", name="아이하이", ads=[make_ad(ad_id="old", key="i-hi.co.kr")])],
+                      generated_at="2026-09-29T12:00:00")
+    current = make_report([make_brand(ads=[make_ad(ad_id="new")])])
+    combined = panel.retained_candidates(current, [old])
+    assert {a.ad_id for _, a in panel.saver_rows(combined, True)} == {"new", "old"}
+    assert combined._candidate_sources[("i-hi.co.kr", "old")] == old.generated_at
+    assert len(current.brands) == 1
+    assert old.brands[0].ads[0].recorded == ""
+
+
+def test_latest_failed_grade_is_not_replaced_by_older_pass():
+    old = make_report([make_brand(key="i-hi.co.kr", name="아이하이")], generated_at="2026-09-29T12:00:00")
+    failed = make_brand(key="i-hi.co.kr", name="아이하이")
+    failed.is_a_grade = False
+    current = make_report([failed])
+    assert panel.saver_rows(panel.retained_candidates(current, [old]), True) == []
+
+
+def test_preserved_materials_appear_in_notion_table_with_source(notion, monkeypatch):
+    current = build_report()
+    previous = make_report([make_brand(key="i-hi.co.kr", name="아이하이", ads=[make_ad(ad_id="old", key="i-hi.co.kr")])],
+                           generated_at="2026-09-29T12:00:00")
+    monkeypatch.setattr(v, "_saved_reports", lambda: [previous])
+    at = open_app(monkeypatch, current)
+    assert len(at.dataframe[-1].value) == 3
+    row = at.dataframe[-1].value.query("브랜드 == '아이하이'").iloc[0]
+    assert row["검색 출처"] == "이전 검색에서 보존"
+    assert row["확인 시각"] == previous.generated_at
+    at.checkbox(key=f"{TOKEN}_include_previous").uncheck().run()
+    assert len(at.dataframe[-1].value) == 2
+
+
 def open_app(monkeypatch, report):
     monkeypatch.setattr(v, "find_a_grade_ads", lambda settings, creds, progress=None: report)
     at = AppTest.from_file(APP, default_timeout=60)
@@ -67,6 +105,28 @@ def test_save_creates_brand_and_ads_without_human_columns(notion, monkeypatch):
     assert all(p["properties"][nr.A_BRAND]["relation"][0]["id"] == brands[0]["id"] for p in ads)
     for _, names in fake.written_properties():
         assert not names & set(nr.HUMAN_ONLY)
+
+
+def test_bulk_selection_preserves_drafts_and_never_saves(notion, monkeypatch):
+    fake, _ = notion
+    report = build_report()
+    at = open_app(monkeypatch, report)
+    at.session_state[f"{TOKEN}_table_0"] = {
+        "edited_rows": {0: {"제목": "수정한 제목", "진행 여부": nr.STATUS_DEFAULT}},
+        "added_rows": [], "deleted_rows": [],
+    }
+    at.run()
+    fake.requests.clear()
+    at.button(key=f"{TOKEN}_none").click().run()
+    assert not at.exception
+    table = at.dataframe[-1].value
+    assert not table["선택"].any()
+    assert table.iloc[0]["제목"] == "수정한 제목"
+    assert any("선택된 0개" in c.value for c in at.caption)
+    at.button(key=f"{TOKEN}_all").click().run()
+    assert at.dataframe[-1].value["선택"].all()
+    assert at.dataframe[-1].value.iloc[0]["제목"] == "수정한 제목"
+    assert not fake.written_properties()
 
 
 def test_recorded_ads_hidden_on_next_search_and_resave_updates(notion, monkeypatch):

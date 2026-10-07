@@ -34,7 +34,7 @@ def create_edit(reference_path, script, folders, key, output='outputs/reference_
         reference = analyze_video(reference_path, key, root / 'analysis_cache', model, True, progress)
         write_json(run / 'reference.json', reference)
         stage('보유 소스 장면 분석')
-        assets, source_issues = index_sources(folders, key, root / 'analysis_cache', model, source_limit, progress)
+        assets, source_issues = index_sources(folders, key, root / 'analysis_cache', model, source_limit, progress, script)
         write_json(run / 'sources.json', assets)
         if not assets:
             raise ValueError('실제 화면을 분석한 소스가 없습니다. API와 소스 파일을 확인해주세요.')

@@ -16,9 +16,9 @@ from notion_sync import NotionClient
 import notion_references as n
 
 
-AD_COLUMNS = [(n.A_TITLE, 200), (n.A_BRAND, 85), (n.A_APPEAL, 90), (n.A_DAYS, 60),
+AD_COLUMNS = [(n.A_TITLE, 200), (n.A_BRAND, 85), (n.A_ACCOUNT, 140), (n.A_STATUS, 95), (n.A_DAYS, 60),
               (n.A_META, 75), (n.H_MATERIAL, 120), (n.H_EDITED, 90), (n.H_FEEDBACK, 160)]
-BRAND_COLUMNS = [(n.B_TITLE, 160), (n.B_PRODUCT, 140), (n.B_PEAK, 140), (n.B_RISE, 100),
+BRAND_COLUMNS = [(n.B_TITLE, 160), (n.B_PRODUCT, 140), (n.B_MALL, 180), (n.B_PEAK, 140), (n.B_RISE, 100),
                  (n.B_MAX_DAYS, 95), (n.B_ACCOUNTS, 95)]
 
 

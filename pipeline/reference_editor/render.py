@@ -10,6 +10,7 @@ import pycapcut as cc
 
 from .analysis import probe
 from .catalog import clone_material
+from .style_match import resolve_pyc_key
 
 
 def _us(seconds):
@@ -41,7 +42,7 @@ def render_plan(plan, output_root, catalog, project_name=None):
     script = cc.DraftFolder(str(root)).create_draft(name, plan.width, plan.height, plan.fps)
     for kind, label in ((cc.TrackType.video, '영상'), (cc.TrackType.text, '자막'), (cc.TrackType.audio, '나레이션')):
         script.add_track(kind, label)
-    video_ids, text_ids = [], []
+    video_ids, text_ids, native_log = [], [], []
     for shot in plan.shots:
         material = cc.VideoMaterial(_local_copy(shot.asset_path, folder))
         if shot.source_end > material.duration / 1_000_000 + 0.05:
@@ -55,17 +56,33 @@ def render_plan(plan, output_root, catalog, project_name=None):
             left, right = (scale, scale * 1.08) if shot.motion == 'zoom_in' else (scale * 1.08, scale)
             segment.add_keyframe(cc.KeyframeProperty.uniform_scale, 0, left)
             segment.add_keyframe(cc.KeyframeProperty.uniform_scale, segment.duration, right)
+        native_applied = []
+        for key in dict.fromkeys(shot.resource_keys):
+            if key.startswith('pyc:'):
+                member = resolve_pyc_key(key)
+                segment.add_effect(member)
+                native_applied.append((key, segment.segment_id, member.value.is_vip))
+        if shot.transition_key.startswith('pyc:') and shot is not plan.shots[-1]:
+            member = resolve_pyc_key(shot.transition_key)
+            segment.add_transition(member, duration=min(member.value.default_duration, _us(shot.end - shot.start) // 3))
+            native_applied.append((shot.transition_key, segment.segment_id, member.value.is_vip))
         script.add_segment(segment, '영상')
         video_ids.append(segment.segment_id)
+        native_log.extend(native_applied)
     cursor = 0
     for beat in plan.audio:
         segment = cc.AudioSegment(_local_copy(beat.path, folder), cc.trange(_us(cursor), _us(beat.duration)))
         script.add_segment(segment, '나레이션'); cursor += beat.duration
     for caption in plan.captions:
         segment = cc.TextSegment(caption.text, cc.trange(_us(caption.start), _us(caption.end)-_us(caption.start)),
-                                 style=cc.TextStyle(size=caption.size, align=1, color=tuple(caption.color),
+                                 style=cc.TextStyle(size=caption.size, align=1, color=tuple(caption.color), bold=caption.bold,
                                                     auto_wrapping=True, max_line_width=0.82),
-                                 clip_settings=cc.ClipSettings(transform_y=caption.y))
+                                 clip_settings=cc.ClipSettings(transform_y=caption.y),
+                                 border=cc.TextBorder(color=(0.0, 0.0, 0.0), width=40.0) if caption.outline else None)
+        if caption.animation_key.startswith('pyc:'):
+            member = resolve_pyc_key(caption.animation_key)
+            segment.add_animation(member, duration=min(450_000, (_us(caption.end) - _us(caption.start)) // 3))
+            native_log.append((caption.animation_key, segment.segment_id, member.value.is_vip))
         script.add_segment(segment, '자막')
         text_ids.append(segment.segment_id)
     script.save()
@@ -79,7 +96,7 @@ def render_plan(plan, output_root, catalog, project_name=None):
         content = json.loads(text['content'])
         if caption.font_path:
             font = _local_copy(caption.font_path, folder)
-            text.update(font_path=font, font_name=Path(caption.font_path).stem)
+            text.update(font_path=font, font_name=Path(caption.font_path).stem, font_title=Path(caption.font_path).stem)
             for style in content.get('styles', []):
                 style['font'] = {'path': font, 'id': '', 'name': Path(caption.font_path).stem}
         # Apply emphasis only to verbatim words; separate style spans remain editable.
@@ -134,9 +151,10 @@ def render_plan(plan, output_root, catalog, project_name=None):
         applied.append(dict(key=key, segment=sid, status='requires_native_verification'))
     for shot, sid in zip(plan.shots, video_ids):
         for key in dict.fromkeys(shot.resource_keys):
-            apply(key, sid, shot.end - shot.start)
+            if not key.startswith('pyc:'):
+                apply(key, sid, shot.end - shot.start)
     for caption, sid in zip(plan.captions, text_ids):
-        if caption.animation_key:
+        if caption.animation_key and not caption.animation_key.startswith('pyc:'):
             apply(caption.animation_key, sid, caption.end - caption.start)
     file.write_text(json.dumps(data, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
     meta_path = folder / 'draft_meta_info.json'
@@ -145,6 +163,8 @@ def render_plan(plan, output_root, catalog, project_name=None):
                 tm_duration=_us(plan.duration))
     meta_path.write_text(json.dumps(meta, ensure_ascii=False), encoding='utf-8')
     (folder / 'adforge_plan.json').write_text(json.dumps(plan.to_dict(), ensure_ascii=False, indent=2), encoding='utf-8')
+    applied.extend(dict(key=key, segment=sid, pro=bool(vip), status='requires_native_verification')
+                   for key, sid, vip in native_log)
     result = {'project': str(folder), 'name': name, 'duration': plan.duration, 'resources': applied,
               'missing_resources': missing, 'native_verified': False}
     (folder / 'adforge_render.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')

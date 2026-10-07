@@ -31,7 +31,7 @@ def render_reference_editor():
         if refresh or 're_catalog' not in st.session_state:
             st.session_state['re_catalog'] = harvest_catalog(draft_root())
         catalog = st.session_state['re_catalog']
-        st.caption('내 프로젝트에서 읽은 효과입니다. 캐시가 있어도 실제 적용 검수 전에는 미검증으로 표시합니다.')
+        st.caption('‘자동 선택’은 레퍼런스에서 읽은 전환·효과·자막 애니메이션·폰트 계열과 가장 가까운 CapCut 리소스를 고릅니다(유료 Pro 우선, 없으면 가장 비슷한 계열로 대체). 직접 고르면 그 선택이 우선합니다. 실제 재생 비교 전에는 미검증입니다.')
         selections = {}
         for kind, title in [('animation', '자막 입장 애니메이션'), ('transition', '장면 전환'), ('effect', '영상 효과')]:
             entries = [e for e in catalog['entries'] if e['kind'] == kind and

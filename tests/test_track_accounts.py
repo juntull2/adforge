@@ -82,9 +82,9 @@ def test_hidden_account_names_and_copy_are_searched_again(brand):
 
     # 다른 브랜드 랜딩으로 가는 광고의 페이지는 연결 계정이 아님
     assert "건강ㅎŁ 삶 되찾ブl 팬" not in by_name
-    # 공식 계정 이름은 다시 검색하지 않음
-    assert ("리포데이 공식몰", "keyword_unordered") not in meta.queries
-    assert "공식 이름 검색으로만 나오는 계정" not in by_name
+    # 공식 계정도 이름으로 검색해 추가 연결 계정을 찾습니다.
+    assert ("리포데이 공식몰", "keyword_unordered") in meta.queries
+    assert "공식 이름 검색으로만 나오는 계정" in by_name
     # 같은 검색은 한 번만
     assert len(meta.queries) == len(set(meta.queries))
 
@@ -102,6 +102,21 @@ def test_rounds_and_budget_limit(brand, monkeypatch):
     accounts = g.track_brand_accounts(meta, g.LinkResolver(), brand, g.ScanSettings())
     assert all(a.depth == 0 for a in accounts)
     assert ("건강ㅎŁ 삶 되찾ブl", "keyword_unordered") not in meta.queries
+
+
+def test_account_name_search_uses_configured_collection_limit(brand):
+    meta = world()
+    original = meta.search
+    limits = {}
+    def search(query, **kwargs):
+        limits[query] = kwargs["max_pages"]
+        return original(query, **kwargs)
+    meta.search = search
+    g.track_brand_accounts(meta, g.LinkResolver(), brand,
+                           g.ScanSettings(pages_per_keyword=7, account_pages=30))
+    assert limits["re4day.co.kr"] == 7
+    assert limits["건강ㅎŁ 삶 되찾ブl"] == 30
+    assert limits["리포데이 공식몰"] == 30
 
 
 def test_brand_terms_exclude_page_name_keywords():

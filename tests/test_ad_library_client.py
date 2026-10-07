@@ -75,6 +75,7 @@ def test_rate_limit_stops_immediately_without_retry(monkeypatch):
         client.search("re4day.co.kr")
     assert client._sess.posts == 1 and sleeps == []          # 다시 시도하지 않음
     assert client.rate_limited and client.failed_queries == ["keyword_unordered:re4day.co.kr"]
+    assert client.last_error == {"source": "web_graphql", "http_status": 200, "codes": [1675004]}
     with pytest.raises(m.AdLibraryRateLimited):
         client.page_ads("123")
     assert client._sess.posts == 1                           # 한도 초과 뒤에는 요청 자체를 보내지 않음
@@ -103,3 +104,57 @@ def test_partial_page_results_survive_rate_limit_and_failure(monkeypatch):
         client, _ = make_client([first] + failure, monkeypatch)
         result = client.page_ads("123", max_pages=20)
         assert len(result) == 1 and result.incomplete and result.stop_reason
+
+
+def test_bootstrap_uses_home_and_real_session_metadata(monkeypatch):
+    calls = []
+    session = object()
+    monkeypatch.setattr(m, "_make_session", lambda: session)
+    def get_page(sess, url, max_retry):
+        calls.append((sess, url, max_retry))
+        return FakeResponse('"LSD",[],{"token":"real-token"},"__spin_r":123,"__spin_t":456,"__spin_b":"trunk","hsi":"789"')
+    monkeypatch.setattr(m, "_get_page", get_page)
+    client = m.AdLibraryClient(min_interval=0)
+    client._connect()
+    assert calls == [(session, "https://www.facebook.com/", 1)]
+    assert client._lsd == "real-token" and client.request_count == 1
+    assert client._session_fields == {"__spin_r": "123", "__rev": "123", "__spin_t": "456", "__spin_b": "trunk", "__hsi": "789"}
+
+
+def test_unrelated_token_cannot_be_used_as_lsd():
+    assert m._extract_lsd('{"token":"unrelated-token"}') == ""
+    assert m._extract_lsd('<input name="lsd" value="real-token">') == "real-token"
+
+
+def test_http_429_does_not_trigger_session_retry(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(m.time, "sleep", sleeps.append)
+    response = FakeResponse("")
+    response.status_code = 429
+    class Session:
+        posts = 0
+        def post(self, *args, **kwargs):
+            self.posts += 1
+            return response
+    client = m.AdLibraryClient(min_interval=0)
+    client._lsd = "token"
+    client._sess = Session()
+    with pytest.raises(m.AdLibraryRateLimited):
+        client.search("x")
+    assert client._sess.posts == 1 and not sleeps and client.rate_limited
+    assert client.last_error == {"source": "web_graphql", "http_status": 429, "codes": []}
+
+
+def test_repeated_account_queries_use_independent_cached_results(monkeypatch):
+    client, _ = make_client([OK], monkeypatch)
+    first = client.page_ads("123")
+    first[0]["ad_archive_id"] = "modified"
+    second = client.page_ads("123")
+    assert second[0]["ad_archive_id"] == "1"
+    assert second.pages_collected == 1 and not second.incomplete
+
+
+def test_failed_results_are_not_cached(monkeypatch):
+    client, _ = make_client([None, None, OK], monkeypatch)
+    assert client.search("x").stop_reason == "failed"
+    assert len(client.search("x")) == 1
